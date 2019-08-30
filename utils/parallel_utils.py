@@ -1,4 +1,5 @@
 from multiprocessing import Process, Lock
+from optimizer import BaseOptimizer
 import os
 import csv
 import time
