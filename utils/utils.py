@@ -3,6 +3,13 @@ import os
 
 
 def create_log_dir(path):
+    """
+    Parameters
+    ----------
+    path: string
+        the path where creating the log file for hyperparameter configurations and corresponding performances.
+    """
+
     files = path.split("/")
     this_path = ""
 
@@ -14,6 +21,7 @@ def create_log_dir(path):
 
 def _resolve_name(path, package, start):
     """Return the absolute name of the module to be imported."""
+    
     if not hasattr(package, 'rindex'):
         raise ValueError("'package' not set to a string")
     dot = len(package)

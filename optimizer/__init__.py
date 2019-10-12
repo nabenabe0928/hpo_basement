@@ -1,2 +1,2 @@
-from base_optimizer import BaseOptimizer
-from nelder_mead import NelderMead
+from optimizer.base_optimizer import BaseOptimizer
+from optimizer.nelder_mead import NelderMead

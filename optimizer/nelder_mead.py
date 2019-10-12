@@ -1,4 +1,5 @@
 import numpy as np
+from optimizer.base_optimizer import BaseOptimizer
 from utils import convert_hps_set, revert_hps, out_of_domain
 
 
@@ -9,19 +10,25 @@ def centroid(xs, ys):
     return xs[:-1].mean(axis=0)
 
 
-class NelderMead():
+class NelderMead(BaseOptimizer):
     def __init__(self,
+                 hpu, 
+                 n_parallels=1, 
+                 n_init=10, 
+                 max_evals=100,
                  delta_r=1.0,
                  delta_oc=0.5,
                  delta_ic=-0.5,
                  delta_e=2.0,
                  delta_s=0.5):
 
+        super().__init__(hpu, rs=False, n_parallels=n_parallels, n_init=n_init, max_evals=max_evals)
         self.delta = {"r": delta_r,
                       "e": delta_e,
                       "s": delta_s,
                       "ic": delta_ic,
                       "oc": delta_oc}
+        self.opt = self.sample()
 
     def reflect(self, xs, ys):
         xc = centroid(xs, ys)
