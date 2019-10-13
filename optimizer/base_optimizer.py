@@ -101,7 +101,7 @@ class BaseOptimizer():
         for var_name, hp in hps.items():
             idx = self.cs._hyperparameter_idx[var_name]
             dist = utils.distribution_type(self.cs, var_name)
-            if dist == str:
+            if dist is str or dist is bool:
                 # categorical
                 choices = hp.choices
                 rnd = np.random.randint(len(choices))

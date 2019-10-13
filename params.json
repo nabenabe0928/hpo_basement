@@ -1,5 +1,5 @@
 {
-    "SphereFunction": {
+    "Sphere": {
       "file_name": "benchmarks",
       "dim": 5,
       "config": {

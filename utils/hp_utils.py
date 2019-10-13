@@ -35,7 +35,7 @@ def create_hyperparameter(var_type, name, lower=None, upper=None, log=False, q=N
         return CSH.UniformIntegerHyperparameter(name=name, lower=lower, upper=upper, log=log, q=q)
     elif var_type == float:
         return CSH.UniformFloatHyperparameter(name=name, lower=lower, upper=upper, log=log, q=q)
-    elif var_type == str:
+    elif var_type == str or var_type == bool:
         return CSH.CategoricalHyperparameter(name=name, choices=choices)
     else:
         raise ValueError("The hp_type must be chosen from [int, float, cat]")
@@ -62,7 +62,11 @@ def distribution_type(cs, var_name):
     elif "Float" in cs_dist:
         return float
     elif "Categorical" in cs_dist:
-        return str
+        var_type = type(cs._hyperparameters[var_name].choices[0])
+        if var_type == str or var_type == bool:
+            return var_type
+        else:
+            raise ValueError("The type of categorical parameters must be 'bool' or 'str'.")  
     else:
         raise NotImplementedError("The distribution is not implemented.")
 
@@ -170,7 +174,8 @@ def convert_hps(hp_values, cs):
     hp_converted_values = []
     for idx, hp_value in enumerate(hp_values):
         var_name = cs._idx_to_hyperparameter[idx]
-        if distribution_type(cs, var_name) is not str:
+        d = distribution_type(cs, var_name)
+        if d is int or d is float:
             hp_converted_values.append(convert_hp(hp_value, cs, var_name))
         else:
             hp_converted_values.append(hp_value)
@@ -246,7 +251,8 @@ def revert_hps(hp_converted_values, cs):
     hp_values = []
     for idx, hp_converted_value in enumerate(hp_converted_values):
         var_name = cs._idx_to_hyperparameter[idx]
-        if distribution_type(cs, var_name) is not str:
+        d = distribution_type(cs, var_name)
+        if d is int or d is float:
             hp_values.append(revert_hp(hp_converted_value, cs, var_name))
         else:
             hp_values.append(hp_converted_value)
@@ -507,19 +513,31 @@ class HyperparameterUtilities():
         else:
             for var_name, v in config_info.items():
                 dist = v["dist"]
-                if dist == "uniform":
-                    q = None if "q" not in v.keys() or v["q"] == "None" else v["q"]
-                    log = False if "log" not in v.keys() else eval(v["log"])
-                    l, u = v["lower"], v["upper"]
+                if vt in ["int", "float", "str", "bool"]:
                     vt = eval(v["var_type"])
+                else:
+                    raise ValueError("var_type in params.json must be 'int' or 'float' or 'str' or 'bool'.")
+                if dist == "uniform":
+                    if "q" not in v.keys() or v["q"] == "None":
+                        q = None  
+                    elif type(v["q"]) == int or type(v["q"]) == float:
+                        q = v["q"]
+                    else:
+                        raise ValueError("q in params.json must be int or float or 'None'.")
+                    if "log" not in v.keys():
+                        log = False
+                    elif v["log"] == "True" or v["log"] == "False":
+                        log = eval(v["log"])
+                    else:
+                        raise ValueError("log in params.json must be 'True' or 'False'.")
+                    l, u = v["lower"], v["upper"]
                     hp = create_hyperparameter(vt, var_name, lower=l, upper=u, log=log, q=q)
                 elif dist == "cat":
                     choices = v["choices"]
-                    vt = eval(v["var_type"])
                     hp = create_hyperparameter(vt, var_name, choices=choices)
                 else:
-                    raise ValueError("The first element of json hp dict must be uniform or cat.")
+                    raise ValueError("The first element of json hp dict must be 'uniform' or 'cat'.")
 
                 self.config_space.add_hyperparameter(hp)
 
-        return load_class("obj_functions.{}.{}".format(json_params["file_name"], self.obj_name))
+        return load_class("obj_functions.{}.{}".format(json_params["func_dir"], self.obj_name))
