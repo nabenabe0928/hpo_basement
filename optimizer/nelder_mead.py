@@ -1,7 +1,6 @@
 import numpy as np
 from optimizer.base_optimizer import BaseOptimizer
 import utils
-from utils import convert_hps_set, revert_hps, out_of_domain
 
 
 def centroid(xs, ys):
@@ -30,6 +29,7 @@ class NelderMead(BaseOptimizer):
                       "ic": delta_ic,
                       "oc": delta_oc}
         self.opt = self.sample
+        self.n_dim = n_init - 1
 
     def reflect(self, xs, ys):
         xc = centroid(xs, ys)
@@ -54,21 +54,18 @@ class NelderMead(BaseOptimizer):
             ys[i] = Yp[i - 1]
 
     def search(self, X, Y, cs):
-        n_dim = len(cs._hyperparameters)
-        Xc = convert_hps_set(X, cs)
-        xs = Xc[:n_dim+1]
-        ys = Y[:n_dim+1]
+        xs = X[:self.n_init]
+        ys = Y[:self.n_init]
         n_evals = len(Y)
-        idx = n_dim + 1
+        idx = self.n_init
 
         while True:
             xr = self.reflect(xs, ys)
             if idx == n_evals:
-                return revert_hps(xr, cs)
+                return xr
             else:
                 yr = Y[idx]
                 idx += 1
-
             if ys[0] <= yr < ys[-2]:
                 xs[-1] = xr
                 ys[-1] = yr
@@ -76,7 +73,7 @@ class NelderMead(BaseOptimizer):
             elif yr < ys[0]:
                 xe = self.expand(xs, ys)
                 if idx == n_evals:
-                    return revert_hps(xr, cs)
+                    return xe
                 else:
                     ye = Y[idx]
                     idx += 1
@@ -90,7 +87,7 @@ class NelderMead(BaseOptimizer):
             elif ys[-2] <= yr < ys[-1]:
                 xoc = self.outside_contract(xs, ys)
                 if idx == n_evals:
-                    return revert_hps(xoc, cs)
+                    return xoc
                 else:
                     yoc = Y[idx]
                     idx += 1
@@ -98,16 +95,17 @@ class NelderMead(BaseOptimizer):
                         xs[-1] = xoc
                         ys[-1] = yoc
                     else:
-                        if n_evals > idx + n_dim:
+                        if n_evals > idx + self.n_dim:
                             self.shrink(xs, ys, Y[idx:])
+                            idx += self.n_dim
                         else:
                             this_idx = n_evals - idx
                             return_x = xs[this_idx] + self.delta["s"] * (xs[this_idx] - xs[0])
-                            return revert_hps(return_x, cs)
+                            return return_x
             elif ys[-1] <= yr:
                 xic = self.inside_contract(xs, ys)
                 if idx == n_evals:
-                    return revert_hps(xic, cs)
+                    return xic
                 else:
                     yic = Y[idx]
                     idx += 1
@@ -115,18 +113,16 @@ class NelderMead(BaseOptimizer):
                         xs[-1] = xic
                         ys[-1] = yic
                     else:
-                        if n_evals > idx + n_dim:
+                        if n_evals > idx + self.n_dim:
                             self.shrink(xs, ys, Y[idx:])
+                            idx += self.n_dim
                         else:
                             this_idx = n_evals - idx
                             return_x = xs[this_idx] + self.delta["s"] * (xs[this_idx] - xs[0])
-                            return revert_hps(return_x, cs)
+                            return return_x
 
     def sample(self):
         cs = self.hpu.config_space
-        n_dim = len(cs._hyperparameters)
-        Xs, Ys = self.hpu.load_hps(convert=True, do_sort=True)
-        X = Xs[:n_dim+1]
-        Y = Ys[0][:n_dim+1]
+        X, Y = self.hpu.load_hps(convert=True, do_sort=False)
 
-        return self.search(X, Y, cs)
+        return utils.revert_hps(self.search(X, Y[0], cs), cs)

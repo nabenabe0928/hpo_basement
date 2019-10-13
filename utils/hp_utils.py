@@ -508,14 +508,14 @@ class HyperparameterUtilities():
             for var_name, v in config_info.items():
                 dist = v["dist"]
                 if dist == "uniform":
-                    q = None if "q" not in v.keys() else v["q"]
-                    log = None if "log" not in v.keys() else v["log"]
+                    q = None if "q" not in v.keys() or v["q"] == "None" else v["q"]
+                    log = False if "log" not in v.keys() else eval(v["log"])
                     l, u = v["lower"], v["upper"]
-                    vt = v["var_type"]
+                    vt = eval(v["var_type"])
                     hp = create_hyperparameter(vt, var_name, lower=l, upper=u, log=log, q=q)
                 elif dist == "cat":
                     choices = v["choices"]
-                    vt = v["var_type"]
+                    vt = eval(v["var_type"])
                     hp = create_hyperparameter(vt, var_name, choices=choices)
                 else:
                     raise ValueError("The first element of json hp dict must be uniform or cat.")

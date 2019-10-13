@@ -1,0 +1,18 @@
+{
+    "SphereFunction": {
+      "file_name": "benchmarks",
+      "dim": 5,
+      "config": {
+        "x": {
+            "lower": -5.0,
+            "upper": 5.0,
+            "dist": "uniform",
+            "q": "None",
+            "log": "False",
+            "choices": [],
+            "var_type": "float"
+        }
+      }
+    }
+}
+  
