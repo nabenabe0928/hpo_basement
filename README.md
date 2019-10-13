@@ -41,54 +41,54 @@ class OptName(BaseOptimizer):
 ## Hyperparameters of Objective Functions
 Describe the details of hyperparameters in `params.json`.
 
-### First key
+### 1. First key
 
 The name of objective function and it corresponds to the name of objective function class. 
 
-### func_dir
+### 2. func_dir
 
 the name of directory containing the objective function's class file.
 
-### dim
+### 3. dim
 
 The dimension of the hyperparameters of the objective function.
 
-### config
+### 4. config
 
 The information related to the hyperparameters.
 
-#### the name of each hyperparameter
+#### 4-1. the name of each hyperparameter
 
 used when recording the hyperparameter configurations.
 
-#### lower, upper
+#### 4-2. lower, upper
 
 The lower and upper bound of the hyperparameter. 
 Required only for float and integer parameters.
 
-#### dist (required anytime)
+#### 4-3. dist (required anytime)
 
 The distribution of the hyperparameter. 
 Either 'uniform' or 'cat'.
 
-#### q
+#### 4-4. q
 
 The quantization parameter of a hyperparameter. 
 If omited, q is going to be None. 
 Either any float or integer value or 'None'.
 
-#### log
+#### 4-5. log
 
 If searching on a log-scale space or not.
 If 'True', on a log scale.
 If omited or 'False', on a linear scale. 
 
-#### var_type (required anytime)
+#### 4-6. var_type (required anytime)
 
 The type of a hyperparameter.
 Either 'int' or 'float' or 'str' or 'bool'.
 
-#### choices (required only if dist is 'cat')
+#### 4-7. choices (required only if dist is 'cat')
 
 The choices of categorical parameters.
 Have to be given by a list.
