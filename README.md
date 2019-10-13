@@ -5,6 +5,31 @@
 
 ・ConfigSpace[ (github)](https://github.com/automl/ConfigSpace)
 
+## Implementation
+An easy example of `main.py`.
+
+```
+from utils import HyperparameterUtilities
+from optimizer import NelderMead
+
+if __name__=='__main__':
+    hpu = HyperparameterUtilities(
+          "Sphere", # the name of objective function
+          "NelderMead", # the name of an optimizer
+          0, # the index number of experiments 
+          ["loss", "acc"] # the name of performance measurements (1st one is the main measurement.)
+          )
+    opt = NelderMead(
+          hpu, 
+          n_parallels=1, # the number of parallel resources
+          n_init=10, # the number of initial samplings
+          max_evals=100 # the number of evaluations in an experiment
+          )
+    opt.optimize()
+```
+
+Run from termianl by `python main.py`.
+
 ## Optimizer
 You can add whatever optimizers you would like to use in this basement.
 By inheriting the `BaseOptimizer` object, you can use basic function needed to start HPO. 
@@ -142,7 +167,6 @@ An example follows below.
 
 
 ```
-
 """
 Parameters
 ----------
