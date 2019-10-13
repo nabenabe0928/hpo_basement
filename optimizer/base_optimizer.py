@@ -16,8 +16,11 @@ def objective_function(hp_conf, hpu, n_gpu, n_jobs):
         the index of gpu used in an evaluation
     """
 
-    ys = hpu.obj_class(hp_conf, n_gpu)
-    hpu.save_hps(hp_conf, ys, n_jobs)
+    if utils.out_of_domain(hp_conf, hpu):
+        hpu.save_hps(hp_conf, {yn: 1.0e+8 for yn in hpu.y_names}, n_jobs, hpu.lock)
+    else:
+        ys = hpu.obj_class(hp_conf, n_gpu)
+        hpu.save_hps(hp_conf, ys, n_jobs)
 
 
 class BaseOptimizer():

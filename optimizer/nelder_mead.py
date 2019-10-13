@@ -1,5 +1,6 @@
 import numpy as np
 from optimizer.base_optimizer import BaseOptimizer
+import utils
 from utils import convert_hps_set, revert_hps, out_of_domain
 
 
@@ -28,7 +29,7 @@ class NelderMead(BaseOptimizer):
                       "s": delta_s,
                       "ic": delta_ic,
                       "oc": delta_oc}
-        self.opt = self.sample()
+        self.opt = self.sample
 
     def reflect(self, xs, ys):
         xc = centroid(xs, ys)
@@ -121,13 +122,11 @@ class NelderMead(BaseOptimizer):
                             return_x = xs[this_idx] + self.delta["s"] * (xs[this_idx] - xs[0])
                             return revert_hps(return_x, cs)
 
-    def sample(self, X, Y, hpu, job_id, lock):
-        cs = hpu.config_space
+    def sample(self):
+        cs = self.hpu.config_space
+        n_dim = len(cs._hyperparameters)
+        Xs, Ys = self.hpu.load_hps(convert=True, do_sort=True)
+        X = Xs[:n_dim+1]
+        Y = Ys[0][:n_dim+1]
 
-        x = self.search(X, Y, cs)
-        if out_of_domain(x, hpu):
-            hpu.save_hps(x, [], job_id, lock, converted=False)
-            X.append(x)
-            Y.append(1.0e+8)
-        else:
-            return x
+        return self.search(X, Y, cs)

@@ -302,6 +302,27 @@ def save_hp(save_file_path, lock, job_id, value):
     lock.release()
 
 
+def load_hp(save_file_path, lock, var_type):
+    """
+    loading hyperparameters evaluated in an experiment
+
+    Parameters
+    ----------
+    var_type: type
+        the type of hyperparameter
+
+    Returns
+    -------
+    the list of a hyperparameter evlauated in an experiment
+    """
+
+    lock.acquire()
+    with open(save_file_path, "r", newline="") as f:
+        reader = [var_type(row[1]) for row in list(csv.reader(f, delimiter=","))]
+    lock.release()
+    return reader
+
+
 class HyperparameterUtilities():
     """
     Parameters
@@ -310,8 +331,10 @@ class HyperparameterUtilities():
         The name of the objective function's file
     opt_name: string
         the name of an optimizer
+    y_names: list of string
+        the names of the measurements of hyperparameter configurations
     """
-    def __init__(self, obj_name, opt_name, n_experiments):
+    def __init__(self, obj_name, opt_name, n_experiments, y_names):
         """
         Member Variables
         config_space: ConfigurationSpace
@@ -324,6 +347,7 @@ class HyperparameterUtilities():
         """
 
         self.obj_name = obj_name
+        self.y_names = y_names
         self.config_space = CS.ConfigurationSpace()
         self.obj_class = self.prepare_opt_env()
         self.save_path = "history/log/{}/{}/{:0>3}/".format(opt_name, obj_name, n_experiments)
@@ -418,6 +442,49 @@ class HyperparameterUtilities():
         for var_name, v in ys.items():
             save_file_path = self.save_path + "/" + var_name + ".csv"
             save_hp(save_file_path, self.lock, job_id, v)
+    
+    def load_hps(self, convert=False, do_sort=False):
+        """
+        loading hyperparameter configurations and the corresponding performance
+
+        Parameters
+        ----------
+        convert: bool
+            if True, converting into constrained scales
+        
+        Returns
+        -------
+        the list of hyperparameter configurations and the corresponding performance
+        [the index for configurations][the index for hyperparameters]
+        """
+
+        cs = self.config_space
+        names = cs._idx_to_hyperparameter
+        hps = []
+        ys = []
+        for idx in range(len(names)):
+            var_name = names[idx]
+            var_type = distribution_type(cs, var_name)
+            save_file_path = self.save_path + "/" + var_name + ".csv"
+            hp = load_hp(save_file_path, self.lock, var_type)
+            if convert:
+                hp = [convert_hp(val, cs, var_name) for val in hp]
+            hps.append(hp)
+
+        for y_name in self.y_names:
+            save_file_path = self.save_path + "/" + y_name + ".csv"
+            y = load_hp(save_file_path, self.lock, float)
+            ys.append(y)
+        
+        if do_sort:
+            order = np.argsort(ys[0])
+            ys = [np.array(y[order]) for y in ys]
+            hps = [np.array(hp[order]) for hp in hps]
+        n_confs = len(hps[0])
+        n_dims = len(hps)
+        hps = [[hps[nd][nc] for nd in range(n_dims)] for nc in range(n_confs)]
+
+        return hps, ys
 
     def prepare_opt_env(self):
         """
