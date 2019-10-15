@@ -66,7 +66,7 @@ def distribution_type(cs, var_name):
         if var_type == str or var_type == bool:
             return var_type
         else:
-            raise ValueError("The type of categorical parameters must be 'bool' or 'str'.")  
+            raise ValueError("The type of categorical parameters must be 'bool' or 'str'.")
     else:
         raise NotImplementedError("The distribution is not implemented.")
 
@@ -91,19 +91,19 @@ def get_hp_info(hp):
             return hp.lower, hp.upper, hp.q, hp.log
         else:
             return np.log(hp.lower), np.log(hp.upper), hp.q, hp.log
-    except:
+    except NotImplementedError:
         raise NotImplementedError("Categorical parameters do not have the log scale option.")
 
 
-def out_of_domain(hps, hpu):
+def out_of_domain(hps, hp_utils):
     """
     Parameters
     ----------
     hps: list or dict of hyperparameter values
         if list, the indexes follows the indexes in the ConfigSpace
         else if dict, the keys are the name of hyperparameters
-        values are the value of hyperparameter which will be evaluated.  
-    hpu: HyperparameterUtilities object
+        values are the value of hyperparameter which will be evaluated.
+    hp_utils: HyperparameterUtilities object
 
     Returns
     -------
@@ -112,18 +112,18 @@ def out_of_domain(hps, hpu):
         otherwise, False.
     """
 
-    hp_dict = hpu.list_to_dict(hps) if type(hps) == list else hps
+    hp_dict = hp_utils.list_to_dict(hps) if type(hps) == list else hps
 
     for var_name, value in hp_dict.items():
-        hp = hpu.config_space._hyperparameters[var_name]
-        
+        hp = hp_utils.config_space._hyperparameters[var_name]
+
         try:
-            l, u = hp.lower, hp.upper
-            if l <= value <= u:
+            lb, ub = hp.lower, hp.upper
+            if lb <= value <= ub:
                 pass
             else:
                 return True
-        except:
+        except ValueError:
             # categorical parameters
             pass
     return False
@@ -149,14 +149,14 @@ def convert_hp(hp_value, cs, var_name):
     """
 
     try:
-        l, u, _, log = get_hp_info(cs._hyperparameters[var_name])
+        lb, ub, _, log = get_hp_info(cs._hyperparameters[var_name])
         hp_value = np.log(hp_value) if log else hp_value
-        return (hp_value - l) / (u - l)
-    except:
+        return (hp_value - lb) / (ub - lb)
+    except NotImplementedError:
         raise NotImplementedError("Categorical parameters do not have lower and upper options.")
 
 
-def convert_hps(hp_values, cs):
+def convert_hp_conf(hp_conf, cs):
     """
     Converting each value of a hyperparameter configuration into [0, 1]
 
@@ -167,22 +167,22 @@ def convert_hps(hp_values, cs):
 
     Returns
     -------
-    list of float or int value
+    1d list of float or int value
         the values are constrained in [0, 1]
     """
 
-    hp_converted_values = []
-    for idx, hp_value in enumerate(hp_values):
+    hp_converted_conf = []
+    for idx, hp_value in enumerate(hp_conf):
         var_name = cs._idx_to_hyperparameter[idx]
         d = distribution_type(cs, var_name)
         if d is int or d is float:
-            hp_converted_values.append(convert_hp(hp_value, cs, var_name))
+            hp_converted_conf.append(convert_hp(hp_value, cs, var_name))
         else:
-            hp_converted_values.append(hp_value)
-    return hp_converted_values
+            hp_converted_conf.append(hp_value)
+    return hp_converted_conf
 
 
-def convert_hps_set(hps_set, cs):
+def convert_hp_confs(hp_confs, cs):
     """
     Converting each value of hyperparameter configurations into [0, 1]
 
@@ -193,14 +193,14 @@ def convert_hps_set(hps_set, cs):
 
     Returns
     -------
-    list of float or int value
+    2d list of float or int value
         the values are constrained in [0, 1]
     """
 
-    hp_converted_values_set = []
-    for hps in hps_set:
-        hp_converted_values_set.append(convert_hps(hps, cs))
-    return hp_converted_values_set
+    hp_converted_confs = []
+    for hp_conf in hp_confs:
+        hp_converted_confs.append(convert_hp_conf(hp_conf, cs))
+    return hp_converted_confs
 
 
 def revert_hp(hp_converted_value, cs, var_name):
@@ -223,17 +223,17 @@ def revert_hp(hp_converted_value, cs, var_name):
     """
 
     try:
-        l, u, q, log = get_hp_info(cs._hyperparameters[var_name])
+        lb, ub, q, log = get_hp_info(cs._hyperparameters[var_name])
         var_type = distribution_type(cs, var_name)
-        hp_value = (u - l) * hp_converted_value + l
+        hp_value = (ub - lb) * hp_converted_value + lb
         hp_value = np.exp(hp_value) if log else hp_value
         hp_value = np.floor(hp_value / q) * q if q is not None else hp_value
         return var_type(hp_value)
-    except:
+    except NotImplementedError:
         raise NotImplementedError("Categorical parameters do not have lower and upper options.")
 
 
-def revert_hps(hp_converted_values, cs):
+def revert_hp_conf(hp_converted_conf, cs):
     """
     Reverting each value of a hyperparameter configuration into original scales
 
@@ -244,23 +244,23 @@ def revert_hps(hp_converted_values, cs):
 
     Returns
     -------
-    list of float or int value
+    1d list of float or int value
         the values of a hyperparameter configuration on original scales
     """
 
-    hp_values = []
-    for idx, hp_converted_value in enumerate(hp_converted_values):
+    hp_conf = []
+    for idx, hp_converted_value in enumerate(hp_converted_conf):
         var_name = cs._idx_to_hyperparameter[idx]
         d = distribution_type(cs, var_name)
         if d is int or d is float:
-            hp_values.append(revert_hp(hp_converted_value, cs, var_name))
+            hp_conf.append(revert_hp(hp_converted_value, cs, var_name))
         else:
-            hp_values.append(hp_converted_value)
+            hp_conf.append(hp_converted_value)
 
-    return hp_values
+    return hp_conf
 
 
-def revert_hps_set(converted_hps_set, cs):
+def revert_hp_confs(converted_hp_confs, cs):
     """
     Reverting each value of hyperparameter configurations into original scales
 
@@ -271,14 +271,14 @@ def revert_hps_set(converted_hps_set, cs):
 
     Returns
     -------
-    list of float or int value
+    2d list of float or int value
         the values of hyperparameter configurations in original scales
     """
 
-    hp_values_set = []
-    for converted_hps in converted_hps_set:
-        hp_values_set.append(revert_hps(converted_hps, cs))
-    return hp_values_set
+    hp_confs = []
+    for converted_hp_conf in converted_hp_confs:
+        hp_confs.append(revert_hp_conf(converted_hp_conf, cs))
+    return hp_confs
 
 
 def save_hp(save_file_path, lock, job_id, value):
@@ -308,7 +308,7 @@ def save_hp(save_file_path, lock, job_id, value):
     lock.release()
 
 
-def load_hp(save_file_path, lock, var_type):
+def load_hps(save_file_path, lock, var_type):
     """
     loading hyperparameters evaluated in an experiment
 
@@ -339,8 +339,11 @@ class HyperparameterUtilities():
         the name of an optimizer
     y_names: list of string
         the names of the measurements of hyperparameter configurations
+    dim: int
+        the dimension of a benchmark function. Required only when using a benchmark function.
     """
-    def __init__(self, obj_name, opt_name, n_experiments, y_names):
+
+    def __init__(self, obj_name, opt_name, n_experiments, y_names, dim=None):
         """
         Member Variables
         config_space: ConfigurationSpace
@@ -358,6 +361,7 @@ class HyperparameterUtilities():
         self.obj_class = self.prepare_opt_env()
         self.save_path = "history/log/{}/{}/{:0>3}/".format(opt_name, obj_name, n_experiments)
         self.lock = Lock()
+        self.dim = dim
         create_log_dir(self.save_path)
         self.var_names = list(self.config_space._hyperparameters.keys())
 
@@ -368,14 +372,14 @@ class HyperparameterUtilities():
         Parameters
         ----------
         hp_dict: list of a hyperparameter configuration
-            indexes follow the config space and values are corresponding values 
-        
+            indexes follow the config space and values are corresponding values.
+
         Returns
         -------
         list of a hyperparameter configuration
             the indexes follow the config space
         """
-        
+
         if type(hp_dict) != dict:
             raise NotImplementedError("{} is not dict.".format(hp_dict))
 
@@ -397,8 +401,8 @@ class HyperparameterUtilities():
         Parameters
         ----------
         hp_list: list of a hyperparameter configuration
-            indexes follow the config space and values are corresponding values 
-        
+            indexes follow the config space and values are corresponding values
+
         Returns
         -------
         dict of a hyperparameter configuration
@@ -407,7 +411,7 @@ class HyperparameterUtilities():
 
         if type(hp_list) != list:
             raise NotImplementedError("{} is not list.".format(hp_list))
- 
+
         hp_dict = {}
 
         for idx, value in enumerate(hp_list):
@@ -416,7 +420,7 @@ class HyperparameterUtilities():
 
         return hp_list
 
-    def save_hps(self, hps, ys, job_id, converted=False):
+    def save_hp_conf(self, hp_conf, ys, job_id, converted=False):
         """
         recording a hyperparameter configuration and the corresponding performance
 
@@ -434,13 +438,13 @@ class HyperparameterUtilities():
             if True, reverting into original scales
         """
 
-        if type(hps) == dict:
-            hps = self.dict_to_list(hps)
+        if type(hp_conf) == dict:
+            hp_conf = self.dict_to_list(hp_conf)
         if type(ys) != dict:
             raise ValueError("ys must be dict.")
         if converted:
-            hps = revert_hps(hps, self.config_space)
-        for idx, hp in enumerate(hps):
+            hp_conf = revert_hp_conf(hp_conf, self.config_space)
+        for idx, hp in enumerate(hp_conf):
             var_name = self.config_space._idx_to_hyperparameter[idx]
             save_file_path = self.save_path + "/" + var_name + ".csv"
             save_hp(save_file_path, self.lock, job_id, hp)
@@ -448,8 +452,8 @@ class HyperparameterUtilities():
         for var_name, v in ys.items():
             save_file_path = self.save_path + "/" + var_name + ".csv"
             save_hp(save_file_path, self.lock, job_id, v)
-    
-    def load_hps(self, convert=False, do_sort=False):
+
+    def load_hps_conf(self, convert=False, do_sort=False):
         """
         loading hyperparameter configurations and the corresponding performance
 
@@ -457,7 +461,7 @@ class HyperparameterUtilities():
         ----------
         convert: bool
             if True, converting into constrained scales
-        
+
         Returns
         -------
         the list of hyperparameter configurations and the corresponding performance
@@ -466,31 +470,31 @@ class HyperparameterUtilities():
 
         cs = self.config_space
         names = cs._idx_to_hyperparameter
-        hps = []
+        hps_conf = []
         ys = []
         for idx in range(len(names)):
             var_name = names[idx]
             var_type = distribution_type(cs, var_name)
             save_file_path = self.save_path + "/" + var_name + ".csv"
-            hp = load_hp(save_file_path, self.lock, var_type)
+            hps = load_hps(save_file_path, self.lock, var_type)
             if convert:
-                hp = [convert_hp(val, cs, var_name) for val in hp]
-            hps.append(hp)
+                hps = [convert_hp(hp, cs, var_name) for hp in hps]
+            hps_conf.append(hps)
 
         for y_name in self.y_names:
             save_file_path = self.save_path + "/" + y_name + ".csv"
-            y = load_hp(save_file_path, self.lock, float)
+            y = load_hps(save_file_path, self.lock, float)
             ys.append(y)
-        
+
         if do_sort:
             order = np.argsort(ys[0])
             ys = [np.array(y[order]) for y in ys]
-            hps = [np.array(hp[order]) for hp in hps]
-        n_confs = len(hps[0])
-        n_dims = len(hps)
-        hps = [[hps[nd][nc] for nd in range(n_dims)] for nc in range(n_confs)]
+            hps_conf = [np.array(hps[order]) for hps in hps_conf]
+        n_confs = len(hps_conf[0])
+        n_dims = len(hps_conf)
+        hps_conf = [[hps_conf[nd][nc] for nd in range(n_dims)] for nc in range(n_confs)]
 
-        return hps, ys
+        return hps_conf, ys
 
     def prepare_opt_env(self):
         """
@@ -502,42 +506,65 @@ class HyperparameterUtilities():
 
         config_info = json_params["config"]
 
-        if 'dim' in json_params.keys():
-            n = json_params['dim']
-            v = config_info['x']
-            l, u = v["lower"], v["upper"]
-            for i in range(n):
+        if self.dim is not None:
+            try:
+                v = config_info['x']
+            except ValueError:
+                raise ValueError("ONLY 'x' is allowed to be the name of variable for benchmark functions in params.json.")
+            lb, ub = v["lower"], v["upper"]
+            for i in range(self.dim):
                 var_name = 'x{:0>3}'.format(i)
-                hp = create_hyperparameter(float, var_name, lower=l, upper=u)
+                hp = create_hyperparameter(float, var_name, lower=lb, upper=ub)
                 self.config_space.add_hyperparameter(hp)
         else:
             for var_name, v in config_info.items():
-                dist = v["dist"]
-                if vt in ["int", "float", "str", "bool"]:
-                    vt = eval(v["var_type"])
-                else:
-                    raise ValueError("var_type in params.json must be 'int' or 'float' or 'str' or 'bool'.")
-                if dist == "uniform":
-                    if "q" not in v.keys() or v["q"] == "None":
-                        q = None  
-                    elif type(v["q"]) == int or type(v["q"]) == float:
-                        q = v["q"]
-                    else:
-                        raise ValueError("q in params.json must be int or float or 'None'.")
-                    if "log" not in v.keys():
-                        log = False
-                    elif v["log"] == "True" or v["log"] == "False":
-                        log = eval(v["log"])
-                    else:
-                        raise ValueError("log in params.json must be 'True' or 'False'.")
-                    l, u = v["lower"], v["upper"]
-                    hp = create_hyperparameter(vt, var_name, lower=l, upper=u, log=log, q=q)
-                elif dist == "cat":
-                    choices = v["choices"]
-                    hp = create_hyperparameter(vt, var_name, choices=choices)
-                else:
-                    raise ValueError("The first element of json hp dict must be 'uniform' or 'cat'.")
-
+                hp = self.get_hp_info_from_json(v, var_name)
                 self.config_space.add_hyperparameter(hp)
 
         return load_class("obj_functions.{}.{}".format(json_params["func_dir"], self.obj_name))
+
+    def get_hp_info_from_json(self, v, var_name):
+        """
+        Parameters
+        ----------
+        v: dict
+            loaded from params.json
+        var_name: str
+            the name of a hyperparameter
+
+        Returns
+        -------
+        hp: ConfigSpace.hyperparameters object
+            The object including a hyperparameter's information
+        """
+
+        dist = v["dist"]
+        vt = v["var_type"]
+
+        if vt in ["int", "float", "str", "bool"]:
+            vt = eval(vt)
+        else:
+            raise ValueError("var_type in params.json must be 'int' or 'float' or 'str' or 'bool'.")
+
+        if dist == "uniform":
+            if "q" not in v.keys() or v["q"] == "None":
+                q = None
+            elif type(v["q"]) == int or type(v["q"]) == float:
+                q = v["q"]
+            else:
+                raise ValueError("q in params.json must be int or float or 'None'.")
+            if "log" not in v.keys():
+                log = False
+            elif v["log"] == "True" or v["log"] == "False":
+                log = eval(v["log"])
+            else:
+                raise ValueError("log in params.json must be 'True' or 'False'.")
+            lb, ub = v["lower"], v["upper"]
+            hp = create_hyperparameter(vt, var_name, lower=lb, upper=ub, log=log, q=q)
+        elif dist == "cat":
+            choices = v["choices"]
+            hp = create_hyperparameter(vt, var_name, choices=choices)
+        else:
+            raise ValueError("The first element of json hp dict must be 'uniform' or 'cat'.")
+
+        return hp

@@ -21,7 +21,7 @@ def create_log_dir(path):
 
 def _resolve_name(path, package, start):
     """Return the absolute name of the module to be imported."""
-    
+
     if not hasattr(package, 'rindex'):
         raise ValueError("'package' not set to a string")
     dot = len(package)

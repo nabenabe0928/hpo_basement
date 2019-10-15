@@ -1,7 +1,6 @@
 {
     "Sphere": {
-      "file_name": "benchmarks",
-      "dim": 5,
+      "func_dir": "benchmarks",
       "config": {
         "x": {
             "lower": -5.0,
@@ -15,4 +14,3 @@
       }
     }
 }
-  

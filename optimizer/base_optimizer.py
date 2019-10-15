@@ -3,10 +3,10 @@ import utils
 import os
 import csv
 import time
-from multiprocessing import Process, Lock
+from multiprocessing import Process
 
 
-def objective_function(hp_conf, hpu, n_gpu, n_jobs):
+def objective_function(hp_conf, hp_utils, n_gpu, n_jobs):
     """
     Parameters
     ----------
@@ -16,18 +16,18 @@ def objective_function(hp_conf, hpu, n_gpu, n_jobs):
         the index of gpu used in an evaluation
     """
 
-    if utils.out_of_domain(hp_conf, hpu):
-        hpu.save_hps(hp_conf, {yn: 1.0e+8 for yn in hpu.y_names}, n_jobs, hpu.lock)
+    if utils.out_of_domain(hp_conf, hp_utils):
+        hp_utils.save_hp_conf(hp_conf, {yn: 1.0e+8 for yn in hp_utils.y_names}, n_jobs, hp_utils.lock)
     else:
-        ys = hpu.obj_class(hp_conf, n_gpu)
-        hpu.save_hps(hp_conf, ys, n_jobs)
+        ys = hp_utils.obj_class(hp_conf, n_gpu)
+        hp_utils.save_hp_conf(hp_conf, ys, n_jobs)
 
 
 class BaseOptimizer():
     """
     Parameters
     ----------
-    hpu: HyperparametersUtilities object
+    hp_utils: HyperparametersUtilities object
         ./utils/hp_utils.py/HyperparameterUtilities
     rs: bool
         if random search or not
@@ -42,7 +42,7 @@ class BaseOptimizer():
         the number of evlauations in an experiment
     """
 
-    def __init__(self, hpu, rs=True, n_parallels=1, n_init=10, max_evals=100, obj=objective_function):
+    def __init__(self, hp_utils, rs=True, n_parallels=1, n_init=10, max_evals=100, obj=objective_function):
         """
         Member Variables
         ----------------
@@ -54,22 +54,22 @@ class BaseOptimizer():
             the optimizer of hyperparameter configurations
         """
 
-        self.hpu = hpu
+        self.hp_utils = hp_utils
         self.n_jobs = self.get_n_jobs()
         self.obj = obj
-        self.n_parallels = hpu.n_parallels
-        self.cs = hpu.config_space
-        self.save_file_path = hpu.save_path
+        self.n_parallels = hp_utils.n_parallels
+        self.cs = hp_utils.config_space
+        self.save_file_path = hp_utils.save_path
         self.max_evals = max_evals
         self.n_init = n_init
         self.n_parallels = n_parallels
         self.opt = callable
         self.rs = rs
-        
+
     def get_n_jobs(self):
         """
-        The function to get currenct number of evaluations in the beginning of restarting of an experiment 
-        
+        The function to get currenct number of evaluations in the beginning of restarting of an experiment
+
         Returns
         -------
         The number of evaluations
@@ -111,7 +111,7 @@ class BaseOptimizer():
                 rnd = np.random.random()
                 sample[idx] = utils.revert_hp(rnd, self.cs, var_name)
 
-        return self.hpu.list_to_dict(sample)
+        return self.hp_utils.list_to_dict(sample)
 
     def optimize(self):
         if self.n_parallels <= 1:
@@ -127,7 +127,7 @@ class BaseOptimizer():
                 hp_conf = self._initial_sampler()
             else:
                 hp_conf = self.opt()
-            self.obj(hp_conf, self.hpu, n_gpu, self.n_jobs)
+            self.obj(hp_conf, self.hp_utils, n_gpu, self.n_jobs)
             self.n_jobs += 1
 
             if self.n_jobs >= self.max_evals:
@@ -159,7 +159,7 @@ class BaseOptimizer():
                 else:
                     hp_conf = self.opt()
 
-                p = Process(target=self.obj, args=(hp_conf, self.hpu, n_gpu, self.n_jobs))
+                p = Process(target=self.obj, args=(hp_conf, self.hp_utils, n_gpu, self.n_jobs))
                 p.start()
                 jobs.append([n_gpu, p])
                 self.n_jobs += 1
