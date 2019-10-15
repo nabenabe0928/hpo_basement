@@ -22,7 +22,34 @@ if __name__ == '__main__':
     opt.optimize()
 ```
 
-Run from termianl by `python main.py`.
+Run from termianl by (one example):
+
+```
+python main.py -dim 2 -par 1 -ini 3 -exp 0 -eva 100 -res 0
+```
+
+where all the arguments are integer.
+
+### dim:
+The dimension of input space.
+Only for benchmark functions.
+
+### par
+The number of parallel computer resources such as GPU or CPU.
+
+### ini
+The number of initial samplings.
+
+### exp
+The index of experiments.
+Used only for indexing of experiments.
+
+### eva
+The maximum number of evaluations in an experiment.
+If eva = 100, 100 configurations will be evaluated.
+
+### res
+Whether restarting an experiment based on the previous experiment.
 
 ## Optimizer
 You can add whatever optimizers you would like to use in this basement.
