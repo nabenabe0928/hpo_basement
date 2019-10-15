@@ -30,7 +30,7 @@ python main.py -dim 2 -par 1 -ini 3 -exp 0 -eva 100 -res 0
 
 where all the arguments are integer.
 
-### dim:
+### dim
 The dimension of input space.
 Only for benchmark functions.
 
