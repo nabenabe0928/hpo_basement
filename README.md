@@ -11,21 +11,14 @@ Note that the optimization is always minimization;
 Therefore, users have to set the output multiplied by -1 when hoping to maximize.
 
 ```
-from utils import HyperparameterUtilities
-from optimizer import NelderMead
+import utils
+import optimizer
 
-if __name__=='__main__':
-    hp_utils = HyperparameterUtilities(
-               "Sphere", # the name of objective function
-               dim=10 # the dimension of input (required only when the objective function is benchmark function.)
-               )
-    opt = NelderMead(
-          hp_utils,
-          n_parallels=1, # the number of parallel resources
-          n_init=10, # the number of initial samplings
-          n_experiments=0, # the index of experiments. Used only to specify the path of log files.
-          max_evals=100 # the number of evaluations in an experiment
-          )
+
+if __name__ == '__main__':
+    requirements, dim = utils.parse_requirements()
+    hp_utils = utils.HyperparameterUtilities("Sphere", dim=dim)
+    opt = optimizer.NelderMead(hp_utils, **requirements)
     opt.optimize()
 ```
 
@@ -38,15 +31,16 @@ A small example follows below:
 
 ```
 from optimizer.base_optimizer import BaseOptimizer
-import utils
+
 
 class OptName(BaseOptimizer):
     def __init__(self,
-                 hp_utils, # hyperparameter utility object
-                 n_parallels=1, # the number of parallel computer resourses
-                 n_init=10, # the number of initial sampling
-                 n_experiments=0, # the index of experiments. Used only to specify the path of log files.
-                 max_evals=100, # the number of maximum evaluations in an experiment
+                 hp_utils,  # hyperparameter utility object
+                 n_parallels=1,  # the number of parallel computer resourses
+                 n_init=10,  # the number of initial sampling
+                 n_experiments=0,  # the index of experiments. Used only to specify the path of log files.
+                 max_evals=100,  # the number of maximum evaluations in an experiment
+                 restart=True,  # Whether restarting the previous experiment or not. If False, removes the previous log files.
                  **kwargs
                  ):
 
@@ -56,7 +50,9 @@ class OptName(BaseOptimizer):
                          n_init=n_init,
                          n_experiments=n_experiments,
                          max_evals=max_evals,
-                         rs=False)
+                         restart=restart,
+                         rs=False  # Whether random search or not.
+                         )
 
         # optimizer in BaseOptimizer object
         self.opt = self.sample
@@ -179,6 +175,8 @@ An example of (`obj_functions/benchmarks/Sphere.py`) follows below.
 
 
 ```
+import numpy as np
+
 """
 Parameters
 ----------

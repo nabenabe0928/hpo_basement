@@ -1,13 +1,5 @@
 import numpy as np
 from optimizer.base_optimizer import BaseOptimizer
-import utils
-
-
-def centroid(xs, ys):
-    xs, ys = map(np.asarray, [xs, ys])
-    order = np.argsort(ys)
-    xs, ys = xs[order], ys[order]
-    return xs[:-1].mean(axis=0)
 
 
 class NelderMead(BaseOptimizer):
@@ -17,6 +9,7 @@ class NelderMead(BaseOptimizer):
                  n_init=10,
                  max_evals=100,
                  n_experiments=0,
+                 restart=True,
                  delta_r=1.0,
                  delta_oc=0.5,
                  delta_ic=-0.5,
@@ -27,7 +20,8 @@ class NelderMead(BaseOptimizer):
                          n_parallels=n_parallels,
                          n_init=n_init,
                          max_evals=max_evals,
-                         n_experiments=n_experiments
+                         n_experiments=n_experiments,
+                         restart=restart
                          )
         self.delta = {"r": delta_r,
                       "e": delta_e,
@@ -36,99 +30,103 @@ class NelderMead(BaseOptimizer):
                       "oc": delta_oc}
         self.opt = self.sample
         self.n_dim = n_init - 1
+        self.idx = 0
+        self.n_evals = 0
+        self.xc = None
+        self.xs = None
+        self.ys = None
 
-    def reflect(self, xs, ys):
-        xc = centroid(xs, ys)
-        return xc + self.delta["r"] * (xs - xs[-1])
+    def centroid(self):
+        order = np.argsort(self.ys)
+        self.xs, self.ys = self.xs[order], self.ys[order]
+        self.xc = self.xs[:-1].mean(axis=0)
 
-    def outside_contract(self, xs, ys):
-        xc = centroid(xs, ys)
-        return xc + self.delta["oc"] * (xs - xs[-1])
+    def reflect(self):
+        return self.xc + self.delta["r"] * (self.xc - self.xs[-1])
 
-    def inside_contract(self, xs, ys):
-        xc = centroid(xs, ys)
-        return xc + self.delta["ic"] * (xs - xs[-1])
+    def outside_contract(self):
+        return self.xc + self.delta["oc"] * (self.xc - self.xs[-1])
 
-    def expand(self, xs, ys):
-        xc = centroid(xs, ys)
-        return xc + self.delta["e"] * (xs - xs[-1])
+    def if_outside_contract(self, X, Y):
+        if Y[self.idx] <= Y[self.idx - 1]:
+            self.xs[-1] = X[self.idx][:]
+            self.ys[-1] = Y[self.idx]
+            self.idx += 1
+            return None
+        else:
+            self.idx += 1
+            return self.if_shrink(Y)
 
-    def shrink(self, xs, ys, Yp):
-        n_points = len(ys)
+    def inside_contract(self):
+        return self.xc + self.delta["ic"] * (self.xc - self.xs[-1])
+
+    def if_inside_contract(self, X, Y):
+        if Y[self.idx] < self.ys[-1]:
+            self.xs[-1] = X[self.idx][:]
+            self.ys[-1] = Y[self.idx]
+            self.idx += 1
+            return None
+        else:
+            self.idx += 1
+            return self.if_shrink(Y)
+
+    def expand(self):
+        return self.xc + self.delta["e"] * (self.xc - self.xs[-1])
+
+    def if_expand(self, X, Y):
+        if Y[self.idx] < Y[self.idx - 1]:
+            self.xs[-1] = X[self.idx][:]
+            self.ys[-1] = Y[self.idx]
+        else:
+            self.xs[-1] = X[self.idx - 1][:]
+            self.ys[-1] = Y[self.idx - 1]
+        self.idx += 1
+
+    def shrink(self, Y):
+        n_points = len(self.ys)
         for i in range(1, n_points):
-            xs[i] = xs[0] + self.delta["s"] * (xs[i] - xs[0])
-            ys[i] = Yp[i - 1]
+            self.xs[i] = self.xs[0] + self.delta["s"] * (self.xs[i] - self.xs[0])
+            self.ys[i] = Y[self.idx + i - 1]
 
-    def search(self, X, Y, cs):
-        xs = X[:self.n_init]
-        ys = Y[:self.n_init]
-        n_evals = len(Y)
-        idx = self.n_init
+    def if_shrink(self, Y):
+        n_res = self.n_evals - self.idx
+        if n_res >= self.n_dim:
+            self.shrink(Y)
+            self.idx += self.n_dim
+            return None
+        else:
+            return self.xs[n_res + 1] + self.delta["s"] * (self.xs[n_res + 1] - self.xs[0])
+
+    def search(self, X, Y):
+        self.xs = X[:self.n_init]
+        self.ys = Y[:self.n_init]
+        self.n_evals = len(Y)
+        self.idx = self.n_init
 
         while True:
-            xr = self.reflect(xs, ys)
-            if idx == n_evals:
-                return xr
+            self.centroid()
+            if self.idx == self.n_evals:
+                return self.reflect()
+            xr, yr = X[self.idx][:], Y[self.idx]
+            self.idx += 1
+            if self.ys[0] <= yr < self.ys[-2]:
+                self.xs[-1], self.ys[-1] = xr, yr
+            elif yr < self.ys[0]:
+                if self.idx == self.n_evals:
+                    return self.expand()
+                else:
+                    self.if_expand(X, Y)
             else:
-                yr = Y[idx]
-                idx += 1
-            if ys[0] <= yr < ys[-2]:
-                xs[-1] = xr
-                ys[-1] = yr
-
-            elif yr < ys[0]:
-                xe = self.expand(xs, ys)
-                if idx == n_evals:
-                    return xe
+                if self.idx == self.n_evals:
+                    return self.inside_contract() if self.ys[-1] <= yr else self.outside_contract()
                 else:
-                    ye = Y[idx]
-                    idx += 1
-                    if ye < yr:
-                        xs[-1] = xe
-                        ys[-1] = ye
-                    else:
-                        xs[-1] = xr
-                        ys[-1] = yr
-
-            elif ys[-2] <= yr < ys[-1]:
-                xoc = self.outside_contract(xs, ys)
-                if idx == n_evals:
-                    return xoc
-                else:
-                    yoc = Y[idx]
-                    idx += 1
-                    if yoc <= yr:
-                        xs[-1] = xoc
-                        ys[-1] = yoc
-                    else:
-                        if n_evals > idx + self.n_dim:
-                            self.shrink(xs, ys, Y[idx:])
-                            idx += self.n_dim
-                        else:
-                            this_idx = n_evals - idx
-                            return_x = xs[this_idx] + self.delta["s"] * (xs[this_idx] - xs[0])
-                            return return_x
-            elif ys[-1] <= yr:
-                xic = self.inside_contract(xs, ys)
-                if idx == n_evals:
-                    return xic
-                else:
-                    yic = Y[idx]
-                    idx += 1
-                    if yic < ys[-1]:
-                        xs[-1] = xic
-                        ys[-1] = yic
-                    else:
-                        if n_evals > idx + self.n_dim:
-                            self.shrink(xs, ys, Y[idx:])
-                            idx += self.n_dim
-                        else:
-                            this_idx = n_evals - idx
-                            return_x = xs[this_idx] + self.delta["s"] * (xs[this_idx] - xs[0])
-                            return return_x
+                    return_x = self.if_inside_contract(X, Y) if self.ys[-1] <= yr else self.if_outside_contract(X, Y)
+                    if return_x is not None:
+                        return return_x
 
     def sample(self):
-        cs = self.hp_utils.config_space
         X, Y = self.hp_utils.load_hps_conf(convert=True, do_sort=False)
+        X, Y = map(np.asarray, [X, Y[0]])
 
-        return utils.revert_hp_conf(self.search(X, Y[0], cs), cs)
+        x = self.search(X, Y)
+        return self.hp_utils.revert_hp_conf(x)

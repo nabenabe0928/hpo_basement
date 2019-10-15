@@ -16,7 +16,7 @@ def objective_function(hp_conf, hp_utils, n_gpu, job_id):
         the index of gpu used in an evaluation
     """
 
-    if utils.out_of_domain(hp_conf, hp_utils):
+    if hp_utils.out_of_domain(hp_conf):
         hp_utils.save_hp_conf(hp_conf, {yn: 1.0e+8 for yn in hp_utils.y_names}, job_id)
     else:
         ys = hp_utils.obj_class(hp_conf, n_gpu)
@@ -39,7 +39,10 @@ class BaseOptimizer():
     n_init: int
         the number of initial configurations
     n_experiments: int
-        the index of experiments. Used only for specifying the path of log file.
+        the index of experiments. Used only to specify the path of log file.
+    restart: bool
+        if restart the experiment or not.
+        if True, continue the experiment based on log files.
     max_evals: int
         the number of evlauations in an experiment
     """
@@ -51,6 +54,7 @@ class BaseOptimizer():
                  n_experiments=0,
                  max_evals=100,
                  rs=False,
+                 restart=True,
                  obj=objective_function):
         """
         Member Variables
@@ -64,18 +68,17 @@ class BaseOptimizer():
         """
 
         self.hp_utils = hp_utils
-        self.n_jobs = self.get_n_jobs()
         self.obj = obj
-        self.n_parallels = hp_utils.n_parallels
         self.cs = hp_utils.config_space
         self.max_evals = max_evals
         self.n_init = n_init
         self.n_parallels = n_parallels
         self.opt = callable
         self.rs = rs
+        self.restart = restart
         opt_name = self.__class__.__name__
         self.hp_utils.save_path = "history/log/{}/{}/{:0>3}".format(opt_name, hp_utils.obj_name, n_experiments)
-        utils.create_log_dir(self.hp_utils.save_path)
+        self.n_jobs = 0
 
     def get_n_jobs(self):
         """
@@ -83,7 +86,7 @@ class BaseOptimizer():
 
         Returns
         -------
-        The number of evaluations
+        The number of evaluations at the beginning of restarting of an experiment.
         """
 
         param_files = os.listdir(self.hp_utils.save_path)
@@ -110,7 +113,7 @@ class BaseOptimizer():
 
         for var_name, hp in hps.items():
             idx = self.cs._hyperparameter_idx[var_name]
-            dist = utils.distribution_type(self.cs, var_name)
+            dist = self.hp_utils.distribution_type(var_name)
             if dist is str or dist is bool:
                 # categorical
                 choices = hp.choices
@@ -119,11 +122,18 @@ class BaseOptimizer():
             else:
                 # numerical
                 rnd = np.random.random()
-                sample[idx] = utils.revert_hp(rnd, self.cs, var_name)
+                sample[idx] = self.hp_utils.revert_hp(rnd, var_name)
 
-        return self.hp_utils.list_to_dict(sample)
+        return sample
 
     def optimize(self):
+        utils.create_log_dir(self.hp_utils.save_path)
+        if not self.restart:
+            utils.check_conflict(self.hp_utils.save_path)
+        utils.create_log_dir(self.hp_utils.save_path)
+
+        self.n_jobs = self.get_n_jobs()
+
         if self.n_parallels <= 1:
             self._optimize_sequential()
         else:
