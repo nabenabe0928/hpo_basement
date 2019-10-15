@@ -13,15 +13,15 @@ from utils import HyperparameterUtilities
 from optimizer import NelderMead
 
 if __name__=='__main__':
-    hpu = HyperparameterUtilities(
-          "Sphere", # the name of objective function
-          "NelderMead", # the name of an optimizer
-          0, # the index number of experiments
-          ["loss", "acc"], # the name of performance measurements (1st one is the main measurement.)
-          dim=10 # the dimension of input (required only when the objective function is benchmark function.)
-          )
+    hp_utils = HyperparameterUtilities(
+               "Sphere", # the name of objective function
+               "NelderMead", # the name of an optimizer
+               0, # the index number of experiments
+               ["loss", "acc"], # the name of performance measurements (1st one is the main measurement.)
+               dim=10 # the dimension of input (required only when the objective function is benchmark function.)
+               )
     opt = NelderMead(
-          hpu,
+          hp_utils,
           n_parallels=1, # the number of parallel resources
           n_init=10, # the number of initial samplings
           max_evals=100 # the number of evaluations in an experiment
@@ -42,7 +42,7 @@ import utils
 
 class OptName(BaseOptimizer):
     def __init__(self,
-                 hpu, # hyperparameter utility object
+                 hp_utils, # hyperparameter utility object
                  n_parallels=1, # the number of parallel computer resourses
                  n_init=10, # the number of initial sampling
                  max_evals=100, # the number of maximum evaluations in an experiment
@@ -50,7 +50,7 @@ class OptName(BaseOptimizer):
                  ):
 
         # inheritance (if rs is True, Random Search)
-        super().__init__(hpu, rs=False, n_parallels=n_parallels, n_init=n_init, max_evals=max_evals)
+        super().__init__(hp_utils, rs=False, n_parallels=n_parallels, n_init=n_init, max_evals=max_evals)
 
         # optimizer in BaseOptimizer object
         self.opt = self.sample
