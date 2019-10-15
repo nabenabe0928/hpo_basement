@@ -156,7 +156,7 @@ An example follows below.
 
 ```
 {
-    "Sphere": {
+    "sphere": {
       "func_dir": "benchmarks", "main": "f",
       "y_names": ["loss"],
       "config": {
@@ -166,7 +166,7 @@ An example follows below.
             }
         }
     },
-    "CNN": {
+    "cnn": {
       "func_dir": "ml", "main": "train",
       "y_names": ["error", "cross_entropy"],
       "config": {
@@ -198,7 +198,7 @@ An example follows below.
 
 The target objective function in an experiment.
 This function must receive the `n_gpu` and `hp_conf` from `BaseOptimizer` object and return the performance by a dictionary format.
-An example of (`obj_functions/benchmarks/Sphere.py`) follows below.
+An example of (`obj_functions/benchmarks/sphere.py`) follows below.
 
 
 ```

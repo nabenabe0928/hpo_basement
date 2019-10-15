@@ -1,5 +1,5 @@
 {
-    "Sphere": {
+    "sphere": {
       "func_dir": "benchmarks", "main": "f",
       "y_names": ["loss"],
       "config": {
