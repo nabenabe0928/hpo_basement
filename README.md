@@ -96,7 +96,7 @@ class OptName(BaseOptimizer):
 ## Hyperparameters of Objective Functions
 Describe the details of hyperparameters in `params.json`.
 
-### 1. First key
+### 1. First key (The name of an objective function)
 
 The name of objective function and it corresponds to the name of objective function class.
 
@@ -107,6 +107,7 @@ The name of directory containing the objective function's class file.
 ### 3. main
 
 The name of main function evaluating the hyperparameter configuration.
+The optimizer optimizes the output of function whose name is `[main]` in the py file `obj_functions/[func_dir]/[First_key].py`.
 
 ### 4. y_names
 
