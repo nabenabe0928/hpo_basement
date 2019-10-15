@@ -12,17 +12,23 @@ def centroid(xs, ys):
 
 class NelderMead(BaseOptimizer):
     def __init__(self,
-                 hpu,
+                 hp_utils,
                  n_parallels=1,
                  n_init=10,
                  max_evals=100,
+                 n_experiments=0,
                  delta_r=1.0,
                  delta_oc=0.5,
                  delta_ic=-0.5,
                  delta_e=2.0,
                  delta_s=0.5):
 
-        super().__init__(hpu, rs=False, n_parallels=n_parallels, n_init=n_init, max_evals=max_evals)
+        super().__init__(hp_utils,
+                         n_parallels=n_parallels,
+                         n_init=n_init,
+                         max_evals=max_evals,
+                         n_experiments=n_experiments
+                         )
         self.delta = {"r": delta_r,
                       "e": delta_e,
                       "s": delta_s,
@@ -122,7 +128,7 @@ class NelderMead(BaseOptimizer):
                             return return_x
 
     def sample(self):
-        cs = self.hpu.config_space
-        X, Y = self.hpu.load_hps(convert=True, do_sort=False)
+        cs = self.hp_utils.config_space
+        X, Y = self.hp_utils.load_hps_conf(convert=True, do_sort=False)
 
         return utils.revert_hp_conf(self.search(X, Y[0], cs), cs)

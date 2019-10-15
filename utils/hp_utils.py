@@ -4,7 +4,7 @@ import csv
 import os
 import ConfigSpace as CS
 import ConfigSpace.hyperparameters as CSH
-from utils.utils import load_class, create_log_dir
+import utils
 from multiprocessing import Lock
 
 
@@ -335,34 +335,31 @@ class HyperparameterUtilities():
     ----------
     obj_name: string
         The name of the objective function's file
-    opt_name: string
-        the name of an optimizer
-    y_names: list of string
-        the names of the measurements of hyperparameter configurations
     dim: int
         the dimension of a benchmark function. Required only when using a benchmark function.
     """
 
-    def __init__(self, obj_name, opt_name, n_experiments, y_names, dim=None):
+    def __init__(self, obj_name, dim=None):
         """
         Member Variables
         config_space: ConfigurationSpace
             config space that contains the hyperparameter information
         obj_class: class
             The class of the objective function
+        y_names: list of string
+            the names of the measurements of hyperparameter configurations
         save_path: string
             the path where we save hyperparameter configurations and corresponding performances.
             history/{log, stdo}/name of optimizer/name of algorithm/number of experiments
         """
 
         self.obj_name = obj_name
-        self.y_names = y_names
         self.config_space = CS.ConfigurationSpace()
+        self.y_names = None
         self.obj_class = self.prepare_opt_env()
-        self.save_path = "history/log/{}/{}/{:0>3}/".format(opt_name, obj_name, n_experiments)
         self.lock = Lock()
         self.dim = dim
-        create_log_dir(self.save_path)
+        self.save_path = None
         self.var_names = list(self.config_space._hyperparameters.keys())
 
     def dict_to_list(self, hp_dict):
@@ -505,6 +502,7 @@ class HyperparameterUtilities():
             json_params = json.load(f)[self.obj_name]
 
         config_info = json_params["config"]
+        self.y_names = json_params["y_names"]
 
         if self.dim is not None:
             try:
@@ -521,7 +519,9 @@ class HyperparameterUtilities():
                 hp = self.get_hp_info_from_json(v, var_name)
                 self.config_space.add_hyperparameter(hp)
 
-        return load_class("obj_functions.{}.{}".format(json_params["func_dir"], self.obj_name))
+        fd, main_f = json_params["func_dir"], json_params["main"]
+
+        return utils.load_class("obj_functions.{}.{}.{}".format(fd, self.obj_name, main_f))
 
     def get_hp_info_from_json(self, v, var_name):
         """

@@ -1,6 +1,7 @@
 {
     "Sphere": {
-      "func_dir": "benchmarks",
+      "func_dir": "benchmarks", "main": "f",
+      "y_names": ["loss"],
       "config": {
         "x": {
             "lower": -5.0,

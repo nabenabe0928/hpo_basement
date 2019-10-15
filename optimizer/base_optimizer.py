@@ -6,7 +6,7 @@ import time
 from multiprocessing import Process
 
 
-def objective_function(hp_conf, hp_utils, n_gpu, n_jobs):
+def objective_function(hp_conf, hp_utils, n_gpu, job_id):
     """
     Parameters
     ----------
@@ -17,10 +17,10 @@ def objective_function(hp_conf, hp_utils, n_gpu, n_jobs):
     """
 
     if utils.out_of_domain(hp_conf, hp_utils):
-        hp_utils.save_hp_conf(hp_conf, {yn: 1.0e+8 for yn in hp_utils.y_names}, n_jobs, hp_utils.lock)
+        hp_utils.save_hp_conf(hp_conf, {yn: 1.0e+8 for yn in hp_utils.y_names}, job_id)
     else:
         ys = hp_utils.obj_class(hp_conf, n_gpu)
-        hp_utils.save_hp_conf(hp_conf, ys, n_jobs)
+        hp_utils.save_hp_conf(hp_conf, ys, job_id)
 
 
 class BaseOptimizer():
@@ -38,11 +38,20 @@ class BaseOptimizer():
         the number of computer resources we use in an experiment
     n_init: int
         the number of initial configurations
+    n_experiments: int
+        the index of experiments. Used only for specifying the path of log file.
     max_evals: int
         the number of evlauations in an experiment
     """
 
-    def __init__(self, hp_utils, rs=True, n_parallels=1, n_init=10, max_evals=100, obj=objective_function):
+    def __init__(self,
+                 hp_utils,
+                 n_parallels=1,
+                 n_init=10,
+                 n_experiments=0,
+                 max_evals=100,
+                 rs=False,
+                 obj=objective_function):
         """
         Member Variables
         ----------------
@@ -59,12 +68,14 @@ class BaseOptimizer():
         self.obj = obj
         self.n_parallels = hp_utils.n_parallels
         self.cs = hp_utils.config_space
-        self.save_file_path = hp_utils.save_path
         self.max_evals = max_evals
         self.n_init = n_init
         self.n_parallels = n_parallels
         self.opt = callable
         self.rs = rs
+        opt_name = self.__class__.__name__
+        self.hp_utils.save_path = "history/log/{}/{}/{:0>3}".format(opt_name, hp_utils.obj_name, n_experiments)
+        utils.create_log_dir(self.hp_utils.save_path)
 
     def get_n_jobs(self):
         """
@@ -75,12 +86,11 @@ class BaseOptimizer():
         The number of evaluations
         """
 
-        param_files = os.path.isdir(self.save_file_path)
+        param_files = os.listdir(self.hp_utils.save_path)
         n_jobs = 0
         if len(param_files) > 0:
-            for param_file in param_files:
-                with open(self.save_file_path + param_file, "r", newline="") as f:
-                    n_jobs = max(len(list(csv.reader(f, delimiter=","))))
+            with open(self.hp_utils.save_path + "/" + self.hp_utils.y_names[0] + ".csv", "r", newline="") as f:
+                n_jobs = len(list(csv.reader(f, delimiter=",")))
         else:
             n_jobs = 0
 
