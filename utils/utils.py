@@ -13,10 +13,11 @@ class pycolor:
 def parse_requirements():
     ap = ArgumentParser()
     ap.add_argument("-dim", type=int, default=None)
-    ap.add_argument("-par", type=int)
+    ap.add_argument("-par", type=int, default=1)
     ap.add_argument("-ini", type=int)
-    ap.add_argument("-exp", type=int)
-    ap.add_argument("-eva", type=int)
+    ap.add_argument("-exp", type=int, default=0)
+    ap.add_argument("-eva", type=int, default=100)
+    ap.add_argument("-seed", type=int, default=None)
     ap.add_argument("-res", type=int, choices=[0, 1])
 
     args = ap.parse_args()
@@ -24,15 +25,16 @@ def parse_requirements():
                     "n_init": args.ini,
                     "n_experiments": args.exp,
                     "max_evals": args.eva,
-                    "restart": args.res
+                    "restart": args.res,
+                    "seed": args.seed
                     }
     dim = args.dim
 
-    if None in requirements.values():
+    if args.ini is None:
         print("#### PARSER ERROR ####")
         print("One example to run the file is described below:")
         print("")
-        print("user@user:~$ python main.py -dim 2 -par 1 -ini 10 -exp 0 -eva 100 -res 0")
+        print("user@user:~$ python main.py -dim 2 -par 1 -ini 10 -exp 0 -eva 100 -res 0 [-seed 0]")
         print("")
         print("  -dim: The dimension of a hyperparameter configuraiton. (Only for benchmark functions. Otherwise, omit it.)")
         print("  -par: The number of parallel computer resources.")
@@ -40,6 +42,7 @@ def parse_requirements():
         print("  -exp: The index of an experiment. (Used only to specify the path of log files.)")
         print("  -eva: The number of evaluations in an experiment.")
         print("  -res: Whether restarting the previous experiment or not. If 0, removes the previous log files.")
+        print("  -seed:The number to specify a random number generator.")
         print("")
         sys.exit()
 

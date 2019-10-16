@@ -6,20 +6,20 @@ import time
 from multiprocessing import Process
 
 
-def objective_function(hp_conf, hp_utils, n_gpu, job_id):
+def objective_function(hp_conf, hp_utils, gpu_id, job_id):
     """
     Parameters
     ----------
     hp_conf: dict
         a hyperparameter configuration
-    n_gpu: int
+    gpu_id: int
         the index of gpu used in an evaluation
     """
 
     if hp_utils.out_of_domain(hp_conf):
         hp_utils.save_hp_conf(hp_conf, {yn: 1.0e+8 for yn in hp_utils.y_names}, job_id)
     else:
-        ys = hp_utils.obj_class(hp_conf, n_gpu)
+        ys = hp_utils.obj_class(hp_conf, gpu_id)
         hp_utils.save_hp_conf(hp_conf, ys, job_id)
 
 
@@ -29,8 +29,6 @@ class BaseOptimizer():
     ----------
     hp_utils: HyperparametersUtilities object
         ./utils/hp_utils.py/HyperparameterUtilities
-    rs: bool
-        if random search or not
     obj: function
         the objective function whose input is a hyperparameter configuration
         and output is the corresponding performance.
@@ -45,6 +43,8 @@ class BaseOptimizer():
         if True, continue the experiment based on log files.
     max_evals: int
         the number of evlauations in an experiment
+    seed: int or None
+        The number specifying the seed on a random number generator
     """
 
     def __init__(self,
@@ -53,8 +53,8 @@ class BaseOptimizer():
                  n_init=10,
                  n_experiments=0,
                  max_evals=100,
-                 rs=False,
                  restart=True,
+                 seed=None,
                  obj=objective_function):
         """
         Member Variables
@@ -65,6 +65,10 @@ class BaseOptimizer():
             the number of evaluations up to now
         opt: function
             the optimizer of hyperparameter configurations
+        rng: numpy.random.RandomState object
+            Sampling random numbers based on the seed argument.
+        ongoing_confs: 2d list [gpu_id][hp idx]
+            Hyperparameter configurations being evaluated now.
         """
 
         self.hp_utils = hp_utils
@@ -72,10 +76,12 @@ class BaseOptimizer():
         self.cs = hp_utils.config_space
         self.max_evals = max_evals
         self.n_init = n_init
-        self.n_parallels = n_parallels
+        self.n_parallels = max(n_parallels, 1)
         self.opt = callable
-        self.rs = rs
         self.restart = restart
+        self.rng = np.random.RandomState(seed)
+        self.seed = seed
+        self.ongoing_confs = [None for _ in range(self.n_parallels)]
         opt_name = self.__class__.__name__
         self.hp_utils.save_path = "history/log/{}/{}/{:0>3}".format(opt_name, hp_utils.obj_name, n_experiments)
         self.n_jobs = 0
@@ -117,11 +123,11 @@ class BaseOptimizer():
             if dist is str or dist is bool:
                 # categorical
                 choices = hp.choices
-                rnd = np.random.randint(len(choices))
+                rnd = self.rng.randint(len(choices))
                 sample[idx] = choices[rnd]
             else:
                 # numerical
-                rnd = np.random.random()
+                rnd = self.rng.uniform()
                 sample[idx] = self.hp_utils.revert_hp(rnd, var_name)
 
         return sample
@@ -141,13 +147,15 @@ class BaseOptimizer():
 
     def _optimize_sequential(self):
         while True:
-            n_gpu = 0
+            gpu_id = 0
 
-            if self.n_jobs < self.n_init or self.rs:
+            if self.n_jobs < self.n_init:
                 hp_conf = self._initial_sampler()
             else:
                 hp_conf = self.opt()
-            self.obj(hp_conf, self.hp_utils, n_gpu, self.n_jobs)
+
+            self.ongoing_confs[0] = hp_conf[:]
+            self.obj(hp_conf, self.hp_utils, gpu_id, self.n_jobs)
             self.n_jobs += 1
 
             if self.n_jobs >= self.max_evals:
@@ -172,16 +180,18 @@ class BaseOptimizer():
                 n_runnings = 0
 
             for _ in range(max(0, self.n_parallels - n_runnings)):
-                n_gpu = gpus.index(False)
+                gpu_id = gpus.index(False)
+                self.ongoing_confs[gpu_id] = None
 
-                if self.n_jobs < self.n_init or self.rs:
+                if self.n_jobs < self.n_init:
                     hp_conf = self._initial_sampler()
                 else:
                     hp_conf = self.opt()
 
-                p = Process(target=self.obj, args=(hp_conf, self.hp_utils, n_gpu, self.n_jobs))
+                self.ongoing_confs[gpu_id] = hp_conf[:]
+                p = Process(target=self.obj, args=(hp_conf, self.hp_utils, gpu_id, self.n_jobs))
                 p.start()
-                jobs.append([n_gpu, p])
+                jobs.append([gpu_id, p])
                 self.n_jobs += 1
 
                 if self.n_jobs >= self.max_evals:

@@ -15,7 +15,7 @@ def create_hyperparameter(var_type, name, lower=None, upper=None, log=False, q=N
     var_type: type
         int or float or str
     dist: string
-        "uniform" or "cat"
+        "u" (uniform) or "c" (categorical)
     q: float or int
         any positive real number
     lower: float or int
@@ -38,7 +38,7 @@ def create_hyperparameter(var_type, name, lower=None, upper=None, log=False, q=N
     elif var_type == str or var_type == bool:
         return CSH.CategoricalHyperparameter(name=name, choices=choices)
     else:
-        raise ValueError("The hp_type must be chosen from [int, float, cat]")
+        raise ValueError("The hp_type must be chosen from [int, float, str, bool]")
 
 
 def get_hp_info(hp):
@@ -531,7 +531,7 @@ class HyperparameterUtilities():
         else:
             raise ValueError("var_type in params.json must be 'int' or 'float' or 'str' or 'bool'.")
 
-        if dist == "uniform":
+        if dist == "u":
             if "q" not in v.keys() or v["q"] == "None":
                 q = None
             elif type(v["q"]) == int or type(v["q"]) == float:
@@ -546,10 +546,10 @@ class HyperparameterUtilities():
                 raise ValueError("log in params.json must be 'True' or 'False'.")
             lb, ub = v["lower"], v["upper"]
             hp = create_hyperparameter(vt, var_name, lower=lb, upper=ub, log=log, q=q)
-        elif dist == "cat":
+        elif dist == "c":
             choices = v["choices"]
             hp = create_hyperparameter(vt, var_name, choices=choices)
         else:
-            raise ValueError("The first element of json hp dict must be 'uniform' or 'cat'.")
+            raise ValueError("The first element of json hp dict must be 'u' (uniform) or 'c' (categorical).")
 
         return hp

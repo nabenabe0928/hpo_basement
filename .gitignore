@@ -6,3 +6,5 @@ __pycache__
 */*/*/__pycache__
 */*/*/*/__pycache__
 */*/*/*/*/__pycache__
+obj_functions/machine_learning/dataset/svhn/
+obj_functions/machine_learning/dataset/cifar/
