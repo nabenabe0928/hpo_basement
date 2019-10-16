@@ -1,41 +1,80 @@
 {
-    "ackley": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"],
+    "_comment1": ["FirstKey: string",
+                  "          The name of the objective function file.",
+                  "func_dir: string",
+                  "          The name of directory where there is the objective function file.",
+                  "    main: string",
+                  "          The name of function calling the objective function.",
+                  " y_names: list of string",
+                  "          The names of measurements of hyperparameter configurations. e.g.) loss, cross entropy etc...",
+                  "  in_fmt: string",
+                  "          The format of input for the objective function. Either 'list' or 'dict'."
+                  ],
+
+    "_comment2": ["About the elements of dict['config'].",
+                  "FirstKey: string",
+                  "          The name of a hyperparameter",
+                  "   lower: int or float (Only for uniform dist)",
+                  "          The lower bound of the hyperparameter.",
+                  "   upper: int or float (Only for uniform dist)",
+                  "          The upper bound of the hyperparameter.",
+                  "    dist: string (REQUIRED)('u' (uniform) or 'c' (categorical)",
+                  "          The distribution of the hyperparameter.",
+                  "var_type: string (REQUIRED)('int' or 'float' or 'str' or 'bool')",
+                  "          The type of the hyperparameter.",
+                  "       q: int or float or omitted",
+                  "          The quantization parameter.",
+                  "     log: string ('True' or 'False')",
+                  "          If True, searching on a log-scale space.",
+                  " choices: list (Only for categorical dist)",
+                  "          The possible choices for categorical parameters."
+                  ],
+
+
+    "_comment3": "Here is the benchmark functions zone.",
+
+
+    "ackley": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -32.768, "upper": 32.768, "dist": "u", "var_type": "float"}}
     },
-    "different_power": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"],
+    "different_power": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -1.0, "upper": 1.0, "dist": "u", "var_type": "float"}}
     },
-    "griewank": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"],
+    "griewank": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -600.0, "upper": 600.0, "dist": "u", "var_type": "float"}}
     },
-    "k_tablet": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"],
+    "k_tablet": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -5.12, "upper": 5.12, "dist": "u", "var_type": "float"}}
     },
-    "perm": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"],
+    "perm": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -1.0, "upper": 1.0, "dist": "u", "var_type": "float"}}
     },
-    "rastrigin": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"],
+    "rastrigin": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -5.12, "upper": 5.12, "dist": "u", "var_type": "float"}}
     },
-    "rosenbrock": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"],
+    "rosenbrock": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -5.0, "upper": 5.0, "dist": "u", "var_type": "float"}}
     },
-    "schwefel": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"],
+    "schwefel": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -500.0, "upper": 500.0, "dist": "u", "var_type": "float"}}
     },
-    "sphere": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"],
+    "sphere": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -5.0, "upper": 5.0, "dist": "u", "var_type": "float"}}
     },
-    "styblinski": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"],
+    "styblinski": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -5.0, "upper": 5.0, "dist": "u", "var_type": "float"}}
     },
-    "weighted_sphere": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"],
+    "weighted_sphere": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -5.12, "upper": 5.12, "dist": "u", "var_type": "float"}}
     },
-    "xin_she_yang": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"],
+    "xin_she_yang": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -6.3, "upper": 6.3, "dist": "u", "var_type": "float"}}
     },
-    "zakharov": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"],
+    "zakharov": {"func_dir": "benchmarks", "main": "f", "y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -10.0, "upper": 10.0, "dist": "u", "var_type": "float"}}
-    }
+    },
+
+
+    "_comment4": "Here is the machine learning algorithm zone."
+
 }

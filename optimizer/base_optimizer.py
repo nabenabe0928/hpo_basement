@@ -3,6 +3,7 @@ import utils
 import os
 import csv
 import time
+import ml_utils
 from multiprocessing import Process
 
 
@@ -16,10 +17,15 @@ def objective_function(hp_conf, hp_utils, gpu_id, job_id):
         the index of gpu used in an evaluation
     """
 
+    save_path = "history/stdo" + hp_utils.save_file_path[11:] + "/log{:0>5}.csv"
+    if hp_utils.in_fmt == "dict":
+        hp_conf = hp_utils.list_to_dict(hp_conf)
+        ml_utils.print_config(hp_conf, save_path)
+
     if hp_utils.out_of_domain(hp_conf):
         hp_utils.save_hp_conf(hp_conf, {yn: 1.0e+8 for yn in hp_utils.y_names}, job_id)
     else:
-        ys = hp_utils.obj_class(hp_conf, gpu_id)
+        ys = hp_utils.obj_class(hp_conf, gpu_id, save_path)
         hp_utils.save_hp_conf(hp_conf, ys, job_id)
 
 

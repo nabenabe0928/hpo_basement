@@ -25,31 +25,35 @@ if __name__ == '__main__':
 Run from termianl by (one example):
 
 ```
-python main.py -dim 2 -par 1 -ini 3 -exp 0 -eva 100 -res 0
+python main.py -dim 2 -par 1 -ini 3 -exp 0 -eva 100 -res 0 -seed 0
 ```
 
 where all the arguments are integer.
 
-### dim
+### dim (optional: Default is None)
 The dimension of input space.
 Only for benchmark functions.
 
-### par
+### par (optional: Default is 1)
 The number of parallel computer resources such as GPU or CPU.
 
-### ini
+### ini (Required)
 The number of initial samplings.
 
-### exp
+### exp (optional: Default is 0)
 The index of experiments.
 Used only for indexing of experiments.
 
-### eva
+### eva (optional: Default is 100)
 The maximum number of evaluations in an experiment.
 If eva = 100, 100 configurations will be evaluated.
 
-### res
+### res (optional: Default is 0(=False))
 Whether restarting an experiment based on the previous experiment.
+If 0, will remove the previous log files after you choose "y" at the caution.
+
+### seed  (optional: Default is None)
+The number to specify the random seed.
 
 ## Optimizer
 You can add whatever optimizers you would like to use in this basement.

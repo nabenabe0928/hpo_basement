@@ -132,6 +132,8 @@ class HyperparameterUtilities():
             The class of the objective function
         y_names: list of string
             the names of the measurements of hyperparameter configurations
+        in_fmt: string
+            The format of input for the objective function. Either "dict" or "list".
         save_path: string
             the path where we save hyperparameter configurations and corresponding performances.
             history/{log, stdo}/name of optimizer/name of algorithm/number of experiments
@@ -140,6 +142,7 @@ class HyperparameterUtilities():
         self.obj_name = obj_name
         self.config_space = CS.ConfigurationSpace()
         self.y_names = None
+        self.in_fmt = None
         self.lock = Lock()
         self.dim = dim
         self.save_path = None
@@ -488,6 +491,7 @@ class HyperparameterUtilities():
 
         config_info = json_params["config"]
         self.y_names = json_params["y_names"]
+        self.in_fmt = json_params["in_fmt"]
 
         if self.dim is not None:
             try:
