@@ -153,7 +153,7 @@ If omited or 'False', on a linear scale.
 The type of a hyperparameter.
 Either 'int' or 'float' or 'str' or 'bool'.
 
-#### -7. choices (required only if dist is 'c' (categorical) )
+#### 5-7. choices (required only if dist is 'c' (categorical) )
 
 The choices of categorical parameters.
 Have to be given by a list.
