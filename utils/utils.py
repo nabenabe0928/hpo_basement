@@ -19,6 +19,10 @@ def parse_requirements():
     ap.add_argument("-eva", type=int, default=100)
     ap.add_argument("-seed", type=int, default=None)
     ap.add_argument("-res", type=int, choices=[0, 1])
+    ap.add_argument("-dat", type=str, default=None)
+    ap.add_argument("-cls", type=int, default=None)
+    ap.add_argument("-img", type=int, default=None)
+    ap.add_argument("-sub", type=float, default=None)
 
     args = ap.parse_args()
     requirements = {"n_parallels": args.par,
@@ -28,25 +32,34 @@ def parse_requirements():
                     "restart": args.res,
                     "seed": args.seed
                     }
-    dim = args.dim
+    experimental_settings = {"dim": args.dim,
+                             "dataset_name": args.dat,
+                             "n_cls": args.cls,
+                             "image_size": args.img,
+                             "sub_prop": args.sub,
+                             }
 
     if args.ini is None:
         print("#### PARSER ERROR ####")
         print("One example to run the file is described below:")
         print("")
-        print("user@user:~$ python main.py -dim 2 -par 1 -ini 10 -exp 0 -eva 100 -res 0 [-seed 0]")
+        print("user@user:~$ python main.py -dim 2 -par 1 -ini 10 -exp 0 -eva 100 -res 0 [-seed 0 -dat cifar -cls 10 -img 32 -sub 0.1]")
         print("")
-        print("  -dim: The dimension of a hyperparameter configuraiton. (Only for benchmark functions. Otherwise, omit it.)")
         print("  -par: The number of parallel computer resources.")
         print("  -ini: The number of initial samplings.")
         print("  -exp: The index of an experiment. (Used only to specify the path of log files.)")
         print("  -eva: The number of evaluations in an experiment.")
         print("  -res: Whether restarting the previous experiment or not. If 0, removes the previous log files.")
         print("  -seed:The number to specify a random number generator.")
+        print("  -dim: The dimension of a hyperparameter configuraiton. (Only for benchmark functions. Otherwise, omit it.)")
+        print("  -dat: The name of dataset.")
+        print("  -cls: The number of classes on a given task.")
+        print("  -img: The pixel size of training data.")
+        print("  -sub: How much percentages of training data to use in training (Must be between 0. and 1.).")
         print("")
         sys.exit()
 
-    return requirements, dim
+    return requirements, experimental_settings
 
 
 def get_stdo_path(path):

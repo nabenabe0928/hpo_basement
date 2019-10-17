@@ -16,8 +16,8 @@ import optimizer
 
 
 if __name__ == '__main__':
-    requirements, dim = utils.parse_requirements()
-    hp_utils = utils.HyperparameterUtilities("Sphere", dim=dim)
+    requirements, experimental_settings = utils.parse_requirements()
+    hp_utils = utils.HyperparameterUtilities("Sphere", experimental_settings=experimental_settings)
     opt = optimizer.NelderMead(hp_utils, **requirements)
     opt.optimize()
 ```
@@ -54,6 +54,18 @@ If 0, will remove the previous log files after you choose "y" at the caution.
 
 ### seed  (optional: Default is None)
 The number to specify the random seed.
+
+### dat (supervised learning)
+The name of dataset.
+
+### cls (supervised learning)
+The number of classes on a given task.
+
+### img (optional: Default is None)
+The pixel size of training data.
+
+### sub (optional: Default is None)
+How much percentages of training data to use in training (Must be between 0. and 1.).
 
 ## Optimizer
 You can add whatever optimizers you would like to use in this basement.
@@ -102,58 +114,46 @@ class OptName(BaseOptimizer):
 Describe the details of hyperparameters in `params.json`.
 
 ### 1. First key (The name of an objective function)
+The name of objective function and it corresponds to the name of objective function callable.
 
-The name of objective function and it corresponds to the name of objective function class.
+### 2. func_file
+The name of a file containing the objective function's callable.
 
-### 2. func_dir
-
-The name of directory containing the objective function's class file.
-
-### 3. main
-
-The name of main function evaluating the hyperparameter configuration.
-The optimizer optimizes the output of function whose name is `[main]` in the py file `obj_functions/[func_dir]/[First_key].py`.
-
-### 4. y_names
-
+### 3. y_names
 The names of the measurements of hyperparameter configurations
 
-### 3. config
+### 4. in_fmt
+The format of input for the objective function. Either 'list' or 'dict'.
 
+### 5. config
 The information related to the hyperparameters.
 
-#### 3-1. the name of each hyperparameter
-
+#### 5-1. the name of each hyperparameter
 Used when recording the hyperparameter configurations.
 
-#### 3-2. lower, upper
-
+#### 5-2. lower, upper
 The lower and upper bound of the hyperparameter.
 Required only for float and integer parameters.
 
-#### 3-3. dist (required anytime)
-
+#### 5-3. dist (required anytime)
 The distribution of the hyperparameter.
 Either 'u' (uniform) or 'c' (categorical).
 
-#### 3-4. q
-
+#### 5-4. q
 The quantization parameter of a hyperparameter.
 If omited, q is going to be None.
 Either any float or integer value or 'None'.
 
-#### 3-5. log
-
+#### 5-5. log
 If searching on a log-scale space or not.
 If 'True', on a log scale.
 If omited or 'False', on a linear scale.
 
-#### 3-6. var_type (required anytime)
-
+#### 5-6. var_type (required anytime)
 The type of a hyperparameter.
 Either 'int' or 'float' or 'str' or 'bool'.
 
-#### 3-7. choices (required only if dist is 'c' (categorical) )
+#### -7. choices (required only if dist is 'c' (categorical) )
 
 The choices of categorical parameters.
 Have to be given by a list.
@@ -163,8 +163,9 @@ An example follows below.
 ```
 {
     "sphere": {
-      "func_dir": "benchmarks", "main": "f",
+      "func_file": "benchmarks",
       "y_names": ["loss"],
+      "in_fmt": "list",
       "config": {
             "x": {
                 "lower": -5.0, "upper": 5.0,
@@ -173,8 +174,9 @@ An example follows below.
         }
     },
     "cnn": {
-      "func_dir": "ml", "main": "train",
+      "func_file": "ml",
       "y_names": ["error", "cross_entropy"],
+      "in_fmt": "dict",
       "config": {
             "batch_size": {
                 "lower": 32, "upper": 256,
@@ -201,9 +203,8 @@ An example follows below.
 ```
 
 ## Objective Functions
-
 The target objective function in an experiment.
-This function must receive the `gpu_id` and `hp_conf` from `BaseOptimizer` object and return the performance by a dictionary format.
+This function must receive the `gpu_id`, `hp_conf`, `save_path`, and `experimental_settings` from `BaseOptimizer` object and return the performance by a dictionary format.
 An example of (`obj_functions/benchmarks/sphere.py`) follows below.
 
 
@@ -217,6 +218,10 @@ hp_conf: 1d list of hyperparameter value
     [the index for a hyperparameter]
 gpu_id: int
     the index of a visible GPU
+save_path: str
+    The path to record training.
+experimental_settings: dict
+    The dict of experimental settins.
 
 Returns
 -------
@@ -225,6 +230,28 @@ ys: dict
     values are the corresponding performance.
 """
 
-def f(hp_conf, gpu_id=None):
+def f(hp_conf, gpu_id, save_path, experimental_settings):
     return {"loss": (np.array(hp_conf) ** 2).sum()}
 ```
+
+Also, the keys and corresponding values of `experimental_settings` are as follows:
+
+### dim: int
+The dimension of input space.
+Only for benchmark functions.
+
+### dataset_name: str
+The name of dataset.
+
+### n_cls: int
+The number of classes on a given task.
+
+### image_size: int
+The pixel size of training data.
+
+### sub_prop: float
+How much percentages of training data to use in training (Must be between 0. and 1.).
+
+### biased_cls: list of float
+The size of this list must be same as n_cls.
+The i-th element of this list is the percentages of training data to use in learning.

@@ -119,11 +119,32 @@ class HyperparameterUtilities():
     ----------
     obj_name: string
         The name of the objective function's file
-    dim: int
-        the dimension of a benchmark function. Required only when using a benchmark function.
+    experimental_settings: dict
+        *dim: int
+            the dimension of a benchmark function. Required only when using a benchmark function.
+        *dataset_name: string
+            the name of dataset. e.g.) cifar, svhn etc...
+        *n_cls: int
+            the number of classes on a given task.
+        *image_size: int
+            pixel size
+        *sub_prop: float
+            How much percentages of training data to use in training. The value must be [0., 1.].
+        *biased_cls: list of float
+            How much percentages of i-th labeled data to use in training.
+            The length must be same as n_cls. Each element must be (0, 1].
     """
 
-    def __init__(self, obj_name, dim=None):
+    def __init__(self,
+                 obj_name,
+                 experimental_settings={"dim": None,
+                                        "dataset_name": None,
+                                        "n_cls": None,
+                                        "image_size": None,
+                                        "sub_prop": None,
+                                        "biased_cls": None
+                                        }
+                 ):
         """
         Member Variables
         config_space: ConfigurationSpace
@@ -144,7 +165,7 @@ class HyperparameterUtilities():
         self.y_names = None
         self.in_fmt = None
         self.lock = Lock()
-        self.dim = dim
+        self.experimental_settings = experimental_settings
         self.save_path = None
         self.obj_class = self.prepare_opt_env()
         self.var_names = list(self.config_space._hyperparameters.keys())
@@ -508,9 +529,9 @@ class HyperparameterUtilities():
                 hp = self.get_hp_info_from_json(v, var_name)
                 self.config_space.add_hyperparameter(hp)
 
-        fd, main_f = json_params["func_dir"], json_params["main"]
+        fn = json_params["func_file"]
 
-        return utils.load_class("obj_functions.{}.{}.{}".format(fd, self.obj_name, main_f))
+        return utils.load_class("obj_functions.{}.{}".format(fn, self.obj_name))
 
     def get_hp_info_from_json(self, v, var_name):
         """

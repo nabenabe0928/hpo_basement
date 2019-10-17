@@ -25,8 +25,25 @@ def objective_function(hp_conf, hp_utils, gpu_id, job_id):
     if hp_utils.out_of_domain(hp_conf):
         hp_utils.save_hp_conf(hp_conf, {yn: 1.0e+8 for yn in hp_utils.y_names}, job_id)
     else:
-        ys = hp_utils.obj_class(hp_conf, gpu_id, save_path)
+        ys = hp_utils.obj_class(hp_conf, gpu_id, save_path, hp_utils.experimental_settings)
         hp_utils.save_hp_conf(hp_conf, ys, job_id)
+
+
+def get_path_name(obj_name, experimental_settings):
+    obj_path_name = obj_name
+    if experimental_settings["dim"] is not None:
+        obj_path_name += "_{}d".format(experimental_settings["dim"])
+    if experimental_settings["dataset_name"] is not None:
+        obj_path_name += "_{}".format(experimental_settings["dataset_name"])
+    if experimental_settings["n_cls"] is not None:
+        obj_path_name += experimental_settings["n_cls"]
+    if experimental_settings["image_size"] is not None:
+        obj_path_name += "_img{}".format(experimental_settings["image_size"])
+    if experimental_settings["sub_prop"] is not None:
+        obj_path_name += "_{}per".format(int(100 * experimental_settings["sub_prop"]))
+    if experimental_settings["biased_cls"] is not None:
+        obj_path_name += "_biased"
+    return obj_path_name
 
 
 class BaseOptimizer():
@@ -89,7 +106,8 @@ class BaseOptimizer():
         self.seed = seed
         self.ongoing_confs = [None for _ in range(self.n_parallels)]
         opt_name = self.__class__.__name__
-        self.hp_utils.save_path = "history/log/{}/{}/{:0>3}".format(opt_name, hp_utils.obj_name, n_experiments)
+        obj_path_name = get_path_name(hp_utils.obj_name, hp_utils.experimental_settings)
+        self.hp_utils.save_path = "history/log/{}/{}/{:0>3}".format(opt_name, obj_path_name, n_experiments)
         self.n_jobs = 0
 
     def get_n_jobs(self):
