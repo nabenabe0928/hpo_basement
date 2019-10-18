@@ -5,7 +5,7 @@ from torchvision import datasets, transforms
 
 """
 dataset: 5-d array
-1d: the index of image (default: < 50000)
+1d: the index of image (default: < 50000 (cifar), 73257 (svhn))
 2d: pixel information (0) or label (1)
 3d: the index of RGB (0, 1, 2)
 4d: the index of a row vector of pixel information (default: < 32)
@@ -26,10 +26,8 @@ test_dataset = datasets.CIFAR10(root="cifar",
                                 transform=transform_test)
 
 
-def see_cifar10(dataset, idx=0):
-    classes = ('plane', 'car', 'bird',
-               'cat', 'deer', 'dog',
-               'frog', 'horse', 'ship', 'truck')
+def see_cifar(dataset, idx=0):
+    classes = dataset.dataset.classes[:]
 
     npimg = dataset[idx][0].numpy()
     print(classes[dataset[idx][1]])
@@ -37,22 +35,7 @@ def see_cifar10(dataset, idx=0):
     plt.show()
 
 
-def see_cifar100(dataset, idx=0):
-    classes = ('apple', 'aquarium_fish', 'baby', 'bear', 'beaver', 'bed', 'bee', 'beetle',
-               'bicycle', 'bottle', 'bowl', 'boy', 'bridge', 'bus', 'butterfly', 'camel',
-               'can', 'castle', 'caterpillar', 'cattle', 'chair', 'chimpanzee', 'clock',
-               'cloud', 'cockroach', 'couch', 'crab', 'crocodile', 'cup', 'dinosaur',
-               'dolphin', 'elephant', 'flatfish', 'forest', 'fox', 'girl', 'hamster',
-               'house', 'kangaroo', 'keyboard', 'lamp', 'lawn_mower', 'leopard', 'lion',
-               'lizard', 'lobster', 'man', 'maple_tree', 'motorcycle', 'mountain', 'mouse',
-               'mushroom', 'oak_tree', 'orange', 'orchid', 'otter', 'palm_tree', 'pear',
-               'pickup_truck', 'pine_tree', 'plain', 'plate', 'poppy', 'porcupine',
-               'possum', 'rabbit', 'raccoon', 'ray', 'road', 'rocket', 'rose',
-               'sea', 'seal', 'shark', 'shrew', 'skunk', 'skyscraper', 'snail', 'snake',
-               'spider', 'squirrel', 'streetcar', 'sunflower', 'sweet_pepper', 'table',
-               'tank', 'telephone', 'television', 'tiger', 'tractor', 'train', 'trout',
-               'tulip', 'turtle', 'wardrobe', 'whale', 'willow_tree', 'wolf', 'woman', 'worm')
+def see_svhn(dataset, idx=0):
     npimg = dataset[idx][0].numpy()
-    print(classes[dataset[idx][1]])
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.show()

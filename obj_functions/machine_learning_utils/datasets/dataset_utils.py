@@ -19,6 +19,7 @@ def get_dataset(dataset_name,
     train_dataset, test_dataset = process_raw_dataset(train_raw_dataset,
                                                       test_raw_dataset,
                                                       raw_n_cls,
+                                                      dataset_name,
                                                       n_cls,
                                                       sub_prop,
                                                       biased_cls)
@@ -37,7 +38,7 @@ def get_raw_dataset(dataset_name, image_size=None, n_cls=10):
     if dataset_name.upper() == "CIFAR":
         if 2 <= n_cls <= 10:
             nc = 10
-        elif 11 <= nc <= 100:
+        elif 11 <= n_cls <= 100:
             nc = 100
         else:
             raise ValueError("n_cls must be between 2 and 100.")
@@ -52,6 +53,7 @@ def get_raw_dataset(dataset_name, image_size=None, n_cls=10):
 def process_raw_dataset(train_raw_dataset,
                         test_raw_dataset,
                         raw_n_cls,
+                        dataset_name,
                         n_cls=None,
                         sub_prop=None,
                         biased_cls=None):
@@ -60,28 +62,30 @@ def process_raw_dataset(train_raw_dataset,
         return train_raw_dataset, test_raw_dataset
     else:
         print("Processing raw dataset...")
-        train_itr = range(len(train_raw_dataset))
-        test_itr = range(len(test_raw_dataset))
-        print("Got Iterators.")
-        train_labels = np.array([[train_raw_dataset[i][1] for i in train_itr],
-                                list(train_itr)])
-        test_labels = np.array([[test_raw_dataset[i][1] for i in test_itr],
-                                list(test_itr)])
+        if dataset_name.upper() == "CIFAR":
+            train_labels = np.array([train_raw_dataset.targets, list(range(len(train_raw_dataset)))])
+            test_labels = np.array([test_raw_dataset.targets, list(range(len(test_raw_dataset)))])
+        elif dataset_name.upper() == "SVHN":
+            train_labels = np.array([train_raw_dataset.labels, list(range(len(train_raw_dataset)))])
+            test_labels = np.array([test_raw_dataset.labels, list(range(len(test_raw_dataset)))])
         print("Start processing...")
         print("")
 
         if n_cls is not None:
+            print("The number of classes: {} -> {}".format(raw_n_cls, n_cls))
             train_labels, test_labels = get_small_class(train_labels, test_labels, n_cls)
         if sub_prop is not None:
-            n_subtrain = int(np.ceil(len(train_labels) * sub_prop))
+            n_subtrain = int(np.ceil(len(train_labels[0]) * sub_prop))
+            print("Subsampling: {} images".format(n_subtrain))
             train_labels = np.array([tl[:n_subtrain] for tl in train_labels])
+            print(train_labels)
         if biased_cls is not None:
+            print("Biased labels")
             train_labels = get_biased_class(train_labels, biased_cls, n_cls, raw_n_cls)
 
-        train_indexes = np.array([datum[0] for datum in train_labels])
-        test_indexes = np.array([datum[0] for datum in test_labels])
+        print(train_labels[1])
 
-        return Subset(train_raw_dataset, train_indexes), Subset(test_raw_dataset, test_indexes)
+        return Subset(train_raw_dataset, train_labels[1]), Subset(test_raw_dataset, test_labels[1])
 
 
 def get_small_class(train_labels, test_labels, n_cls):

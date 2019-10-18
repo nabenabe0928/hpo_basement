@@ -87,7 +87,7 @@ def test(device, optimizer, model, test_data, loss_func):
 def print_last_result(values, save_path):
     with open(save_path, "a", newline="") as f:
         writer = csv.writer(f, delimiter=",", quotechar=" ")
-        s = "\n MinTestLoss: {}\n MaxTestAcc:  {}".format(*values)
+        s = "\n MinTestLoss: {}\n MaxTestAcc: {}".format(*values)
         writer.writerow([s])
 
 
@@ -122,5 +122,5 @@ def print_config(hp_dict, save_path, is_out_of_domain=False):
 
         if is_out_of_domain:
             s = "Out of Domain\n"
-            s += "\nMinTestLoss: {}\nMaxTestAcc:  {}".format(1.0e+8, 1.0e+8)
+            s += "\nMinTestLoss: {}\nMaxTestAcc: {}".format(1.0e+8, 1.0e+8)
             writer.writerow([s])
