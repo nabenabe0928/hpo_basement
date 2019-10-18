@@ -78,12 +78,9 @@ def process_raw_dataset(train_raw_dataset,
             n_subtrain = int(np.ceil(len(train_labels[0]) * sub_prop))
             print("Subsampling: {} images".format(n_subtrain))
             train_labels = np.array([tl[:n_subtrain] for tl in train_labels])
-            print(train_labels)
         if biased_cls is not None:
             print("Biased labels")
             train_labels = get_biased_class(train_labels, biased_cls, n_cls, raw_n_cls)
-
-        print(train_labels[1])
 
         return Subset(train_raw_dataset, train_labels[1]), Subset(test_raw_dataset, test_labels[1])
 

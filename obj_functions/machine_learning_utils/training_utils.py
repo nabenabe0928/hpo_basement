@@ -93,10 +93,13 @@ def print_last_result(values, save_path):
 
 def print_result(values, save_path):
     if type(values[0]) == str:
+        s = "{}\t{}\t{}\t{}\t{}\t{}\t{}".format(*values)
+        print(s)
         s = "\t{}\t\t{}\t{}\t\t{}\t\t{}\t\t{}\t\t{}".format(*values)
     else:
+        s = "{:.4f}\t{}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{}".format(*values)
+        print(s)
         s = "\t{:.4f}\t{}\t\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{}".format(*values)
-    print(s)
 
     with open(save_path, "a", newline="") as f:
         writer = csv.writer(f, delimiter=",", quotechar=" ")
