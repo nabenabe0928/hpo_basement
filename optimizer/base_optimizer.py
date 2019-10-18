@@ -20,11 +20,12 @@ def objective_function(hp_conf, hp_utils, gpu_id, job_id):
     save_path = "history/stdo" + hp_utils.save_path[11:] + "/log{:0>5}.csv".format(job_id)
     if hp_utils.in_fmt == "dict":
         hp_conf = hp_utils.list_to_dict(hp_conf)
-        ml_utils.print_config(hp_conf, save_path, is_out_of_domain=True)
 
     if hp_utils.out_of_domain(hp_conf):
+        ml_utils.print_config(hp_conf, save_path, is_out_of_domain=True)
         hp_utils.save_hp_conf(hp_conf, {yn: 1.0e+8 for yn in hp_utils.y_names}, job_id)
     else:
+        ml_utils.print_config(hp_conf, save_path)
         ys = hp_utils.obj_class(hp_conf, gpu_id, save_path)
         hp_utils.save_hp_conf(hp_conf, ys, job_id)
 
