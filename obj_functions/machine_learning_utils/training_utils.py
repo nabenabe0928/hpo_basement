@@ -15,6 +15,7 @@ def accuracy(y, target):
 
 def start_train(model, train_data, test_data, cuda_id, save_path):
     device = torch.device("cuda", cuda_id) if torch.cuda.is_available() else torch.device("cpu")
+    print_resource(torch.cuda.is_available(), cuda_id, save_path)
     model = model.to(device)
     cudnn.benchmark = True
     optimizer = optim.SGD(model.parameters(), lr=model.lr, momentum=model.momentum, weight_decay=model.weight_decay, nesterov=True)
@@ -36,7 +37,7 @@ def start_train(model, train_data, test_data, cuda_id, save_path):
         time_now = str(datetime.datetime.today())[:-10]
         rsl.append({k: v for k, v in zip(rsl_keys, [lr, epoch + 1, train_acc, train_loss, test_acc, test_loss, time_now])})
         loss_min, acc_max = min(loss_min, test_loss), max(acc_max, test_acc)
-        print_result(rsl[-1].values(), save_path)
+        print_result(list(rsl[-1].values()), save_path)
 
     print_last_result([loss_min, acc_max], save_path)
 
@@ -86,15 +87,15 @@ def test(device, optimizer, model, test_data, loss_func):
 def print_last_result(values, save_path):
     with open(save_path, "a", newline="") as f:
         writer = csv.writer(f, delimiter=",", quotechar=" ")
-        s = "\n MinTestLoss: {} \n MaxTestAcc: {}".format(*values)
+        s = "\n MinTestLoss: {}\n MaxTestAcc: {}".format(*values)
         writer.writerow([s])
 
 
 def print_result(values, save_path):
     if type(values[0]) == str:
-        s = "{}\t{}\t{}\t{}\t{}\t{}\t{}".format(*values)
+        s = "{}\t\t{}\t{}\t\t{}\t\t{}\t\t{}\t\t{}".format(*values)
     else:
-        s = "{:.4f}\t{}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{}".format(*values)
+        s = "{:.4f}\t{}\t\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{}".format(*values)
     print(s)
 
     with open(save_path, "a", newline="") as f:
@@ -102,12 +103,24 @@ def print_result(values, save_path):
         writer.writerow([s])
 
 
-def print_config(hp_dict, save_path):
+def print_resource(is_available, gpu_id, save_path):
+    with open(save_path, "a", newline="") as f:
+        writer = csv.writer(f, delimiter=",", quotechar=" ")
+        s = "Computing on GPU{}\n".format(gpu_id) if is_available else "Not Computing on GPU\n"
+        print(s)
+        writer.writerow([s])
+
+
+def print_config(hp_dict, save_path, is_out_of_domain=False):
     with open(save_path, "w", newline="") as f:
         writer = csv.writer(f, delimiter=",", quotechar=" ")
-        s = "### Hyperparameters ### \n"
+        s = "### Hyperparameters ###\n"
 
         for name, value in hp_dict.items():
-            s += "{}: {} \n".format(name, value)
-        s += "\n"
+            s += "{}: {}\n".format(name, value)
         writer.writerow([s])
+
+        if is_out_of_domain:
+            s = "Out of Domain\n"
+            s += "\nMinTestLoss: {}\nMaxTestAcc: {}".format(1.0e+8, 1.0e+8)
+            writer.writerow([s])

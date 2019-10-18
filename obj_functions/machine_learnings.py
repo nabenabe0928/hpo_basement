@@ -1,6 +1,5 @@
-import machine_learning_utils as ml_utils
-import models
-import datasets
+import obj_functions.machine_learning_utils as ml_utils
+from obj_functions import models, datasets
 
 
 def train(model, hp_dict, train_data, test_data, cuda_id, save_path):
@@ -9,13 +8,17 @@ def train(model, hp_dict, train_data, test_data, cuda_id, save_path):
     return {"error": 1. - acc_max, "cross_entropy": loss_min}
 
 
-def cnn(hp_dict, cuda_id, save_path, experimental_settings):
-    model = models.CNN(**hp_dict)
-    train_data, test_data = datasets.get_data(dataset_name=experimental_settings["dataset_name"],
-                                              batch_size=hp_dict["batch_size"],
-                                              n_cls=experimental_settings["n_cls"],
-                                              image_size=experimental_settings["image_size"],
-                                              sub_prop=experimental_settings["sub_prop"],
-                                              biased_cls=experimental_settings["biased_cls"]
-                                              )
-    return train(model, hp_dict, train_data, test_data, cuda_id, save_path)
+def cnn(experimental_settings):
+    train_dataset, test_dataset = datasets.get_dataset(dataset_name=experimental_settings["dataset_name"],
+                                                       n_cls=experimental_settings["n_cls"],
+                                                       image_size=experimental_settings["image_size"],
+                                                       sub_prop=experimental_settings["sub_prop"],
+                                                       biased_cls=experimental_settings["biased_cls"]
+                                                       )
+
+    def _imp(hp_dict, cuda_id, save_path):
+        model = models.CNN(**hp_dict, n_cls=experimental_settings["n_cls"])
+        train_data, test_data = datasets.get_data(train_dataset, test_dataset, batch_size=model.batch_size)
+        return train(model, hp_dict, train_data, test_data, cuda_id, save_path)
+
+    return _imp

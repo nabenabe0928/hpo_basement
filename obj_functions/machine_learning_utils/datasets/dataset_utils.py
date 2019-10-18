@@ -1,20 +1,19 @@
 import torch
 import numpy as np
-from cifar import get_cifar
-from svhn import get_svhn
+from obj_functions.machine_learning_utils.datasets.cifar import get_cifar
+from obj_functions.machine_learning_utils.datasets.svhn import get_svhn
+from obj_functions.machine_learning_utils.datasets.imagenet import get_imagenet
 from torch.utils.data.dataset import Subset
-from imagenet import get_imagenet
 
 
-def get_data(dataset_name,
-             batch_size,
-             n_cls=10,  # The number of class in training and testing
-             image_size=None,  # pixel size
-             sub_prop=None,  # How much percentages of training we use in an experiment. [0, 1]
-             biased_cls=None  # len(biased_cls) must be n_cls. Each element represents the percentages.
-             ):
+def get_dataset(dataset_name,
+                n_cls=10,  # The number of class in training and testing
+                image_size=None,  # pixel size
+                sub_prop=None,  # How much percentages of training we use in an experiment. [0, 1]
+                biased_cls=None  # len(biased_cls) must be n_cls. Each element represents the percentages.
+                ):
 
-    train_raw_dataset, test_raw_dataset, raw_n_cls = get_raw_dataset(dataset_name, batch_size, image_size, n_cls)
+    train_raw_dataset, test_raw_dataset, raw_n_cls = get_raw_dataset(dataset_name, image_size, n_cls)
 
     n_cls = None if n_cls == raw_n_cls else n_cls
     train_dataset, test_dataset = process_raw_dataset(train_raw_dataset,
@@ -24,13 +23,17 @@ def get_data(dataset_name,
                                                       sub_prop,
                                                       biased_cls)
 
+    return train_dataset, test_dataset
+
+
+def get_data(train_dataset, test_dataset, batch_size):
     train_data = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
     test_data = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
 
     return train_data, test_data
 
 
-def get_raw_dataset(dataset_name, batch_size, image_size=None, n_cls=10):
+def get_raw_dataset(dataset_name, image_size=None, n_cls=10):
     if dataset_name.upper() == "CIFAR":
         if 2 <= n_cls <= 10:
             nc = 10
@@ -39,11 +42,11 @@ def get_raw_dataset(dataset_name, batch_size, image_size=None, n_cls=10):
         else:
             raise ValueError("n_cls must be between 2 and 100.")
 
-        return get_cifar(batch_size, nc) if image_size is None else get_cifar(batch_size, nc, image_size)
+        return get_cifar(nc) if image_size is None else get_cifar(nc, image_size)
     elif dataset_name.upper() == "SVHN":
-        return get_svhn(batch_size) if image_size is None else get_svhn(batch_size, image_size)
+        return get_svhn() if image_size is None else get_svhn(image_size)
     elif dataset_name.upper() == "IMAGENET":
-        return get_imagenet(batch_size) if image_size is None else get_svhn(batch_size, image_size)
+        return get_imagenet() if image_size is None else get_imagenet(image_size)
 
 
 def process_raw_dataset(train_raw_dataset,
@@ -56,13 +59,16 @@ def process_raw_dataset(train_raw_dataset,
     if n_cls is None and sub_prop is None and biased_cls is None:
         return train_raw_dataset, test_raw_dataset
     else:
+        print("Processing raw dataset...")
         train_itr = range(len(train_raw_dataset))
-        test_itr = range(len(train_raw_dataset))
-        train_labels = [[train_raw_dataset[i][1] for i in train_itr],
-                        list(train_itr)]
-        test_labels = [[test_raw_dataset[i][1] for i in test_itr],
-                       list(test_itr)]
-        train_labels, test_labels = map(np.asarray, [train_labels, test_labels])
+        test_itr = range(len(test_raw_dataset))
+        print("Got Iterators.")
+        train_labels = np.array([[train_raw_dataset[i][1] for i in train_itr],
+                                list(train_itr)])
+        test_labels = np.array([[test_raw_dataset[i][1] for i in test_itr],
+                                list(test_itr)])
+        print("Start processing...")
+        print("")
 
         if n_cls is not None:
             train_labels, test_labels = get_small_class(train_labels, test_labels, n_cls)

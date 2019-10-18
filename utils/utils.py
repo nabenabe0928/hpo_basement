@@ -37,6 +37,7 @@ def parse_requirements():
                              "n_cls": args.cls,
                              "image_size": args.img,
                              "sub_prop": args.sub,
+                             "biased_cls": None
                              }
 
     if args.ini is None:
@@ -45,17 +46,17 @@ def parse_requirements():
         print("")
         print("user@user:~$ python main.py -dim 2 -par 1 -ini 10 -exp 0 -eva 100 -res 0 [-seed 0 -dat cifar -cls 10 -img 32 -sub 0.1]")
         print("")
-        print("  -par: The number of parallel computer resources.")
-        print("  -ini: The number of initial samplings.")
-        print("  -exp: The index of an experiment. (Used only to specify the path of log files.)")
-        print("  -eva: The number of evaluations in an experiment.")
-        print("  -res: Whether restarting the previous experiment or not. If 0, removes the previous log files.")
-        print("  -seed:The number to specify a random number generator.")
-        print("  -dim: The dimension of a hyperparameter configuraiton. (Only for benchmark functions. Otherwise, omit it.)")
-        print("  -dat: The name of dataset.")
-        print("  -cls: The number of classes on a given task.")
-        print("  -img: The pixel size of training data.")
-        print("  -sub: How much percentages of training data to use in training (Must be between 0. and 1.).")
+        print("  -ini (Both  Required): The number of initial samplings.")
+        print("  -dim (Bench Required): The dimension of a hyperparameter configuraiton. (Only for benchmark functions. Otherwise, omit it.)")
+        print("  -dat (ML    Required): The name of dataset.")
+        print("  -cls (ML    Required): The number of classes on a given task.")
+        print("  -img (ML    Optional): The pixel size of training data.")
+        print("  -sub (ML    Optional): How much percentages of training data to use in training (Must be between 0. and 1.).")
+        print("  -par (Both  Optional): The number of parallel computer resources.")
+        print("  -exp (Both  Optional): The index of an experiment. (Used only to specify the path of log files.)")
+        print("  -eva (Both  Optional): The number of evaluations in an experiment.")
+        print("  -res (Both  Optional): Whether restarting the previous experiment or not. If 0, removes the previous log files.")
+        print("  -seed(Both  Optional):The number to specify a random number generator.")
         print("")
         sys.exit()
 

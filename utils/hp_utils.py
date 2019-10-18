@@ -271,17 +271,15 @@ class HyperparameterUtilities():
         hp_dict = self.list_to_dict(hp_conf) if type(hp_conf) == list else hp_conf
 
         for var_name, value in hp_dict.items():
+            if not self.distribution_type(var_name) in [int, float]:
+                continue
             hp = self.config_space._hyperparameters[var_name]
+            lb, ub = hp.lower, hp.upper
 
-            try:
-                lb, ub = hp.lower, hp.upper
-                if lb <= value <= ub:
-                    pass
-                else:
-                    return True
-            except ValueError:
-                # categorical parameters
+            if lb <= value <= ub:
                 pass
+            else:
+                return True
         return False
 
     def convert_hp(self, hp_value, var_name):
@@ -514,24 +512,28 @@ class HyperparameterUtilities():
         self.y_names = json_params["y_names"]
         self.in_fmt = json_params["in_fmt"]
 
-        if self.dim is not None:
+        if self.experimental_settings["dim"] is not None:
             try:
                 v = config_info['x']
             except ValueError:
                 raise ValueError("ONLY 'x' is allowed to be the name of hyperparameters of benchmark functions in params.json.")
             lb, ub = v["lower"], v["upper"]
-            for i in range(self.dim):
+            for i in range(self.experimental_settings["dim"]):
                 var_name = 'x{:0>5}'.format(i)
                 hp = create_hyperparameter(float, var_name, lower=lb, upper=ub)
                 self.config_space.add_hyperparameter(hp)
         else:
             for var_name, v in config_info.items():
+                if "ignore" in v.keys():
+                    if v["ignore"] != "True" and v["ignore"] != "False":
+                        raise ValueError("ignore must be 'True' or 'False', but {} was given.".format(v["ignore"]))
+                    elif v["ignore"] == "True":
+                        continue
+
                 hp = self.get_hp_info_from_json(v, var_name)
                 self.config_space.add_hyperparameter(hp)
 
-        fn = json_params["func_file"]
-
-        return utils.load_class("obj_functions.{}.{}".format(fn, self.obj_name))
+        return utils.load_class("obj_functions.{}".format(self.obj_name))(self.experimental_settings)
 
     def get_hp_info_from_json(self, v, var_name):
         """
@@ -573,6 +575,8 @@ class HyperparameterUtilities():
             hp = create_hyperparameter(vt, var_name, lower=lb, upper=ub, log=log, q=q)
         elif dist == "c":
             choices = v["choices"]
+            if "True" in choices:
+                choices = [eval(choice) for choice in choices]
             hp = create_hyperparameter(vt, var_name, choices=choices)
         else:
             raise ValueError("The first element of json hp dict must be 'u' (uniform) or 'c' (categorical).")

@@ -5,7 +5,7 @@ import warnings
 # https://github.com/Coderx7/SimpleNet_Pytorch/issues/3
 
 
-def get_svhn(batch_size, image_size=32):
+def get_svhn(image_size=32):
     warnings.filterwarnings("ignore", message="numpy.dtype size changed")
     warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
     normalize = transforms.Normalize(mean=[0.5071, 0.4867, 0.4408],

@@ -17,7 +17,9 @@ import optimizer
 
 if __name__ == '__main__':
     requirements, experimental_settings = utils.parse_requirements()
-    hp_utils = utils.HyperparameterUtilities("Sphere", experimental_settings=experimental_settings)
+    hp_utils = utils.HyperparameterUtilities("Sphere",
+                                             experimental_settings=experimental_settings,
+                                             )
     opt = optimizer.NelderMead(hp_utils, **requirements)
     opt.optimize()
 ```
@@ -116,54 +118,52 @@ Describe the details of hyperparameters in `params.json`.
 ### 1. First key (The name of an objective function)
 The name of objective function and it corresponds to the name of objective function callable.
 
-### 2. func_file
-The name of a file containing the objective function's callable.
-
-### 3. y_names
+### 2. y_names
 The names of the measurements of hyperparameter configurations
 
-### 4. in_fmt
+### 3. in_fmt
 The format of input for the objective function. Either 'list' or 'dict'.
 
-### 5. config
+### 4. config
 The information related to the hyperparameters.
 
-#### 5-1. the name of each hyperparameter
+#### 4-1. the name of each hyperparameter
 Used when recording the hyperparameter configurations.
 
-#### 5-2. lower, upper
+#### 4-2. lower, upper
 The lower and upper bound of the hyperparameter.
 Required only for float and integer parameters.
 
-#### 5-3. dist (required anytime)
+#### 4-3. dist (required anytime)
 The distribution of the hyperparameter.
 Either 'u' (uniform) or 'c' (categorical).
 
-#### 5-4. q
+#### 4-4. q
 The quantization parameter of a hyperparameter.
 If omited, q is going to be None.
 Either any float or integer value or 'None'.
 
-#### 5-5. log
+#### 4-5. log
 If searching on a log-scale space or not.
 If 'True', on a log scale.
 If omited or 'False', on a linear scale.
 
-#### 5-6. var_type (required anytime)
+#### 4-6. var_type (required anytime)
 The type of a hyperparameter.
 Either 'int' or 'float' or 'str' or 'bool'.
 
-#### 5-7. choices (required only if dist is 'c' (categorical) )
-
+#### 4-7. choices (required only if dist is 'c' (categorical) )
 The choices of categorical parameters.
 Have to be given by a list.
+
+### 5. ignore (optional: "True" or "False")
+Whether ignoring the hyperparameter or not.
 
 An example follows below.
 
 ```
 {
     "sphere": {
-      "func_file": "benchmarks",
       "y_names": ["loss"],
       "in_fmt": "list",
       "config": {
@@ -174,7 +174,6 @@ An example follows below.
         }
     },
     "cnn": {
-      "func_file": "ml",
       "y_names": ["error", "cross_entropy"],
       "in_fmt": "dict",
       "config": {
@@ -195,7 +194,7 @@ An example follows below.
             },
             "nesterov": {
                 "dist": "c", "choices": [True, False],
-                "var_type": "bool"
+                "var_type": "bool", "ignore": "True"
             }
         }
     }

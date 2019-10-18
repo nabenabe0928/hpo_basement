@@ -1,8 +1,6 @@
 {
     "_comment1": ["FirstKey: string",
                   "          The name of the objective function in 'func_file'.",
-                  "func_file: string",
-                  "          The name of directory where there is the objective function file.",
                   " y_names: list of string",
                   "          The names of measurements of hyperparameter configurations. e.g.) loss, cross entropy etc...",
                   "  in_fmt: string",
@@ -28,35 +26,63 @@
 
     "_comment3": "Here is the benchmark functions zone.",
 
-    "ackley": {"func_file": "benchmarks", "y_names": ["loss"], "in_fmt": "list",
+    "ackley": {"y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -32.768, "upper": 32.768, "dist": "u", "var_type": "float"}}
-    }, "different_power": {"func_file": "benchmarks", "y_names": ["loss"], "in_fmt": "list",
+    },
+    "different_power": {"y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -1.0, "upper": 1.0, "dist": "u", "var_type": "float"}}
-    },"griewank": {"func_file": "benchmarks", "y_names": ["loss"], "in_fmt": "list",
+    },
+    "griewank": {"y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -600.0, "upper": 600.0, "dist": "u", "var_type": "float"}}
-    }, "k_tablet": {"func_file": "benchmarks", "y_names": ["loss"], "in_fmt": "list",
+    },
+    "k_tablet": {"y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -5.12, "upper": 5.12, "dist": "u", "var_type": "float"}}
-    }, "perm": {"func_file": "benchmarks", "y_names": ["loss"], "in_fmt": "list",
+    },
+    "perm": {"y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -1.0, "upper": 1.0, "dist": "u", "var_type": "float"}}
-    }, "rastrigin": {"func_file": "benchmarks", "y_names": ["loss"], "in_fmt": "list",
+    },
+    "rastrigin": {"y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -5.12, "upper": 5.12, "dist": "u", "var_type": "float"}}
-    }, "rosenbrock": {"func_file": "benchmarks", "y_names": ["loss"], "in_fmt": "list",
+    },
+    "rosenbrock": {"y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -5.0, "upper": 5.0, "dist": "u", "var_type": "float"}}
-    }, "schwefel": {"func_file": "benchmarks", "y_names": ["loss"], "in_fmt": "list",
+    },
+    "schwefel": {"y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -500.0, "upper": 500.0, "dist": "u", "var_type": "float"}}
-    }, "sphere": {"func_file": "benchmarks", "y_names": ["loss"], "in_fmt": "list",
+    },
+    "sphere": {"y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -5.0, "upper": 5.0, "dist": "u", "var_type": "float"}}
-    }, "styblinski": {"func_file": "benchmarks", "y_names": ["loss"], "in_fmt": "list",
+    },
+    "styblinski": {"y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -5.0, "upper": 5.0, "dist": "u", "var_type": "float"}}
-    }, "weighted_sphere": {"func_file": "benchmarks", "y_names": ["loss"], "in_fmt": "list",
+    },
+    "weighted_sphere": {"y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -5.12, "upper": 5.12, "dist": "u", "var_type": "float"}}
-    }, "xin_she_yang": {"func_file": "benchmarks", "y_names": ["loss"], "in_fmt": "list",
+    },
+    "xin_she_yang": {"y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -6.3, "upper": 6.3, "dist": "u", "var_type": "float"}}
-    }, "zakharov": {"func_file": "benchmarks", "y_names": ["loss"], "in_fmt": "list",
+    },
+    "zakharov": {"y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -10.0, "upper": 10.0, "dist": "u", "var_type": "float"}}
     },
 
 
-    "_comment4": "Here is the machine learning algorithm zone."
+    "_comment4": "Here is the machine learning algorithm zone.",
+
+    "cnn": {"y_names": ["error", "cross_entropy"], "in_fmt": "dict",
+      "config": {
+            "batch_size": {"lower": 32, "upper": 256, "dist": "u", "log": "True", "var_type": "int"},
+            "lr": {"lower": 5.0e-3, "upper": 5.0e-1, "dist": "u", "log": "True", "var_type": "float"},
+            "weight_decay": {"lower": 5.0e-6, "upper": 5.0e-2, "dist": "u", "log": "True", "var_type": "float"},
+            "momentum": {"lower": 0.8, "upper": 1.0, "dist": "u", "var_type": "float"},
+            "ch1": {"lower": 16, "upper": 128, "dist": "u", "log": "True", "var_type": "int"},
+            "ch2": {"lower": 16, "upper": 128, "dist": "u", "log": "True", "var_type": "int"},
+            "ch3": {"lower": 16, "upper": 128, "dist": "u", "log": "True", "var_type": "int"},
+            "ch4": {"lower": 16, "upper": 128, "dist": "u", "log": "True", "var_type": "int"},
+            "drop_rate": {"lower": 0.0, "upper": 1.0, "dist": "u", "var_type": "float"},
+            "nesterov": {"dist": "c", "choices": ["True", "False"], "var_type": "bool", "ignore": "True"},
+            "lr_decay": {"lower": 1.0e-2, "upper": 1.0, "dist": "u", "log": "True", "var_type": "float", "ignore": "True"}
+        }
+    }
 
 }

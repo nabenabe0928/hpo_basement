@@ -3,7 +3,7 @@ import utils
 import os
 import csv
 import time
-import ml_utils
+import obj_functions.machine_learning_utils as ml_utils
 from multiprocessing import Process
 
 
@@ -17,26 +17,27 @@ def objective_function(hp_conf, hp_utils, gpu_id, job_id):
         the index of gpu used in an evaluation
     """
 
-    save_path = "history/stdo" + hp_utils.save_file_path[11:] + "/log{:0>5}.csv"
+    save_path = "history/stdo" + hp_utils.save_path[11:] + "/log{:0>5}.csv".format(job_id)
     if hp_utils.in_fmt == "dict":
         hp_conf = hp_utils.list_to_dict(hp_conf)
-        ml_utils.print_config(hp_conf, save_path)
+        ml_utils.print_config(hp_conf, save_path, is_out_of_domain=True)
 
     if hp_utils.out_of_domain(hp_conf):
         hp_utils.save_hp_conf(hp_conf, {yn: 1.0e+8 for yn in hp_utils.y_names}, job_id)
     else:
-        ys = hp_utils.obj_class(hp_conf, gpu_id, save_path, hp_utils.experimental_settings)
+        ys = hp_utils.obj_class(hp_conf, gpu_id, save_path)
         hp_utils.save_hp_conf(hp_conf, ys, job_id)
 
 
 def get_path_name(obj_name, experimental_settings):
     obj_path_name = obj_name
+
     if experimental_settings["dim"] is not None:
         obj_path_name += "_{}d".format(experimental_settings["dim"])
     if experimental_settings["dataset_name"] is not None:
         obj_path_name += "_{}".format(experimental_settings["dataset_name"])
     if experimental_settings["n_cls"] is not None:
-        obj_path_name += experimental_settings["n_cls"]
+        obj_path_name += str(experimental_settings["n_cls"])
     if experimental_settings["image_size"] is not None:
         obj_path_name += "_img{}".format(experimental_settings["image_size"])
     if experimental_settings["sub_prop"] is not None:

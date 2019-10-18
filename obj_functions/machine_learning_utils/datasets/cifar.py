@@ -5,17 +5,17 @@ from torchvision import datasets, transforms
 # https://gist.github.com/weiaicunzai/e623931921efefd4c331622c344d8151
 
 
-def get_cifar(batch_size, n_cls=10, image_size=32):
+def get_cifar(n_cls=10, image_size=32):
     if n_cls == 10:
-        return get_cifar10(batch_size, image_size)
+        return get_cifar10(image_size)
     elif n_cls == 100:
-        return get_cifar100(batch_size, image_size)
+        return get_cifar100(image_size)
     else:
         raise ValueError("The number of class for CIFAR must be 2 to 100.")
         print("But, {} was given.".format(n_cls))
 
 
-def get_cifar10(batch_size, image_size=32):
+def get_cifar10(image_size=32):
     normalize = transforms.Normalize(mean=[0.4914, 0.4822, 0.4465],
                                      std=[0.2470, 0.2435, 0.2616])
 
@@ -38,7 +38,7 @@ def get_cifar10(batch_size, image_size=32):
     return train_dataset, test_dataset, 10
 
 
-def get_cifar100(batch_size, image_size=32):
+def get_cifar100(image_size=32):
     normalize = transforms.Normalize(mean=[0.5071, 0.4867, 0.4408],
                                      std=[0.2675, 0.2565, 0.2761])
 
