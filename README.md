@@ -156,7 +156,7 @@ Either 'int' or 'float' or 'str' or 'bool'.
 The choices of categorical parameters.
 Have to be given by a list.
 
-### 5. ignore (optional: "True" or "False")
+#### 4-8. ignore (optional: "True" or "False")
 Whether ignoring the hyperparameter or not.
 
 An example follows below.
@@ -213,24 +213,36 @@ import numpy as np
 """
 Parameters
 ----------
-hp_conf: 1d list of hyperparameter value
-    [the index for a hyperparameter]
-gpu_id: int
-    the index of a visible GPU
-save_path: str
-    The path to record training.
 experimental_settings: dict
-    The dict of experimental settins.
+    The dict of experimental settings.
 
 Returns
 -------
-ys: dict
-    keys are the name of performance measurements.
-    values are the corresponding performance.
+_imp: callable
 """
 
-def f(hp_conf, gpu_id, save_path, experimental_settings):
-    return {"loss": (np.array(hp_conf) ** 2).sum()}
+def f(experimental_settings):
+    def _imp():
+        """
+        Parameters
+        ----------
+        hp_conf: 1d list of hyperparameter value
+            [the index for a hyperparameter]
+        gpu_id: int
+            the index of a visible GPU
+        save_path: str
+            The path to record training.
+
+        Returns
+        -------
+        ys: dict
+            keys are the name of performance measurements.
+            values are the corresponding performance.
+        """
+
+        return {"loss": (np.array(hp_conf) ** 2).sum()}
+
+    return _imp
 ```
 
 Also, the keys and corresponding values of `experimental_settings` are as follows:
