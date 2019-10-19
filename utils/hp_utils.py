@@ -92,7 +92,7 @@ def save_hp(save_file_path, lock, job_id, value):
     lock.release()
 
 
-def load_hps(save_file_path, lock, var_type):
+def load_hps(load_file_path, lock, var_type):
     """
     loading hyperparameters evaluated in an experiment
 
@@ -107,7 +107,7 @@ def load_hps(save_file_path, lock, var_type):
     """
 
     lock.acquire()
-    with open(save_file_path, "r", newline="") as f:
+    with open(load_file_path, "r", newline="") as f:
         reader = [var_type(row[1]) for row in list(csv.reader(f, delimiter=","))]
     lock.release()
     return reader
@@ -457,19 +457,24 @@ class HyperparameterUtilities():
             save_file_path = self.save_path + "/" + var_name + ".csv"
             save_hp(save_file_path, self.lock, job_id, v)
 
-    def load_hps_conf(self, convert=False, do_sort=False):
+    def load_hps_conf(self, convert=False, do_sort=False, another_src=None):
         """
         loading hyperparameter configurations and the corresponding performance
 
         Parameters
         ----------
         convert: bool
-            if True, converting into constrained scales
+            if True, converting into constrained scales.
+        do_sort: bool
+            if True, sort configurations in ascending order by loss values.
+        another_src: str
+            If any path is given, configurations will be loaded from the given path. 
 
         Returns
         -------
         the list of hyperparameter configurations and the corresponding performance
-        [the index for configurations][the index for hyperparameters]
+        hp_conf: [the index for configurations][the index for hyperparameters]
+        ys: [the index for performance measurements][the index for configurations]
         """
 
         cs = self.config_space
@@ -479,15 +484,16 @@ class HyperparameterUtilities():
         for idx in range(len(names)):
             var_name = names[idx]
             var_type = self.distribution_type(var_name)
-            save_file_path = self.save_path + "/" + var_name + ".csv"
-            hps = load_hps(save_file_path, self.lock, var_type)
+            load_file_path = self.save_path + "/" + var_name + ".csv" if another_src is None else another_src + "/" + var_name + ".csv"
+            hps = load_hps(load_file_path, self.lock, var_type)
             if convert:
                 hps = [self.convert_hp(hp, var_name) for hp in hps]
             hps_conf.append(hps)
 
         for y_name in self.y_names:
-            save_file_path = self.save_path + "/" + y_name + ".csv"
-            y = load_hps(save_file_path, self.lock, float)
+            load_file_path = self.save_path + "/" + y_name + ".csv" if another_src is None else another_src + "/" + y_name + ".csv"
+            load_file_path = self.save_path + "/" + y_name + ".csv"
+            y = load_hps(load_file_path, self.lock, float)
             ys.append(y)
 
         if do_sort:
@@ -499,6 +505,31 @@ class HyperparameterUtilities():
         hps_conf = [[hps_conf[nd][nc] for nd in range(n_dims)] for nc in range(n_confs)]
 
         return hps_conf, ys
+    
+    def load_transfer_hps_conf(self, transfer_info_pathes, convert=False, do_sort=False):
+        """
+        loading hyperparameter configurations of prior information and the corresponding performance
+
+        Parameters
+        ----------
+        transfer_info_pathes: list of string
+            The path of the location of prior information
+
+        Returns
+        -------
+        the list of hyperparameter configurations and the corresponding performance
+        X: [the index of tasks][the index for configurations][the index for hyperparameters]
+        Y: [the index of tasks][the index for performance measurements][the index for configurations]
+        """
+
+        X = [[]]
+        Y = [[]]
+
+        for path in transfer_info_pathes:
+            _X, _Y = self.load_hps_conf(convert=convert, do_sort=do_sort, another_src=path)
+            X.append(_X)
+            Y.append(_Y)
+        return X, Y
 
     def prepare_opt_env(self):
         """

@@ -28,8 +28,6 @@ class SingleTaskGPBO(BaseOptimizer):
                          seed=seed
                          )
         self.opt = self.sample
-        self.idx = 0
-        self.n_evals = 0
 
     def sample(self):
         """
@@ -61,6 +59,7 @@ class MultiTaskGPBO(BaseOptimizer):
                  n_experiments=0,
                  restart=True,
                  seed=None,
+                 transfer_info_pathes=None
                  ):
 
         super().__init__(hp_utils,
@@ -72,21 +71,17 @@ class MultiTaskGPBO(BaseOptimizer):
                          seed=seed
                          )
         self.opt = self.sample
-        self.idx = 0
-        self.n_evals = 0
-
-        ### Must Fix here
-        self.X, self.Y = None, None
+        self.X, self.Y = hp_utils.load_transfer_hps_conf(transfer_info_pathes, convert=True)
 
     def sample(self):
         """
         X: N * D
         """
 
-        self.X[0], self.Y[0] = self.hp_utils.load_hps_conf(convert=True, do_sort=False)
-        self.X[0], self.Y[0] = map(np.asarray, [self.X[0], self.Y[0][0]])
+        _X, _Y = self.hp_utils.load_hps_conf(convert=True, do_sort=False)
+        self.X[0], self.Y[0] = map(np.asarray, [_X, _Y])
 
-        Xc, Yc = [], []
+        Xc = []
         for i, Xi in enumerate(self.X):
             task_id = np.ones(len(Xi)) * i
             Xc.append(np.c_[Xi, task_id])
