@@ -73,7 +73,7 @@ The number of classes on a given task.
 The pixel size of training data.
 
 ### sub (optional: Default is None)
-How much percentages of training data to use in training (Must be between 0. and 1.).
+How many percentages of training data to use in training (Must be between 0. and 1.).
 
 ## Optimizer
 You can add whatever optimizers you would like to use in this basement.
@@ -271,8 +271,8 @@ The number of classes on a given task.
 The pixel size of training data.
 
 ### sub_prop: float
-How much percentages of training data to use in training (Must be between 0. and 1.).
+How many percentages of training data to use in training (Must be between 0. and 1.).
 
 ### biased_cls: list of float
-The size of this list must be same as n_cls.
+The size of this list must be the same as n_cls.
 The i-th element of this list is the percentages of training data to use in learning.
