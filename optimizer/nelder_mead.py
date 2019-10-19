@@ -11,6 +11,8 @@ class NelderMead(BaseOptimizer):
                  n_experiments=0,
                  restart=True,
                  seed=None,
+                 verbose=True,
+                 print_freq=1,
                  delta_r=1.0,
                  delta_oc=0.5,
                  delta_ic=-0.5,
@@ -23,7 +25,9 @@ class NelderMead(BaseOptimizer):
                          max_evals=max_evals,
                          n_experiments=n_experiments,
                          restart=restart,
-                         seed=seed
+                         seed=seed,
+                         verbose=verbose,
+                         print_freq=print_freq
                          )
         self.delta = {"r": delta_r,
                       "e": delta_e,

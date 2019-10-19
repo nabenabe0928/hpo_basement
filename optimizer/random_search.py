@@ -9,7 +9,9 @@ class RandomSearch(BaseOptimizer):
                  max_evals=100,
                  n_experiments=0,
                  restart=True,
-                 seed=None
+                 seed=None,
+                 verbose=True,
+                 print_freq=1
                  ):
         super().__init__(hp_utils,
                          n_parallels=n_parallels,
@@ -17,6 +19,8 @@ class RandomSearch(BaseOptimizer):
                          max_evals=max_evals,
                          n_experiments=n_experiments,
                          restart=restart,
-                         seed=seed
+                         seed=seed,
+                         verbose=verbose,
+                         print_freq=print_freq
                          )
         self.opt = self._initial_sampler

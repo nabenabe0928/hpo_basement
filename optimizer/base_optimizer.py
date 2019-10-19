@@ -7,7 +7,7 @@ import obj_functions.machine_learning_utils as ml_utils
 from multiprocessing import Process
 
 
-def objective_function(hp_conf, hp_utils, gpu_id, job_id):
+def objective_function(hp_conf, hp_utils, gpu_id, job_id, verbose=True, print_freq=1):
     """
     Parameters
     ----------
@@ -18,16 +18,19 @@ def objective_function(hp_conf, hp_utils, gpu_id, job_id):
     """
 
     save_path = "history/stdo" + hp_utils.save_path[11:] + "/log{:0>5}.csv".format(job_id)
+    is_out_of_domain = hp_utils.out_of_domain(hp_conf)
+
     if hp_utils.in_fmt == "dict":
         hp_conf = hp_utils.list_to_dict(hp_conf)
-
-    if hp_utils.out_of_domain(hp_conf):
-        ml_utils.print_config(hp_conf, save_path, is_out_of_domain=True)
-        hp_utils.save_hp_conf(hp_conf, {yn: 1.0e+8 for yn in hp_utils.y_names}, job_id)
-    else:
-        ml_utils.print_config(hp_conf, save_path)
-        ys = hp_utils.obj_class(hp_conf, gpu_id, save_path)
+        ml_utils.print_config(hp_conf, save_path, is_out_of_domain=is_out_of_domain)
+        ys = {yn: 1.0e+8 for yn in hp_utils.y_names} if is_out_of_domain else hp_utils.obj_class(hp_conf, gpu_id, save_path) 
         hp_utils.save_hp_conf(hp_conf, ys, job_id)
+    else:
+        ys = {yn: 1.0e+8 for yn in hp_utils.y_names} if is_out_of_domain else hp_utils.obj_class(hp_conf, gpu_id, save_path) 
+        hp_utils.save_hp_conf(hp_conf, ys, job_id)
+    
+    if verbose and job_id % print_freq == 0:
+        utils.print_result(hp_conf, ys, job_id, hp_utils.list_to_dict)        
 
 
 def get_path_name(obj_name, experimental_settings):
@@ -67,9 +70,13 @@ class BaseOptimizer():
         if restart the experiment or not.
         if True, continue the experiment based on log files.
     max_evals: int
-        the number of evlauations in an experiment
+        the number of evlauations in an experiment.
     seed: int or None
-        The number specifying the seed on a random number generator
+        The number specifying the seed on a random number generator.
+    verbose: bool
+        Whether print the result or not.
+    print_freq: int
+        Every print_freq iteration, the result will be printed.    
     """
 
     def __init__(self,
@@ -80,6 +87,8 @@ class BaseOptimizer():
                  max_evals=100,
                  restart=True,
                  seed=None,
+                 verbose=True,
+                 print_freq=1,
                  obj=objective_function):
         """
         Member Variables
@@ -111,6 +120,8 @@ class BaseOptimizer():
         obj_path_name = get_path_name(hp_utils.obj_name, hp_utils.experimental_settings)
         self.hp_utils.save_path = "history/log/{}/{}/{:0>3}".format(opt_name, obj_path_name, n_experiments)
         self.n_jobs = 0
+        self.verbose = verbose
+        self.print_freq = print_freq
 
     def get_n_jobs(self):
         """
@@ -181,7 +192,12 @@ class BaseOptimizer():
                 hp_conf = self.opt()
 
             self.ongoing_confs[0] = hp_conf[:]
-            self.obj(hp_conf, self.hp_utils, gpu_id, self.n_jobs)
+            self.obj(hp_conf, 
+                     self.hp_utils, 
+                     gpu_id, 
+                     self.n_jobs,
+                     verbose=self.verbose, 
+                     print_freq=self.print_freq)
             self.n_jobs += 1
 
             if self.n_jobs >= self.max_evals:
@@ -215,7 +231,13 @@ class BaseOptimizer():
                     hp_conf = self.opt()
 
                 self.ongoing_confs[gpu_id] = hp_conf[:]
-                p = Process(target=self.obj, args=(hp_conf, self.hp_utils, gpu_id, self.n_jobs))
+                p = Process(target=self.obj, 
+                            args=(hp_conf,
+                                  self.hp_utils,
+                                  gpu_id,
+                                  self.n_jobs,
+                                  self.verbose,
+                                  self.print_freq))
                 p.start()
                 jobs.append([gpu_id, p])
                 self.n_jobs += 1

@@ -15,6 +15,8 @@ def parse_requirements():
     ap.add_argument("-dim", type=int, default=None)
     ap.add_argument("-par", type=int, default=1)
     ap.add_argument("-ini", type=int)
+    ap.add_argument("-veb", type=int, choices=[0, 1], default=1)
+    ap.add_argument("-fre", type=int, default=1)
     ap.add_argument("-exp", type=int, default=0)
     ap.add_argument("-eva", type=int, default=100)
     ap.add_argument("-seed", type=int, default=None)
@@ -30,7 +32,9 @@ def parse_requirements():
                     "n_experiments": args.exp,
                     "max_evals": args.eva,
                     "restart": args.res,
-                    "seed": args.seed
+                    "seed": args.seed,
+                    "verbose": bool(args.veb),
+                    "print_freq": args.fre
                     }
     experimental_settings = {"dim": args.dim,
                              "dataset_name": args.dat,
@@ -44,7 +48,7 @@ def parse_requirements():
         print("#### PARSER ERROR ####")
         print("One example to run the file is described below:")
         print("")
-        print("user@user:~$ python main.py -dim 2 -par 1 -ini 10 -exp 0 -eva 100 -res 0 [-seed 0 -dat cifar -cls 10 -img 32 -sub 0.1]")
+        print("user@user:~$ python main.py -dim 2 -par 1 -ini 10 -exp 0 -eva 100 -res 0 [-seed 0 -veb 1 -fre 1 -dat cifar -cls 10 -img 32 -sub 0.1]")
         print("")
         print("  -ini (Both  Required): The number of initial samplings.")
         print("  -dim (Bench Required): The dimension of a hyperparameter configuraiton. (Only for benchmark functions. Otherwise, omit it.)")
@@ -56,7 +60,9 @@ def parse_requirements():
         print("  -exp (Both  Optional): The index of an experiment. (Used only to specify the path of log files.)")
         print("  -eva (Both  Optional): The number of evaluations in an experiment.")
         print("  -res (Both  Optional): Whether restarting the previous experiment or not. If 0, removes the previous log files.")
-        print("  -seed(Both  Optional):The number to specify a random number generator.")
+        print("  -seed(Both  Optional): The number to specify a random number generator.")
+        print("  -veb (Both  Optional): Whether print the result or not. If 0, do not print.")
+        print("  -fre (Both  Optional): Every print_freq iteration, the result will be printed.")
         print("")
         sys.exit()
 
@@ -69,6 +75,16 @@ def get_stdo_path(path):
     for p in path.split("/")[2:]:
         stdo += p + "/"
     return stdo
+
+
+def print_result(hp_conf, ys, job_id, list_to_dict):
+    print("##### Evaluation {:0>5} #####".format(job_id))
+    if type(hp_conf) is dict:
+        print(hp_conf)
+    else:
+        print(list_to_dict(hp_conf))
+    print(ys)
+    print("")
 
 
 def check_conflict(path):

@@ -27,7 +27,7 @@ if __name__ == '__main__':
 Run from termianl by (one example):
 
 ```
-python main.py -dim 2 -par 1 -ini 3 -exp 0 -eva 100 -res 0 -seed 0
+python main.py -dim 2 -par 1 -ini 3 -exp 0 -eva 100 -res 0 -seed 0 -veb 1 -fre 1
 ```
 
 where all the arguments are integer.
@@ -56,6 +56,12 @@ If 0, will remove the previous log files after you choose "y" at the caution.
 
 ### seed  (optional: Default is None)
 The number to specify the random seed.
+
+### veb (optional: Default is 1)
+Whether print the result or not. If 0, not print.
+
+### fre (optional: Default is 1)
+Every print_freq iteration, the result will be printed.
 
 ### dat (supervised learning)
 The name of dataset.
@@ -87,6 +93,8 @@ class OptName(BaseOptimizer):
                  max_evals=100,  # the number of maximum evaluations in an experiment
                  restart=True,  # Whether restarting the previous experiment or not. If False, removes the previous log files.
                  seed=None,  # The number to specify the seed for a random number generator.
+                 verbose=True,  # Whether print the result or not.
+                 print_freq=1  # Every print_freq iteration, the result will be printed.
                  **kwargs
                  ):
 
@@ -97,7 +105,9 @@ class OptName(BaseOptimizer):
                          n_experiments=n_experiments,
                          max_evals=max_evals,
                          restart=restart,
-                         seed=seed
+                         seed=seed,
+                         verbose=verbose,
+                         print_freq=print_freq
                          )
 
         # optimizer in BaseOptimizer object
