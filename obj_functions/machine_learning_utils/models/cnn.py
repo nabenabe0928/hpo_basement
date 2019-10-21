@@ -62,7 +62,7 @@ class CNN(nn.Module):
         self.nesterov = nesterov
         self.lr_decay = lr_decay
         self.lr_step = lr_step
-        self.epochs = 1  # 60
+        self.epochs = 160
 
         # Architecture of CNN.
         self.c1 = nn.Conv2d(3, self.ch1, 5, padding=2)
