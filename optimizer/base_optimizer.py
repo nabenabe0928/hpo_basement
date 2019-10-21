@@ -168,6 +168,13 @@ class BaseOptimizer():
 
         return sample
 
+    def print_optimized_result(self):
+        print("### Best Configuration ###")
+        hps_conf, losses = self.hp_utils.load_hps_conf(do_sort=True)
+        print(hps_conf[0])
+        print("### Best Performance ###")
+        print(losses[0][0])
+
     def optimize(self):
         utils.create_log_dir(self.hp_utils.save_path)
         if not self.restart:
@@ -180,6 +187,7 @@ class BaseOptimizer():
             self._optimize_sequential()
         else:
             self._optimize_parallel()
+        self.print_optimized_result()
 
     def _optimize_sequential(self):
         while True:
