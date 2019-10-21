@@ -64,8 +64,8 @@ class SingleTaskTPE(BaseOptimizer):
             var_type = utils.distribution_type(self.hp_utils.config_space, var_name)
 
             if var_type in [str, bool]:
-                cat_idx = self._sample_categorical(lower_vals, upper_vals)
-                hp_value = self.hp.choices[cat_idx]
+                cat_idx = self._sample_categorical(var_name, lower_vals, upper_vals)
+                hp_value = self.hp_utils.config_space._hyperparameters[var_name].choices[cat_idx]
             elif var_type in [float, int]:
                 hp_value = self._sample_numerical(var_name, var_type, lower_vals, upper_vals)
             hp_conf.append(hp_value)
