@@ -11,9 +11,9 @@ class GaussKernel():
         self.sigma = np.maximum(sigma, EPS)
 
     def pdf(self, x):
-        den = np.sqrt(2 * np.pi) * self.sigma
-        mah = ((x - self.mu) / self.sigma) ** 2
-        return 1. / den * np.exp(-0.5 * mah)
+        z = np.sqrt(2 * np.pi) * self.sigma
+        mahalanobis = ((x - self.mu) / self.sigma) ** 2
+        return 1. / z * np.exp(-0.5 * mahalanobis)
 
     def cdf(self, x):
         z = (x - self.mu) / (np.sqrt(2) * self.sigma)

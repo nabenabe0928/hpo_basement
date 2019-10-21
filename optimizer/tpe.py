@@ -63,20 +63,15 @@ class SingleTaskTPE(BaseOptimizer):
             var_name = self.hp_utils.config_space._idx_to_hyperparameter[idx]
             var_type = utils.distribution_type(self.hp_utils.config_space, var_name)
 
-            if var_type in [str, bool]:
-                cat_idx = self._sample_categorical(var_name, lower_vals, upper_vals)
-                hp_value = self.hp_utils.config_space._hyperparameters[var_name].choices[cat_idx]
-            elif var_type in [float, int]:
-                hp_value = self._sample_numerical(var_name, var_type, lower_vals, upper_vals)
+            hp_value = self._sample_categorical(var_name, lower_vals, upper_vals) if var_type in [str, bool] \
+                       else self._sample_numerical(var_name, var_type, lower_vals, upper_vals)
             hp_conf.append(hp_value)
 
         return self.hp_utils.revert_hp_conf(hp_conf)
 
     def _sample_numerical(self, var_name, var_type, lower_vals, upper_vals):
         hp = self.hp_utils.config_space._hyperparameters[var_name]
-        q, log = hp.q, hp.log
-        lb, ub = 0., 1.
-        converted_q = None
+        q, log, lb, ub, converted_q = hp.q, hp.log, 0., 1., None
 
         if var_type is int or q is not None:
             if not log:
@@ -98,13 +93,10 @@ class SingleTaskTPE(BaseOptimizer):
         pe_lower = CategoricalParzenEstimator(lower_vals, n_choices, self.weight_func)
         pe_upper = CategoricalParzenEstimator(upper_vals, n_choices, self.weight_func)
 
-        return int(self._compare_candidates(pe_lower, pe_upper))
+        best_choice_idx = int(self._compare_candidates(pe_lower, pe_upper))
+        return choices[best_choice_idx]
 
     def _compare_candidates(self, pe_lower, pe_upper):
         samples_lower = pe_lower.sample_from_density_estimator(self.rng, self.n_ei_candidates)
-        ll_lower = pe_lower.log_likelihood(samples_lower)
-        ll_upper = pe_upper.log_likelihood(samples_lower)
-
-        best_idx = np.argmax(ll_lower - ll_upper)
-
+        best_idx = np.argmax(pe_lower.log_likelihood(samples_lower) - pe_upper.log_likelihood(samples_lower))
         return samples_lower[best_idx]

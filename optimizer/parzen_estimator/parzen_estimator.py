@@ -20,29 +20,15 @@ class NumericalParzenEstimator(object):
             drawn_hp = self.basis[active].sample_from_kernel(rng)
             if self.lb <= drawn_hp <= self.ub:
                 samples = np.append(samples, drawn_hp)
-
-        samples = samples if self.q is None else np.round(samples / self.q) * self.q
-
-        return samples
+ 
+        return samples if self.q is None else np.round(samples / self.q) * self.q
 
     def log_likelihood(self, samples):
         p_accept = np.sum([w * (b.cdf(self.ub) - b.cdf(self.lb)) for w, b in zip(self.weights, self.basis)])
-
-        if self.q is None:
-            mah = ((samples[:, None] - self.mus) / self.sigmas) ** 2
-            z = np.sqrt(2 * np.pi) * self.sigmas
-            coef = self.weights / z / p_accept
-            x = -0.5 * mah + np.log(coef)
-            return_val = np.log(np.exp(x).sum(axis=1))
-        else:
-            ps = np.zeros(samples.shape, dtype=float)
-            for w, b in zip(self.weights, self.basis):
-                samples_u = np.minimum(samples + 0.5 * self.q, self.ub)
-                samples_l = np.maximum(samples + 0.5 * self.q, self.lb)
-                ps += w * (b.cdf(samples_u) - b.cdf(samples_l))
-            return_val = np.log(ps + EPS) - np.log(p_accept + EPS)
-
-        return return_val
+        ps = np.zeros(samples.shape, dtype=float)
+        for w, b in zip(self.weights, self.basis):
+            ps += w * b.pdf(samples) if self.q is None else w * (b.cdf(np.minimum(samples + 0.5 * self.q, self.ub)) - b.cdf(np.maximum(samples + 0.5 * self.q, self.lb)))
+        return np.log(ps + EPS) - np.log(p_accept + EPS)
 
     def _calculate_mus(self, samples, lower_bound, upper_bound):
         order = np.argsort(samples)
@@ -95,13 +81,10 @@ class CategoricalParzenEstimator():
     def sample_from_density_estimator(self, rng, n_samples):
         basis_samples = rng.multinomial(n=1, pvals=self.weights, size=n_samples)
         basis_idxs = np.dot(basis_samples, np.arange(self.weights.size))
-        return_val = np.array([self.basis[idx].sample_from_kernel(rng) for idx in basis_idxs])
-
-        return return_val
+        return np.array([self.basis[idx].sample_from_kernel(rng) for idx in basis_idxs])
 
     def log_likelihood(self, samples):
         ps = np.zeros(samples.shape, dtype=float)
         for w, b in zip(self.weights, self.basis):
             ps += w * b.cdf_for_numpy(samples)
-
         return np.log(ps + EPS)
