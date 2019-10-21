@@ -18,7 +18,7 @@ def optimize_EI(gp, best_f, n_dim):
                        q=1,
                        num_restarts=5,
                        raw_samples=5)
-    
+
     return np.array(x[0])
 
 
@@ -58,7 +58,7 @@ class SingleTaskGPBO(BaseOptimizer):
 
         gp = SingleTaskGP(X, Y)
         x = optimize_EI(gp, Y[0].min(), self.n_dim)
-        
+
         return self.hp_utils.revert_hp_conf(x)
 
 
@@ -94,7 +94,7 @@ class MultiTaskGPBO(BaseOptimizer):
         for i, Xi in enumerate(self.X):
             task_id = np.ones(len(Xi)) * i
             Xc.append(np.c_[Xi, task_id])
-        
+
         X = Xc[0]
         Y = self.Y[0][0]
         for i in range(1, len(Xc)):

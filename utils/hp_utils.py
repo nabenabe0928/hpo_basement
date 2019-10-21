@@ -41,6 +41,34 @@ def create_hyperparameter(var_type, name, lower=None, upper=None, log=False, q=N
         raise ValueError("The hp_type must be chosen from [int, float, str, bool]")
 
 
+def distribution_type(config_space, var_name):
+    """
+    Parameters
+    ----------
+    var_name: str
+        the name of target hyperparameter.
+
+    Returns
+    -------
+    type of hyperparameter
+    """
+
+    cs_dist = str(type(config_space._hyperparameters[var_name]))
+
+    if "Integer" in cs_dist:
+        return int
+    elif "Float" in cs_dist:
+        return float
+    elif "Categorical" in cs_dist:
+        var_type = type(config_space._hyperparameters[var_name].choices[0])
+        if var_type == str or var_type == bool:
+            return var_type
+        else:
+            raise ValueError("The type of categorical parameters must be 'bool' or 'str'.")
+    else:
+        raise NotImplementedError("The distribution is not implemented.")
+
+
 def get_hp_info(hp):
     """
     Parameters
@@ -225,33 +253,6 @@ class HyperparameterUtilities():
 
         return hp_dict
 
-    def distribution_type(self, var_name):
-        """
-        Parameters
-        ----------
-        var_name: str
-            the name of target hyperparameter.
-
-        Returns
-        -------
-        type of hyperparameter
-        """
-
-        cs_dist = str(type(self.config_space._hyperparameters[var_name]))
-
-        if "Integer" in cs_dist:
-            return int
-        elif "Float" in cs_dist:
-            return float
-        elif "Categorical" in cs_dist:
-            var_type = type(self.config_space._hyperparameters[var_name].choices[0])
-            if var_type == str or var_type == bool:
-                return var_type
-            else:
-                raise ValueError("The type of categorical parameters must be 'bool' or 'str'.")
-        else:
-            raise NotImplementedError("The distribution is not implemented.")
-
     def out_of_domain(self, hp_conf):
         """
         Parameters
@@ -271,7 +272,7 @@ class HyperparameterUtilities():
         hp_dict = self.list_to_dict(hp_conf) if type(hp_conf) == list else hp_conf
 
         for var_name, value in hp_dict.items():
-            if not self.distribution_type(var_name) in [int, float]:
+            if not distribution_type(self.config_space, var_name) in [int, float]:
                 continue
             hp = self.config_space._hyperparameters[var_name]
             lb, ub = hp.lower, hp.upper
@@ -324,7 +325,7 @@ class HyperparameterUtilities():
         hp_converted_conf = []
         for idx, hp_value in enumerate(hp_conf):
             var_name = self.config_space._idx_to_hyperparameter[idx]
-            d = self.distribution_type(var_name)
+            d = distribution_type(self.config_space, var_name)
             if d is int or d is float:
                 hp_converted_conf.append(self.convert_hp(hp_value, var_name))
             else:
@@ -370,7 +371,7 @@ class HyperparameterUtilities():
 
         try:
             lb, ub, q, log = get_hp_info(self.config_space._hyperparameters[var_name])
-            var_type = self.distribution_type(var_name)
+            var_type = distribution_type(self.config_space, var_name)
             hp_value = (ub - lb) * hp_converted_value + lb
             hp_value = np.exp(hp_value) if log else hp_value
             hp_value = np.floor(hp_value / q) * q if q is not None else hp_value
@@ -396,7 +397,7 @@ class HyperparameterUtilities():
         hp_conf = []
         for idx, hp_converted_value in enumerate(hp_converted_conf):
             var_name = self.config_space._idx_to_hyperparameter[idx]
-            d = self.distribution_type(var_name)
+            d = distribution_type(self.config_space, var_name)
             if d is int or d is float:
                 hp_conf.append(self.revert_hp(hp_converted_value, var_name))
             else:
@@ -457,7 +458,7 @@ class HyperparameterUtilities():
             save_file_path = self.save_path + "/" + var_name + ".csv"
             save_hp(save_file_path, self.lock, job_id, v)
 
-    def load_hps_conf(self, convert=False, do_sort=False, another_src=None):
+    def load_hps_conf(self, convert=False, do_sort=False, index_from_conf=True, another_src=None):
         """
         loading hyperparameter configurations and the corresponding performance
 
@@ -468,7 +469,10 @@ class HyperparameterUtilities():
         do_sort: bool
             if True, sort configurations in ascending order by loss values.
         another_src: str
-            If any path is given, configurations will be loaded from the given path. 
+            If any path is given, configurations will be loaded from the given path.
+        index_from_conf: bool
+            If True, the index of hp_conf becomes opposite.
+            hp_conf: [the index for hyperparameters][the index for configurations]
 
         Returns
         -------
@@ -483,7 +487,7 @@ class HyperparameterUtilities():
         ys = []
         for idx in range(len(names)):
             var_name = names[idx]
-            var_type = self.distribution_type(var_name)
+            var_type = distribution_type(self.config_space, var_name)
             load_file_path = self.save_path + "/" + var_name + ".csv" if another_src is None else another_src + "/" + var_name + ".csv"
             hps = load_hps(load_file_path, self.lock, var_type)
             if convert:
@@ -494,18 +498,19 @@ class HyperparameterUtilities():
             load_file_path = self.save_path + "/" + y_name + ".csv" if another_src is None else another_src + "/" + y_name + ".csv"
             load_file_path = self.save_path + "/" + y_name + ".csv"
             y = load_hps(load_file_path, self.lock, float)
-            ys.append(y)
+            ys.append(np.array(y))
 
         if do_sort:
             order = np.argsort(ys[0])
-            ys = [np.array(y[order]) for y in ys]
-            hps_conf = [np.array(hps[order]) for hps in hps_conf]
-        n_confs = len(hps_conf[0])
-        n_dims = len(hps_conf)
-        hps_conf = [[hps_conf[nd][nc] for nd in range(n_dims)] for nc in range(n_confs)]
+            ys = [y[order] for y in ys]
+            hps_conf = [np.array(hps)[order] for hps in hps_conf]
+        if index_from_conf:
+            n_confs = len(hps_conf[0])
+            n_dims = len(hps_conf)
+            hps_conf = [[hps_conf[nd][nc] for nd in range(n_dims)] for nc in range(n_confs)]
 
         return hps_conf, ys
-    
+
     def load_transfer_hps_conf(self, transfer_info_pathes, convert=False, do_sort=False):
         """
         loading hyperparameter configurations of prior information and the corresponding performance

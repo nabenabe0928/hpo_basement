@@ -1,4 +1,4 @@
-from utils.hp_utils import HyperparameterUtilities, get_hp_info
+from utils.hp_utils import HyperparameterUtilities, get_hp_info, distribution_type
 from utils.utils import (load_class,
                          create_log_dir,
                          import_module,
@@ -9,6 +9,7 @@ from utils.utils import (load_class,
 
 __all__ = ['HyperparameterUtilities',
            'get_hp_info',
+           'distribution_type',
            'load_class',
            'create_log_dir',
            'import_module',

@@ -23,14 +23,14 @@ def objective_function(hp_conf, hp_utils, gpu_id, job_id, verbose=True, print_fr
     if hp_utils.in_fmt == "dict":
         hp_conf = hp_utils.list_to_dict(hp_conf)
         ml_utils.print_config(hp_conf, save_path, is_out_of_domain=is_out_of_domain)
-        ys = {yn: 1.0e+8 for yn in hp_utils.y_names} if is_out_of_domain else hp_utils.obj_class(hp_conf, gpu_id, save_path) 
+        ys = {yn: 1.0e+8 for yn in hp_utils.y_names} if is_out_of_domain else hp_utils.obj_class(hp_conf, gpu_id, save_path)
         hp_utils.save_hp_conf(hp_conf, ys, job_id)
     else:
-        ys = {yn: 1.0e+8 for yn in hp_utils.y_names} if is_out_of_domain else hp_utils.obj_class(hp_conf, gpu_id, save_path) 
+        ys = {yn: 1.0e+8 for yn in hp_utils.y_names} if is_out_of_domain else hp_utils.obj_class(hp_conf, gpu_id, save_path)
         hp_utils.save_hp_conf(hp_conf, ys, job_id)
-    
+
     if verbose and job_id % print_freq == 0:
-        utils.print_result(hp_conf, ys, job_id, hp_utils.list_to_dict)        
+        utils.print_result(hp_conf, ys, job_id, hp_utils.list_to_dict)
 
 
 def get_path_name(obj_name, experimental_settings):
@@ -76,7 +76,7 @@ class BaseOptimizer():
     verbose: bool
         Whether print the result or not.
     print_freq: int
-        Every print_freq iteration, the result will be printed.    
+        Every print_freq iteration, the result will be printed.
     """
 
     def __init__(self,
@@ -107,7 +107,6 @@ class BaseOptimizer():
 
         self.hp_utils = hp_utils
         self.obj = obj
-        self.cs = hp_utils.config_space
         self.max_evals = max_evals
         self.n_init = n_init
         self.n_parallels = max(n_parallels, 1)
@@ -151,12 +150,12 @@ class BaseOptimizer():
         hyperparameter configurations: list
         """
 
-        hps = self.cs._hyperparameters
+        hps = self.hp_utils.config_space._hyperparameters
         sample = [None for _ in range(len(hps))]
 
         for var_name, hp in hps.items():
-            idx = self.cs._hyperparameter_idx[var_name]
-            dist = self.hp_utils.distribution_type(var_name)
+            idx = self.hp_utils.config_space._hyperparameter_idx[var_name]
+            dist = utils.distribution_type(self.hp_utils.config_space, var_name)
             if dist is str or dist is bool:
                 # categorical
                 choices = hp.choices
@@ -192,11 +191,11 @@ class BaseOptimizer():
                 hp_conf = self.opt()
 
             self.ongoing_confs[0] = hp_conf[:]
-            self.obj(hp_conf, 
-                     self.hp_utils, 
-                     gpu_id, 
+            self.obj(hp_conf,
+                     self.hp_utils,
+                     gpu_id,
                      self.n_jobs,
-                     verbose=self.verbose, 
+                     verbose=self.verbose,
                      print_freq=self.print_freq)
             self.n_jobs += 1
 
@@ -231,7 +230,7 @@ class BaseOptimizer():
                     hp_conf = self.opt()
 
                 self.ongoing_confs[gpu_id] = hp_conf[:]
-                p = Process(target=self.obj, 
+                p = Process(target=self.obj,
                             args=(hp_conf,
                                   self.hp_utils,
                                   gpu_id,
