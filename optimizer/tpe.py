@@ -82,7 +82,7 @@ class SingleTaskTPE(BaseOptimizer):
         pe_lower = NumericalParzenEstimator(lower_vals, lb, ub, self.weight_func, q=converted_q)
         pe_upper = NumericalParzenEstimator(upper_vals, lb, ub, self.weight_func, q=converted_q)
 
-        return var_type(self._compare_candidates(pe_lower, pe_upper))
+        return self._compare_candidates(pe_lower, pe_upper)
 
     def _sample_categorical(self, var_name, lower_vals, upper_vals):
         choices = self.hp_utils._hyperparameters[var_name].choices
@@ -94,6 +94,7 @@ class SingleTaskTPE(BaseOptimizer):
         pe_upper = CategoricalParzenEstimator(upper_vals, n_choices, self.weight_func)
 
         best_choice_idx = int(self._compare_candidates(pe_lower, pe_upper))
+
         return choices[best_choice_idx]
 
     def _compare_candidates(self, pe_lower, pe_upper):

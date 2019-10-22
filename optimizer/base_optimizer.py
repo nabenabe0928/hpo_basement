@@ -169,10 +169,10 @@ class BaseOptimizer():
         return sample
 
     def print_optimized_result(self):
-        print("### Best Configuration ###")
+        print("#### Best Configuration ####")
         hps_conf, losses = self.hp_utils.load_hps_conf(do_sort=True)
         print(hps_conf[0])
-        print("### Best Performance ###")
+        print("##### Best Performance #####")
         print(losses[0][0])
 
     def optimize(self):
