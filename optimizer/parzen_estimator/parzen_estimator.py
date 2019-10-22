@@ -18,7 +18,7 @@ class NumericalParzenEstimator(object):
         while samples.size < n_samples:
             active = np.argmax(rng.multinomial(1, self.weights))
             drawn_hp = self.basis[active].sample_from_kernel(rng)
-            if self.lb <= drawn_hp <= self.ub:va
+            if self.lb <= drawn_hp <= self.ub:
                 samples = np.append(samples, drawn_hp)
  
         return samples if self.q is None else np.round(samples / self.q) * self.q
