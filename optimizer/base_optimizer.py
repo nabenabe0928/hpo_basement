@@ -195,8 +195,10 @@ class BaseOptimizer():
 
             if self.n_jobs < self.n_init:
                 hp_conf = self._initial_sampler()
-            else:
+            elif self.n_jobs < self.max_evals:
                 hp_conf = self.opt()
+            else:
+                break
 
             self.ongoing_confs[0] = hp_conf[:]
             self.obj(hp_conf,
