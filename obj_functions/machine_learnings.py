@@ -15,7 +15,6 @@ def cnn(experimental_settings):
                                                        sub_prop=experimental_settings["sub_prop"],
                                                        biased_cls=experimental_settings["biased_cls"]
                                                        )
-
     def _imp(hp_dict, cuda_id, save_path):
         model = models.CNN(**hp_dict, n_cls=experimental_settings["n_cls"])
         train_data, test_data = datasets.get_data(train_dataset, test_dataset, batch_size=model.batch_size)

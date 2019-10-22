@@ -89,19 +89,19 @@ class NelderMead(BaseOptimizer):
         self.idx += 1
 
     def shrink(self, Y):
-        n_points = len(self.ys)
+        n_points = self.n_dim + 1
         for i in range(1, n_points):
             self.xs[i] = self.xs[0] + self.delta["s"] * (self.xs[i] - self.xs[0])
-            self.ys[i] = Y[self.idx + i - 1]
+            self.ys[i] = Y[self.idx]
+            self.idx += 1
 
     def if_shrink(self, Y):
-        n_res = self.n_evals - self.idx
+        n_res = self.n_evals - self.idx - 1
         if n_res >= self.n_dim:
             self.shrink(Y)
-            self.idx += self.n_dim
             return None
         else:
-            return self.xs[n_res + 1] + self.delta["s"] * (self.xs[n_res + 1] - self.xs[0])
+            return self.xs[0] + self.delta["s"] * (self.xs[n_res + 1] - self.xs[0])
 
     def search(self, X, Y):
         self.xs = X[:self.n_init]
