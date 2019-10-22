@@ -1,9 +1,13 @@
 # The basement for the experiments for hyperparameter optimization (HPO)
 
 ## Requirements
-・python3.7
+・python3.7 (3.7.4)
 
 ・ConfigSpace[ (github)](https://github.com/automl/ConfigSpace)
+
+```
+pip install -r requirements.txt
+```
 
 ## Implementation
 An easy example of `main.py`.
