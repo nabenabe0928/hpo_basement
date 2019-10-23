@@ -44,8 +44,8 @@ def get_path_name(obj_name, experimental_settings):
         obj_path_name += str(experimental_settings["n_cls"])
     if experimental_settings["image_size"] is not None:
         obj_path_name += "_img{}".format(experimental_settings["image_size"])
-    if experimental_settings["sub_prop"] is not None:
-        obj_path_name += "_{}per".format(int(100 * experimental_settings["sub_prop"]))
+    if experimental_settings["data_frac"] is not None:
+        obj_path_name += "_{}per".format(int(100 * experimental_settings["data_frac"]))
     if experimental_settings["biased_cls"] is not None:
         obj_path_name += "_biased"
     return obj_path_name

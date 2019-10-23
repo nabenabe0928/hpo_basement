@@ -156,7 +156,7 @@ class HyperparameterUtilities():
             the number of classes on a given task.
         *image_size: int
             pixel size
-        *sub_prop: float
+        *data_frac: float
             How much percentages of training data to use in training. The value must be [0., 1.].
         *biased_cls: list of float
             How much percentages of i-th labeled data to use in training.
@@ -169,7 +169,7 @@ class HyperparameterUtilities():
                                         "dataset_name": None,
                                         "n_cls": None,
                                         "image_size": None,
-                                        "sub_prop": None,
+                                        "data_frac": None,
                                         "biased_cls": None
                                         }
                  ):

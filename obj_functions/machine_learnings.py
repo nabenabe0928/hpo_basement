@@ -12,7 +12,7 @@ def cnn(experimental_settings):
     train_dataset, test_dataset = datasets.get_dataset(dataset_name=experimental_settings["dataset_name"],
                                                        n_cls=experimental_settings["n_cls"],
                                                        image_size=experimental_settings["image_size"],
-                                                       sub_prop=experimental_settings["sub_prop"],
+                                                       data_frac=experimental_settings["data_frac"],
                                                        biased_cls=experimental_settings["biased_cls"]
                                                        )
 

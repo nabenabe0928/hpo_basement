@@ -9,7 +9,7 @@ from torch.utils.data.dataset import Subset
 def get_dataset(dataset_name,
                 n_cls=10,  # The number of class in training and testing
                 image_size=None,  # pixel size
-                sub_prop=None,  # How much percentages of training we use in an experiment. [0, 1]
+                data_frac=None,  # How much percentages of training we use in an experiment. [0, 1]
                 biased_cls=None  # len(biased_cls) must be n_cls. Each element represents the percentages.
                 ):
 
@@ -21,7 +21,7 @@ def get_dataset(dataset_name,
                                                       raw_n_cls,
                                                       dataset_name,
                                                       n_cls,
-                                                      sub_prop,
+                                                      data_frac,
                                                       biased_cls)
 
     return train_dataset, test_dataset
@@ -55,10 +55,10 @@ def process_raw_dataset(train_raw_dataset,
                         raw_n_cls,
                         dataset_name,
                         n_cls=None,
-                        sub_prop=None,
+                        data_frac=None,
                         biased_cls=None):
 
-    if n_cls is None and sub_prop is None and biased_cls is None:
+    if n_cls is None and data_frac is None and biased_cls is None:
         return train_raw_dataset, test_raw_dataset
     else:
         print("Processing raw dataset...")
@@ -74,8 +74,8 @@ def process_raw_dataset(train_raw_dataset,
         if n_cls is not None:
             print("The number of classes: {} -> {}".format(raw_n_cls, n_cls))
             train_labels, test_labels = get_small_class(train_labels, test_labels, n_cls)
-        if sub_prop is not None:
-            n_subtrain = int(np.ceil(len(train_labels[0]) * sub_prop))
+        if data_frac is not None:
+            n_subtrain = int(np.ceil(len(train_labels[0]) * data_frac))
             print("Subsampling: {} images".format(n_subtrain))
             train_labels = np.array([tl[:n_subtrain] for tl in train_labels])
         if biased_cls is not None:

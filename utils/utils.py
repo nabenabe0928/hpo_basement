@@ -40,7 +40,7 @@ def parse_requirements():
                              "dataset_name": args.dat,
                              "n_cls": args.cls,
                              "image_size": args.img,
-                             "sub_prop": args.sub,
+                             "data_frac": args.sub,
                              "biased_cls": None
                              }
 

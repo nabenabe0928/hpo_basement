@@ -274,7 +274,7 @@ The number of classes on a given task.
 ### image_size: int
 The pixel size of training data.
 
-### sub_prop: float
+### data_frac: float
 How many percentages of training data to use in training (Must be between 0. and 1.).
 
 ### biased_cls: list of float
