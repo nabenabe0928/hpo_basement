@@ -560,7 +560,7 @@ class HyperparameterUtilities():
                 self.config_space.add_hyperparameter(hp)
         else:
             if 'x' in config_info.keys():
-                raise ValueError("-dim is required at the implementation e.g.) 'python main.py -dim 3 -ini 3' when optimizing benchmark functions.")
+                raise ValueError("-dim is required in the command line e.g.) 'python main.py -dim 3 -ini 3' when optimizing benchmark functions.")
             for var_name, v in config_info.items():
                 if "ignore" in v.keys():
                     if v["ignore"] != "True" and v["ignore"] != "False":
