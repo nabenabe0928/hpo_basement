@@ -552,13 +552,15 @@ class HyperparameterUtilities():
             try:
                 v = config_info['x']
             except ValueError:
-                raise ValueError("ONLY 'x' is allowed to be the name of hyperparameters of benchmark functions in params.json.")
+                raise ValueError("'x' is allowed to be the name of hyperparameters of benchmark functions ONLY in params.json.")
             lb, ub = v["lower"], v["upper"]
             for i in range(self.experimental_settings["dim"]):
                 var_name = 'x{:0>5}'.format(i)
                 hp = create_hyperparameter(float, var_name, lower=lb, upper=ub)
                 self.config_space.add_hyperparameter(hp)
         else:
+            if 'x' in config_info.keys():
+                raise ValueError("-dim is required at the implementation e.g.) 'python main.py -dim 3 -ini 3' when optimizing benchmark functions.")
             for var_name, v in config_info.items():
                 if "ignore" in v.keys():
                     if v["ignore"] != "True" and v["ignore"] != "False":

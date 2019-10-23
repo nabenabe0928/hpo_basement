@@ -20,14 +20,19 @@ class NumericalParzenEstimator(object):
             drawn_hp = self.basis[active].sample_from_kernel(rng)
             if self.lb <= drawn_hp <= self.ub:
                 samples = np.append(samples, drawn_hp)
- 
+
         return samples if self.q is None else np.round(samples / self.q) * self.q
 
     def log_likelihood(self, samples):
         p_accept = np.sum([w * (b.cdf(self.ub) - b.cdf(self.lb)) for w, b in zip(self.weights, self.basis)])
         ps = np.zeros(samples.shape, dtype=float)
         for w, b in zip(self.weights, self.basis):
-            ps += w * b.pdf(samples) if self.q is None else w * (b.cdf(np.minimum(samples + 0.5 * self.q, self.ub)) - b.cdf(np.maximum(samples + 0.5 * self.q, self.lb)))
+            if self.q is None:
+                ps += w * b.pdf(samples)
+            else:
+                integral_u = b.cdf(np.minimum(samples + 0.5 * self.q, self.ub))
+                integral_l = b.cdf(np.maximum(samples + 0.5 * self.q, self.lb))
+                ps += w * (integral_u - integral_l)
         return np.log(ps + EPS) - np.log(p_accept + EPS)
 
     def _calculate_mus(self, samples, lower_bound, upper_bound):
