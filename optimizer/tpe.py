@@ -55,10 +55,10 @@ class SingleTaskTPE(BaseOptimizer):
 
     def sample(self):
         hps_conf, _ = self.hp_utils.load_hps_conf(convert=True, do_sort=True, index_from_conf=False)
-        n_lower = self.gamma_func(len(hps_conf))
         hp_conf = []
 
         for idx, hps in enumerate(hps_conf):
+            n_lower = self.gamma_func(len(hps))
             lower_vals, upper_vals = hps[:n_lower], hps[n_lower:]
             var_name = self.hp_utils.config_space._idx_to_hyperparameter[idx]
             var_type = utils.distribution_type(self.hp_utils.config_space, var_name)

@@ -1,13 +1,43 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from optimizer.parzen_estimator import GaussKernel, AitchisonAitkenKernel
 
 
 EPS = 1e-12
 
 
+def plot_density_estimators(pe_lower, pe_upper, var_name, pr_basis=False, pr_ei=False, pr_basis_mu=False):
+    weights_set = [pe_lower.weights, pe_upper.weights]
+    basis_set = [pe_lower.basis, pe_upper.basis]
+    mus_set = [pe_lower.mus, pe_upper.mus]
+    names = ["lower", "upper"]
+    lb, ub = pe_lower.lb, pe_lower.ub
+    cmap = plt.get_cmap("tab10")
+
+    x = np.linspace(lb, ub, 100)
+    des = np.array([np.zeros(100) for _ in range(2)])
+
+    for i, (weights, basis, mus, de, name) in enumerate(zip(weights_set, basis_set, mus_set, des, names)):
+        for w, b, mu in zip(weights, basis, mus):
+            de += w * b.pdf(x)
+            if pr_basis:
+                plt.plot(x, w * b.pdf(x), color=cmap(i), linestyle="dotted")
+            if pr_basis_mu:
+                plt.plot([mu] * 100, np.linspace(0, w, 100), color=cmap(i), linestyle="dotted")
+        plt.plot(x, de, label=name, color=cmap(i))
+
+    if pr_ei:
+        plt.plot(x, np.log(des[0]) - np.log(des[1]), label="EI function", color=cmap(2))
+
+    plt.title("Parzen Estimators for {} with {} lower and {} upper evaluations.".format(var_name, len(mus_set[0]) - 1, len(mus_set[1]) - 1))
+    plt.xlim(lb, ub)
+    plt.grid()
+    plt.legend()
+    plt.show()
+
+
 class NumericalParzenEstimator(object):
     def __init__(self, samples, lb, ub, weight_func, q=None):
-
         weights, mus, sigmas = self._calculate(samples, lb, ub, weight_func)
         self.weights, self.mus, self.sigmas = map(np.asarray, (weights, mus, sigmas))
         self.basis = [GaussKernel(m, s) for m, s in zip(mus, sigmas)]
