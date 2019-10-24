@@ -1,7 +1,5 @@
 import numpy as np
-from optimizer.robo.models.wrapper_bohamiann import WrapperBohamiannMultiTask, WrapperBohamiann
-from optimizer.robo.acquisition_functions.log_ei import LogEI
-from optimizer.robo.maximizers.differential_evolution import DifferentialEvolution
+from optimizer.robo import models, acquisition_functions, maximizers
 from optimizer.base_optimizer import BaseOptimizer
 
 
@@ -32,9 +30,9 @@ class SingleTaskBOHAMIANN(BaseOptimizer):
         self.n_dim = len(hp_utils.config_space._hyperparameters)
         self.lower = np.zeros(self.n_dim)
         self.upper = np.ones(self.n_dim)
-        self.model_objective = WrapperBohamiann()
-        self.acquisition_func = LogEI(self.model_objective)
-        self.maximizer = DifferentialEvolution(self.acquisition_func, self.lower, self.upper)
+        self.model_objective = models.WrapperBohamiann()
+        self.acquisition_func = acquisition_functions.LogEI(self.model_objective)
+        self.maximizer = maximizers.DifferentialEvolution(self.acquisition_func, self.lower, self.upper)
 
     def sample(self):
         _X, _y = self.hp_utils.load_hps_conf(convert=True, do_sort=False)
@@ -72,8 +70,8 @@ class MultiTaskBOHAMIANN(BaseOptimizer):
         self.X, self.Y, self.n_tasks = hp_utils.load_transfer_hps_conf(transfer_info_pathes, convert=True)
         self.lower = np.zeros(self.n_dim)
         self.upper = np.ones(self.n_dim)
-        self.model_objective = WrapperBohamiannMultiTask(n_tasks=self.n_tasks)
-        self.acquisition_func = LogEI(self.model_objective)
+        self.model_objective = models.WrapperBohamiannMultiTask(n_tasks=self.n_tasks)
+        self.acquisition_func = acquisition_functions.LogEI(self.model_objective)
 
     def create_multitask_X(self):
         _X, _y = self.hp_utils.load_hps_conf(convert=True, do_sort=False)
@@ -102,7 +100,7 @@ class MultiTaskBOHAMIANN(BaseOptimizer):
             a = self.acquisition_func(x_, eta=y_star)
             return a
 
-        maximizer = DifferentialEvolution(wrapper, self.lower, self.upper)
+        maximizer = maximizers.DifferentialEvolution(wrapper, self.lower, self.upper)
         self.model_objective.train(X, y, do_optimize=True)
         self.acquisition_func.update(self.model_objective)
         x = maximizer.maximize()

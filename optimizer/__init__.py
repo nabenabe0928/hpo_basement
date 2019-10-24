@@ -6,6 +6,7 @@ from optimizer.tpe import SingleTaskTPE
 from optimizer.bohamiann import SingleTaskBOHAMIANN, MultiTaskBOHAMIANN
 from optimizer import parzen_estimator
 from optimizer.parzen_estimator import plot_density_estimators
+from optimizer import robo
 
 
 __all__ = ['BaseOptimizer',
@@ -17,5 +18,6 @@ __all__ = ['BaseOptimizer',
            'SingleTaskBOHAMIANN',
            'MultiTaskBOHAMIANN',
            'parzen_estimator',
-           'plot_density_estimators'
+           'plot_density_estimators',
+           'robo'
            ]
