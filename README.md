@@ -3,7 +3,9 @@
 ## Requirements
 ・python3.7 (3.7.4)
 
-・ConfigSpace[ (github)](https://github.com/automl/ConfigSpace)
+・ConfigSpace 0.4.10 [ (github)](https://github.com/automl/ConfigSpace)
+
+・pybnn 0.0.5 [ (github)](https://github.com/automl/pybnn)
 
 ```
 pip install -r requirements.txt
