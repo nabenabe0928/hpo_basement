@@ -33,7 +33,7 @@ def objective_function(hp_conf, hp_utils, gpu_id, job_id, verbose=True, print_fr
         utils.print_result(hp_conf, ys, job_id, hp_utils.list_to_dict)
 
 
-def get_path_name(obj_name, experimental_settings):
+def get_path_name(obj_name, experimental_settings, transfer_info_pathes):
     obj_path_name = obj_name
 
     if experimental_settings["dim"] is not None:
@@ -48,6 +48,12 @@ def get_path_name(obj_name, experimental_settings):
         obj_path_name += "_{}per".format(int(100 * experimental_settings["data_frac"]))
     if experimental_settings["biased_cls"] is not None:
         obj_path_name += "_biased"
+    if transfer_info_pathes is not None:
+        obj_path_name += "_transfers"
+        for path in transfer_info_pathes:
+            p = "{}{}{}".format(*path[12:].split("/"))
+            obj_path_name += "_" + p
+
     return obj_path_name
 
 
@@ -89,6 +95,7 @@ class BaseOptimizer():
                  seed=None,
                  verbose=True,
                  print_freq=1,
+                 transfer_info_pathes=None,
                  obj=objective_function):
         """
         Member Variables
@@ -116,7 +123,7 @@ class BaseOptimizer():
         self.seed = seed
         self.ongoing_confs = [None for _ in range(self.n_parallels)]
         opt_name = self.__class__.__name__
-        obj_path_name = get_path_name(hp_utils.obj_name, hp_utils.experimental_settings)
+        obj_path_name = get_path_name(hp_utils.obj_name, hp_utils.experimental_settings, transfer_info_pathes)
         self.hp_utils.save_path = "history/log/{}/{}/{:0>3}".format(opt_name, obj_path_name, n_experiments)
         self.n_jobs = 0
         self.verbose = verbose

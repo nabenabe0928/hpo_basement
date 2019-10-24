@@ -86,7 +86,8 @@ class MultiTaskBOHAMIANN(BaseOptimizer):
                          max_evals=max_evals,
                          n_experiments=n_experiments,
                          restart=restart,
-                         seed=seed
+                         seed=seed,
+                         transfer_info_pathes=transfer_info_pathes
                          )
         self.opt = self.sample
         self.n_tasks = len(transfer_info_pathes) + 1
