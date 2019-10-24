@@ -1,0 +1,3 @@
+[submodule "optimizer/optimizer/RoBO"]
+	path = optimizer/optimizer/RoBO
+	url = https://github.com/automl/RoBO
