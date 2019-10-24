@@ -8,6 +8,8 @@
 ・pybnn 0.0.5 [ (github)](https://github.com/automl/pybnn)
 
 ```
+pip install ConfigSpace
+pip install pybnn
 pip install -r requirements.txt
 ```
 
