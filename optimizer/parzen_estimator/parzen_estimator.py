@@ -37,13 +37,54 @@ def plot_density_estimators(pe_lower, pe_upper, var_name, pr_basis=False, pr_ei=
 
 
 class NumericalParzenEstimator(object):
+    """
+    samples: ndarray (n, )
+        The observed hyperparameter values.
+    lb: float
+        The lower bound of a hyperparameter
+    ub: float
+        The upper bound of a hyperparameter
+    weight_func: callable
+        The function returning the weight of each basis of this parzen estimator.
+    q: float
+        The quantization value.
+    """
+
     def __init__(self, samples, lb, ub, weight_func, q=None):
+        """
+        Here, the number of basis is n + 1.
+        n basis are from observed values and 1 basis is from the prior distribution which is N((lb + ub) / 2, (ub - lb) ** 2).
+
+        weights: ndarray (n + 1, )
+            the weight of each basis. The total must be 1.
+        mus: ndarray (n + 1, )
+            The center of each basis.
+            The values themselves are the observed hyperparameter values. Sorted in ascending order.
+        sigmas: ndarray (n + 1, )
+            The band width of each basis.
+            The values are determined by a heuristic.
+        basis: the list of kernel.GaussKernel object (n + 1, )
+        """
+
         weights, mus, sigmas = self._calculate(samples, lb, ub, weight_func)
         self.weights, self.mus, self.sigmas = map(np.asarray, (weights, mus, sigmas))
         self.basis = [GaussKernel(m, s) for m, s in zip(mus, sigmas)]
         self.lb, self.ub, self.q = lb, ub, q
 
     def sample_from_density_estimator(self, rng, n_samples):
+        """
+        Parameters
+        ----------
+        rng: numpy.random.RandomState object
+        n_samples: int
+            The number of samples
+
+        Returns
+        -------
+        samples: ndarray (n_samples, )
+            The random number sampled from the parzen estimator.
+        """
+
         samples = np.asarray([], dtype=float)
         while samples.size < n_samples:
             active = np.argmax(rng.multinomial(1, self.weights))
@@ -53,15 +94,27 @@ class NumericalParzenEstimator(object):
 
         return samples if self.q is None else np.round(samples / self.q) * self.q
 
-    def log_likelihood(self, samples):
+    def log_likelihood(self, xs):
+        """
+        Parameters
+        ----------
+        xs: ndarray (n_ei_candidates, )
+            The number of candidates to evaluate the EI function.
+
+        Returns
+        -------
+        EI: ndarray (n_ei_candidates, )
+            The value of each hyperparameters' EI function.
+        """
+
         p_accept = np.sum([w * (b.cdf(self.ub) - b.cdf(self.lb)) for w, b in zip(self.weights, self.basis)])
-        ps = np.zeros(samples.shape, dtype=float)
+        ps = np.zeros(xs.shape, dtype=float)
         for w, b in zip(self.weights, self.basis):
             if self.q is None:
-                ps += w * b.pdf(samples)
+                ps += w * b.pdf(xs)
             else:
-                integral_u = b.cdf(np.minimum(samples + 0.5 * self.q, self.ub))
-                integral_l = b.cdf(np.maximum(samples + 0.5 * self.q, self.lb))
+                integral_u = b.cdf(np.minimum(xs + 0.5 * self.q, self.ub))
+                integral_l = b.cdf(np.maximum(xs + 0.5 * self.q, self.lb))
                 ps += w * (integral_u - integral_l)
         return np.log(ps + EPS) - np.log(p_accept + EPS)
 
@@ -97,6 +150,10 @@ class NumericalParzenEstimator(object):
         return sorted_weights
 
     def _calculate(self, samples, lower_bound, upper_bound, weights_func):
+        """
+        calculating the weights, sigmas, mus for each basis.
+        """
+
         samples = np.asarray(samples)
         sorted_mus, order, prior_pos = self._calculate_mus(samples, lower_bound, upper_bound)
         sigma = self._calculate_sigmas(samples, lower_bound, upper_bound, sorted_mus, prior_pos)

@@ -15,6 +15,12 @@ class SingleTaskBOHAMIANN(BaseOptimizer):
                  verbose=True,
                  print_freq=1
                  ):
+        """
+        lower: ndarray (D, )
+            The lower bound of each parameter
+        upper: ndarray (D, )
+            The upper bound of each parameter
+        """
 
         super().__init__(hp_utils,
                          n_parallels=n_parallels,
@@ -32,9 +38,16 @@ class SingleTaskBOHAMIANN(BaseOptimizer):
         self.upper = np.ones(self.n_dim)
         self.model_objective = models.WrapperBohamiann()
         self.acquisition_func = acquisition_functions.LogEI(self.model_objective)
-        self.maximizer = maximizers.DifferentialEvolution(self.acquisition_func, self.lower, self.upper)
+        self.maximizer = maximizers.DifferentialEvolution(self.acquisition_func, self.lower, self.upper, rng=self.rng)
 
     def sample(self):
+        """
+        X: list of hp_confs (N, D)
+
+        y: list of performance (yN, N)
+            Y[0] is the performance used in optimization.
+        """
+
         _X, _y = self.hp_utils.load_hps_conf(convert=True, do_sort=False)
         X, y = map(np.asarray, [_X, _y])
 
@@ -57,6 +70,15 @@ class MultiTaskBOHAMIANN(BaseOptimizer):
                  seed=None,
                  transfer_info_pathes=None
                  ):
+        """
+        n_tasks: int
+            The number of types of tasks including the target task
+        X: list of hp_confs for each task (M, Nm, D)
+            Nm is the number of evaluated configurations of task M.
+            The id of target task is 0.
+        Y: list of performance for each task (M, yN, Nm)
+            Y[:][0] is the performance used in optimization.
+        """
 
         super().__init__(hp_utils,
                          n_parallels=n_parallels,
@@ -67,7 +89,8 @@ class MultiTaskBOHAMIANN(BaseOptimizer):
                          seed=seed
                          )
         self.opt = self.sample
-        self.X, self.Y, self.n_tasks = hp_utils.load_transfer_hps_conf(transfer_info_pathes, convert=True)
+        self.n_tasks = len(transfer_info_pathes) + 1
+        self.X, self.Y = hp_utils.load_transfer_hps_conf(transfer_info_pathes, convert=True)
         self.lower = np.zeros(self.n_dim)
         self.upper = np.ones(self.n_dim)
         self.model_objective = models.WrapperBohamiannMultiTask(n_tasks=self.n_tasks)
@@ -91,6 +114,17 @@ class MultiTaskBOHAMIANN(BaseOptimizer):
         return X, y
 
     def sample(self):
+        """
+        Reference: https://github.com/automl/RoBO/blob/master/robo/fmin/warmstart_mtbo.py
+
+        Here, N is the number of evaluations all over each task.
+
+        Training Data: ndarray (N, D + 1)
+            The last element is the index of tasks.
+
+        Training Label: ndarray (N, )
+        """
+
         X, y = self.create_multitask_X()
         y_star = self.Y[0][0].min()
 
@@ -100,7 +134,7 @@ class MultiTaskBOHAMIANN(BaseOptimizer):
             a = self.acquisition_func(x_, eta=y_star)
             return a
 
-        maximizer = maximizers.DifferentialEvolution(wrapper, self.lower, self.upper)
+        maximizer = maximizers.DifferentialEvolution(wrapper, self.lower, self.upper, rng=self.rng)
         self.model_objective.train(X, y, do_optimize=True)
         self.acquisition_func.update(self.model_objective)
         x = maximizer.maximize()

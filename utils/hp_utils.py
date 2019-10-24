@@ -8,6 +8,22 @@ import utils
 from multiprocessing import Lock
 
 
+"""
+VARIABLES
+---------
+N: int
+    The number of evaluations
+D: int
+    The number of dimensions
+M: int
+    The number of tasks (only for multi-task learning)
+K: int
+    The number of classes on a given task.
+yN: int
+    The number of types of performances recorded in an experiment. (not only for multi-objective optimization.)
+"""
+
+
 def create_hyperparameter(var_type, name, lower=None, upper=None, log=False, q=None, choices=None):
     """
     Parameters
@@ -131,14 +147,19 @@ def load_hps(load_file_path, lock, var_type):
 
     Returns
     -------
-    the list of a hyperparameter evlauated in an experiment
+    the ndarray of a hyperparameter evlauated in an experiment (N, )
     """
 
     lock.acquire()
     with open(load_file_path, "r", newline="") as f:
-        reader = [var_type(row[1]) for row in list(csv.reader(f, delimiter=","))]
+        reader = list(csv.reader(f, delimiter=","))
+        values = np.array([var_type(row[1]) for row in reader])
+        job_id = np.array([int(row[0]) for row in reader])
     lock.release()
-    return reader
+
+    order = np.argsort(job_id)
+
+    return values[order]
 
 
 class HyperparameterUtilities():
@@ -158,7 +179,7 @@ class HyperparameterUtilities():
             pixel size
         *data_frac: float
             How much percentages of training data to use in training. The value must be [0., 1.].
-        *biased_cls: list of float
+        *biased_cls: list of float (K, )
             How much percentages of i-th labeled data to use in training.
             The length must be same as n_cls. Each element must be (0, 1].
     """
@@ -179,7 +200,7 @@ class HyperparameterUtilities():
             config space that contains the hyperparameter information
         obj_class: class
             The class of the objective function
-        y_names: list of string
+        y_names: list of string (yN, )
             the names of the measurements of hyperparameter configurations
         in_fmt: string
             The format of input for the objective function. Either "dict" or "list".
@@ -204,12 +225,11 @@ class HyperparameterUtilities():
 
         Parameters
         ----------
-        hp_dict: list of a hyperparameter configuration
-            indexes follow the config space and values are corresponding values.
+        hp_dict: dict of a hyperparameter configuration
 
         Returns
         -------
-        list of a hyperparameter configuration
+        list of a hyperparameter configuration (D, )
             the indexes follow the config space
         """
 
@@ -233,7 +253,7 @@ class HyperparameterUtilities():
 
         Parameters
         ----------
-        hp_list: list of a hyperparameter configuration
+        hp_list: list of a hyperparameter configuration (D, )
             indexes follow the config space and values are corresponding values
 
         Returns
@@ -257,7 +277,7 @@ class HyperparameterUtilities():
         """
         Parameters
         ----------
-        hp_conf: list or dict of hyperparameter values
+        hp_conf: list or dict of hyperparameter values (D, )
             if list, the indexes follows the indexes in the ConfigSpace
             else if dict, the keys are the name of hyperparameters
             values are the value of hyperparameter which will be evaluated.
@@ -313,12 +333,12 @@ class HyperparameterUtilities():
 
         Parameters
         ----------
-        hp_conf: list
+        hp_conf: list (D, )
             one hyperparameter configuration
 
         Returns
         -------
-        1d list of float or int value
+        1d list of float or int value (D, )
             the values are constrained in [0, 1]
         """
 
@@ -338,12 +358,12 @@ class HyperparameterUtilities():
 
         Parameters
         ----------
-        hp_confs: list
+        hp_confs: list (N, D)
             the list of hyperparameter configurations
 
         Returns
         -------
-        2d list of float or int value
+        2d list of float or int value (N, D)
             the values are constrained in [0, 1]
         """
 
@@ -385,12 +405,12 @@ class HyperparameterUtilities():
 
         Parameters
         ----------
-        hp_converted_conf: list
+        hp_converted_conf: list (D, )
             one hyperparameter configuration constrained in [0, 1]
 
         Returns
         -------
-        1d list of float or int value
+        1d list of float or int value (D, )
             the values of a hyperparameter configuration on original scales
         """
 
@@ -411,12 +431,12 @@ class HyperparameterUtilities():
 
         Parameters
         ----------
-        converted_hp_confs: list
+        converted_hp_confs: list (N, D)
             the list of hyperparameter configurations constrained in [0, 1]
 
         Returns
         -------
-        2d list of float or int value
+        2d list of float or int value (N, D)
             the values of hyperparameter configurations in original scales
         """
 
@@ -431,9 +451,9 @@ class HyperparameterUtilities():
 
         Parameters
         ----------
-        hps: dict or list
+        hp_conf: dict or list (D, )
             a hyperparameter configuration
-        ys: dict
+        ys: dict (yN, )
             the keys are the name of objective functions
             and the values are the corresponding values
             e.g.) {"loss" 0.67, "acc": 0.81}
@@ -477,8 +497,8 @@ class HyperparameterUtilities():
         Returns
         -------
         the list of hyperparameter configurations and the corresponding performance
-        hp_conf: [the index for configurations][the index for hyperparameters]
-        ys: [the index for performance measurements][the index for configurations]
+        hp_conf: list (N, D)
+        ys: list (yN, N)
         """
 
         cs = self.config_space
@@ -517,18 +537,21 @@ class HyperparameterUtilities():
 
         Parameters
         ----------
-        transfer_info_pathes: list of string
+        transfer_info_pathes: list of string (M, )
             The path of the location of prior information
 
         Returns
         -------
         the list of hyperparameter configurations and the corresponding performance
-        X: [the index of tasks][the index for configurations][the index for hyperparameters]
-        Y: [the index of tasks][the index for performance measurements][the index for configurations]
+        X: list (M, :, D) (: is the index for configurations)
+        Y: list (M, yN, :)
         """
 
         X = [[]]
         Y = [[]]
+
+        if transfer_info_pathes is None:
+            raise ValueError("transfer_info_pathes has to be list of pathes of information to transfer.")
 
         for path in transfer_info_pathes:
             _X, _Y = self.load_hps_conf(convert=convert, do_sort=do_sort, another_src=path)

@@ -37,6 +37,15 @@ class SingleTaskTPE(BaseOptimizer):
                  n_ei_candidates=24,
                  gamma_func=default_gamma,
                  weight_func=default_weights):
+        """
+        n_ei_candidates: int
+            The number of points to evaluate the EI function.
+        gamma_func: callable
+            The function returning the number of a better group based on the total number of evaluations.
+        weight_func: callable
+            The function returning the coefficients of each kernel.
+        """
+
         super().__init__(hp_utils,
                          n_parallels=n_parallels,
                          n_init=n_init,
@@ -72,6 +81,19 @@ class SingleTaskTPE(BaseOptimizer):
         return self.hp_utils.revert_hp_conf(hp_conf)
 
     def _sample_numerical(self, var_name, var_type, lower_vals, upper_vals):
+        """
+        Parameters
+        ----------
+        lower_vals: ndarray (N_lower, )
+            The values of better group.
+        upper_vals: ndarray (N_upper, )
+            The values of worse group.
+        var_name: str
+            The name of a hyperparameter
+        var_type: type
+            The type of a hyperparameter
+        """
+
         hp = self.hp_utils.config_space._hyperparameters[var_name]
         q, log, lb, ub, converted_q = hp.q, hp.log, 0., 1., None
 

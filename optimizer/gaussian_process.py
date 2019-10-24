@@ -9,6 +9,21 @@ from botorch.optim import joint_optimize
 
 
 def optimize_EI(gp, best_f, n_dim):
+    """
+    Reference: https://botorch.org/api/optim.html
+
+    bounds: 2d-ndarray (2, D)
+        The values of lower and upper bound of each parameter.
+    q: int
+        The number of candidates to sample
+    num_restarts: int
+        The number of starting points for multistart optimization.
+    raw_samples: int
+        The number of initial points.
+
+    Returns for joint_optimize is (num_restarts, q, D)
+    """
+
     mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
     fit_gpytorch_model(mll)
     ei = ExpectedImprovement(gp, best_f=best_f, maximize=False)
@@ -16,7 +31,7 @@ def optimize_EI(gp, best_f, n_dim):
     x = joint_optimize(ei,
                        bounds=bounds,
                        q=1,
-                       num_restarts=5,
+                       num_restarts=1,
                        raw_samples=5)
 
     return np.array(x[0])
@@ -50,14 +65,16 @@ class SingleTaskGPBO(BaseOptimizer):
 
     def sample(self):
         """
-        X: N * D
+        Training Data: ndarray (N, D)
+        Training Label: ndarray (N, )
         """
-        X, Y = self.hp_utils.load_hps_conf(convert=True, do_sort=False)
-        X, Y = map(np.asarray, [X, Y[0]])
-        X, Y = torch.from_numpy(X), torch.from_numpy(Y)
 
-        gp = SingleTaskGP(X, Y)
-        x = optimize_EI(gp, Y[0].min(), self.n_dim)
+        X, Y = self.hp_utils.load_hps_conf(convert=True, do_sort=False)
+        X, y = map(np.asarray, [X, Y[0]])
+        X, y = torch.from_numpy(X), torch.from_numpy(y)
+
+        gp = SingleTaskGP(X, y)
+        x = optimize_EI(gp, y.min(), self.n_dim)
 
         return self.hp_utils.revert_hp_conf(x)
 
@@ -86,9 +103,9 @@ class MultiTaskGPBO(BaseOptimizer):
         self.n_dim = len(hp_utils.config_space._hyperparameters)
         self.X, self.Y = hp_utils.load_transfer_hps_conf(transfer_info_pathes, convert=True)
 
-    def sample(self):
-        _X, _Y = self.hp_utils.load_hps_conf(convert=True, do_sort=False)
-        self.X[0], self.Y[0] = map(np.asarray, [_X, _Y])
+    def create_multi_task_X(self):
+        _X, _y = self.hp_utils.load_hps_conf(convert=True, do_sort=False)
+        self.X[0], self.Y[0] = map(np.asarray, [_X, _y])
 
         Xc = []
         for i, Xi in enumerate(self.X):
@@ -100,7 +117,24 @@ class MultiTaskGPBO(BaseOptimizer):
         for i in range(1, len(Xc)):
             X = np.r_[X, Xc[i]]
             Y = np.r_[Y, self.Y[i][0]]
+        return X, Y
 
+    def sample(self):
+        """
+        Here, N is the number of evaluations all over each task.
+
+        Training Data: ndarray (N, D + 1)
+            The last element is the index of tasks.
+
+        Training Label: ndarray (N, )
+
+        task_feature: int
+            The index to obtain the task id. Generally, task_feature=D
+        output_tasks: int
+            The id of the target task.
+        """
+
+        X, Y = self.create_multi_task_X()
         X = torch.from_numpy(X)
         Y = torch.from_numpy(Y)
 

@@ -57,6 +57,29 @@ def process_raw_dataset(train_raw_dataset,
                         n_cls=None,
                         data_frac=None,
                         biased_cls=None):
+    """
+    Parameters
+    ----------
+    train_raw_dataset
+        The dataset from DataLoader
+    test_raw_dataset
+        The dataset from DataLoader
+    raw_n_cls: int
+        The number of classes the raw dataset has.
+    dataset_name: str
+        The name of dataset i.e. "cifar", "svhn", "imagenet"
+    n_cls: int
+        The number of classes you want the learning model to solve
+    data_frac: float
+        How many proportions the learning model uses to train itself. (0. to 1.)
+    biased_cls: list of float (n_cls, )
+        The index corresponds to the index of classes.
+        How many data to use in training. Each element of the list must be 0. to 1.
+
+    Returns
+    -------
+    train_dataset, test_dataset
+    """
 
     if n_cls is None and data_frac is None and biased_cls is None:
         return train_raw_dataset, test_raw_dataset
@@ -86,6 +109,20 @@ def process_raw_dataset(train_raw_dataset,
 
 
 def get_small_class(train_labels, test_labels, n_cls):
+    """
+    Parameters
+    ----------
+    train_labels: list of int
+        Each element is the answer of the corresponding images.
+    test_labels: list of int
+        Same as above.
+
+    Returns
+    -------
+    (train_idxs, test_idxs): tuple of list of int (2,:)
+        Each list has the index of images that will be used in an experiment.
+    """
+
     train_indexes, test_indexes = [], []
 
     for idx, label in enumerate(train_labels[0]):
