@@ -18,6 +18,8 @@ An easy example of `main.py`.
 Note that the optimization is always minimization;
 Therefore, users have to set the output multiplied by -1 when hoping to maximize.
 
+For Single Task.
+
 ```
 import utils
 import optimizer
@@ -25,10 +27,26 @@ import optimizer
 
 if __name__ == '__main__':
     requirements, experimental_settings = utils.parse_requirements()
-    hp_utils = utils.HyperparameterUtilities("Sphere",
-                                             experimental_settings=experimental_settings,
-                                             )
-    opt = optimizer.NelderMead(hp_utils, **requirements)
+    hp_utils = utils.HyperparameterUtilities("sphere", experimental_settings=experimental_settings)
+    opt = optimizer.SingleTaskGPBO(hp_utils, **requirements)
+    best_conf, best_performance = opt.optimize()
+```
+
+For Multi Task.
+
+```
+import utils
+import optimizer
+
+
+if __name__ == '__main__':
+    path = "history/log/"
+    transfer_info_pathes_part = ["SingleTaskGPBO/sphere_3d/000"]  # the name of path
+    transfer_info_pathes = [path + transfer_info_path_part for transfer_info_path_part in transfer_info_pathes_part]
+
+    requirements, experimental_settings = utils.parse_requirements()
+    hp_utils = utils.HyperparameterUtilities("sphere", experimental_settings=experimental_settings)
+    opt = optimizer.MultiTaskGPBO(hp_utils, **requirements, transfer_info_pathes=transfer_info_pathes)
     best_conf, best_performance = opt.optimize()
 ```
 
