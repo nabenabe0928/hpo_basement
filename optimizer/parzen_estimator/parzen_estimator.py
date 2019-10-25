@@ -51,26 +51,35 @@ class NumericalParzenEstimator(object):
         The quantization value.
     """
 
-    def __init__(self, samples, lb, ub, weight_func, q=None):
+    def __init__(self, samples, lb, ub, weight_func, q=None, rule="james"):
         """
         Here, the number of basis is n + 1.
         n basis are from observed values and 1 basis is from the prior distribution which is N((lb + ub) / 2, (ub - lb) ** 2).
 
-        weights: ndarray (n + 1, )
-            the weight of each basis. The total must be 1.
-        mus: ndarray (n + 1, )
-            The center of each basis.
-            The values themselves are the observed hyperparameter values. Sorted in ascending order.
-        sigmas: ndarray (n + 1, )
-            The band width of each basis.
-            The values are determined by a heuristic.
-        basis: the list of kernel.GaussKernel object (n + 1, )
+        if james rule...
+            weights: ndarray (n + 1, ) 
+                the weight of each basis. The total must be 1.
+            mus: ndarray (n + 1, )
+                The center of each basis.
+                The values themselves are the observed hyperparameter values. Sorted in ascending order.
+            sigmas: ndarray (n + 1, )
+                The band width of each basis.
+                The values are determined by a heuristic.
+            basis: the list of kernel.GaussKernel object (n + 1, )
+        if scott rule...
+            weights: ndarray (n, ) 
+                the weight of each basis. The total must be 1.
+            mus: ndarray (n, )
+                The center of each basis.
+            sigmas: ndarray (n, )
+                The band width of each basis.
+                The values are determined by a scott rule.
+            basis: the list of kernel.GaussKernel object (n, )
         """
 
-        weights, mus, sigmas = self._calculate(samples, lb, ub, weight_func)
-        self.weights, self.mus, self.sigmas = map(np.asarray, (weights, mus, sigmas))
-        self.basis = [GaussKernel(m, s) for m, s in zip(mus, sigmas)]
-        self.lb, self.ub, self.q = lb, ub, q
+        self.lb, self.ub, self.q, self.rule = lb, ub, q, rule
+        self.weights, self.mus, self.sigmas = self._calculate(samples, weight_func)
+        self.basis = [GaussKernel(m, s, lb, ub, q) for m, s in zip(self.mus, self.sigmas)]
 
     def sample_from_density_estimator(self, rng, n_samples):
         """
@@ -90,8 +99,7 @@ class NumericalParzenEstimator(object):
         while samples.size < n_samples:
             active = np.argmax(rng.multinomial(1, self.weights))
             drawn_hp = self.basis[active].sample_from_kernel(rng)
-            if self.lb <= drawn_hp <= self.ub:
-                samples = np.append(samples, drawn_hp)
+            samples = np.append(samples, drawn_hp)
 
         return samples if self.q is None else np.round(samples / self.q) * self.q
 
@@ -104,67 +112,61 @@ class NumericalParzenEstimator(object):
 
         Returns
         -------
-        EI: ndarray (n_ei_candidates, )
-            The value of each hyperparameters' EI function.
+        loglikelihood of the parzen estimator at given points: ndarray (n_ei_candidates, )
+            Here, we do not consider jacobian, because it will be canceled out when we compute EI function.
         """
 
-        p_accept = np.sum([w * (b.cdf(self.ub) - b.cdf(self.lb)) for w, b in zip(self.weights, self.basis)])
         ps = np.zeros(xs.shape, dtype=float)
         for w, b in zip(self.weights, self.basis):
-            if self.q is None:
-                ps += w * b.pdf(xs)
-            else:
-                integral_u = b.cdf(np.minimum(xs + 0.5 * self.q, self.ub))
-                integral_l = b.cdf(np.maximum(xs + 0.5 * self.q, self.lb))
-                ps += w * (integral_u - integral_l)
-        return np.log(ps + EPS) - np.log(p_accept + EPS)
+            ps += w * b.pdf(xs)
 
-    def _calculate_mus(self, samples, lower_bound, upper_bound):
+        return np.log(ps + EPS)
+
+    def _calculate(self, samples, weights_func):
+        if self.rule == "james":
+            return self._calculate_by_james_rule(samples, weights_func)
+        elif self.rule == "scott":
+            return self._calculate_by_scott_rule(samples)
+        else:
+            raise ValueError("Rule must be 'scott' or 'james'.")
+    
+    def _calculate_by_james_rule(self, samples, weights_func):
+        samples = np.asarray(samples)
+        prior_mu = 0.5 * (self.lb + self.ub)
+        sigma_bounds = [(self.ub - self.lb) / min(100.0, (1.0 + samples.size)), self.ub - self.lb]
+
         order = np.argsort(samples)
         sorted_mus = samples[order]
-        prior_mu = 0.5 * (lower_bound + upper_bound)
         prior_pos = np.searchsorted(samples[order], prior_mu)
         sorted_mus = np.insert(sorted_mus, prior_pos, prior_mu)
 
-        return sorted_mus, order, prior_pos
+        sorted_mus_with_bounds = np.insert([sorted_mus[0], sorted_mus[-1]], 1, sorted_mus)
+        sigmas = np.maximum(sorted_mus_with_bounds[1:-1] - sorted_mus_with_bounds[0:-2], sorted_mus_with_bounds[2:] - sorted_mus_with_bounds[1:-1])
+        sigmas = np.clip(sigmas, sigma_bounds[0], sigma_bounds[1])
+        sigmas[prior_pos] = sigma_bounds[1]
 
-    def _calculate_sigmas(self, samples, lower_bound, upper_bound, sorted_mus, prior_pos):
-        sorted_mus_with_bounds = np.insert([lower_bound, upper_bound], 1, sorted_mus)
-        sigma = np.maximum(sorted_mus_with_bounds[1:-1] - sorted_mus_with_bounds[0:-2], sorted_mus_with_bounds[2:] - sorted_mus_with_bounds[1:-1])
-        sigma[0] = sorted_mus_with_bounds[2] - sorted_mus_with_bounds[1]
-        sigma[-1] = sorted_mus_with_bounds[-2] - sorted_mus_with_bounds[-3]
-
-        maxsigma = upper_bound - lower_bound
-        minsigma = (upper_bound - lower_bound) / min(100.0, (1.0 + len(sorted_mus)))
-        sigma = np.clip(sigma, minsigma, maxsigma)
-
-        prior_sigma = 1.0 * (upper_bound - lower_bound)
-        sigma[prior_pos] = prior_sigma
-
-        return sigma
-
-    def _calculate_weights(self, samples, weights_func, order, prior_pos):
         sorted_weights = weights_func(samples.size)[order]
         sorted_weights = np.insert(sorted_weights, prior_pos, 1.)
         sorted_weights /= sorted_weights.sum()
 
-        return sorted_weights
+        return np.array(sorted_weights), np.array(sorted_mus), np.array(sigmas)
 
-    def _calculate(self, samples, lower_bound, upper_bound, weights_func):
-        """
-        calculating the weights, sigmas, mus for each basis.
-        """
+    def _calculate_by_scott_rule(self, samples):
+        samples = np.array(samples)
+        mus = np.append(samples, 0.5 * (self.lb + self.ub))
+        mus_sigma = mus.std(ddof=1)
+        IQR = np.subtract.reduce(np.percentile(mus, [75, 25]))
+        sigma = 1.059 * min(IQR, mus_sigma) * mus.size ** (-0.2)
+        sigmas = np.ones(mus.size) * np.clip(sigma, 1.0e-2 * (self.ub - self.lb), 0.5 * (self.ub - self.lb))
+        sigmas[-1] = self.ub - self.lb
+        weights = np.ones(mus.size)
+        weights /= weights.sum()
 
-        samples = np.asarray(samples)
-        sorted_mus, order, prior_pos = self._calculate_mus(samples, lower_bound, upper_bound)
-        sigma = self._calculate_sigmas(samples, lower_bound, upper_bound, sorted_mus, prior_pos)
-        sorted_weights = self._calculate_weights(samples, weights_func, order, prior_pos)
-
-        return np.array(sorted_weights), np.array(sorted_mus), np.array(sigma)
+        return weights, mus, sigmas
 
 
 class CategoricalParzenEstimator():
-    def __init__(self, samples, n_choices, weights_func, top=0.8):
+    def __init__(self, samples, n_choices, weights_func, top=0.9):
         self.n_choices = n_choices
         self.mus = samples
         self.basis = [AitchisonAitkenKernel(c, n_choices, top=top) for c in samples]

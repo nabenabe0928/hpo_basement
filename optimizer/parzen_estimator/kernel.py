@@ -6,7 +6,7 @@ EPS = 1.0e-12
 
 
 class GaussKernel():
-    def __init__(self, mu, sigma):
+    def __init__(self, mu, sigma, lb, ub, q):
         """
         The hyperparameters of Gauss Kernel.
 
@@ -14,19 +14,32 @@ class GaussKernel():
             In general, this value is one of the observed values.
         sigma: float
             Generally, it is called band width and there are so many methods to initialize this value.
+        lb, ub, q: float or int
+            lower and upper bound and quantization value
+        weight: float
+            The normalization constant of probability density function.
+            In other words, when we integranl this kernel from lb to ub, we would obtain 1 as a result.
         """
 
         self.mu = mu
-        self.sigma = np.maximum(sigma, EPS)
+        self.sigma = max(sigma, EPS)
+        self.lb, self.ub, self.q = lb, ub, q
+        self.weight = 1.
+        self.weight = 1. / (self.cdf(ub) - self.cdf(lb))
 
     def pdf(self, x):
         """
         Returning the value Probability density function of a given x.
         """
 
-        z = np.sqrt(2 * np.pi) * self.sigma
-        mahalanobis = ((x - self.mu) / self.sigma) ** 2
-        return 1. / z * np.exp(-0.5 * mahalanobis)
+        if self.q is None:
+            z = np.sqrt(2 * np.pi) * self.sigma
+            mahalanobis = ((x - self.mu) / self.sigma) ** 2
+            return self.weight / z * np.exp(-0.5 * mahalanobis)
+        else:
+            integral_u = self.cdf(np.minimum(x + 0.5 * self.q, self.ub))
+            integral_l = self.cdf(np.maximum(x + 0.5 * self.q, self.lb))
+            return integral_u - integral_l
 
     def cdf(self, x):
         """
@@ -34,18 +47,21 @@ class GaussKernel():
         """
 
         z = (x - self.mu) / (np.sqrt(2) * self.sigma)
-        return 0.5 * (1. + erf(z))
+        return self.weight * 0.5 * (1. + erf(z))
 
     def sample_from_kernel(self, rng):
         """
         Returning the random number sampled from this Gauss kernel.
         """
 
-        return rng.normal(loc=self.mu, scale=self.sigma)
+        while True:
+            sample = rng.normal(loc=self.mu, scale=self.sigma)
+            if self.lb <= sample <= self.ub:
+                return sample
 
 
 class AitchisonAitkenKernel():
-    def __init__(self, choice, n_choices, top=0.8):
+    def __init__(self, choice, n_choices, top=0.9):
         """
         Reference: http://www.ccsenet.org/journal/index.php/jmr/article/download/24994/15579
 

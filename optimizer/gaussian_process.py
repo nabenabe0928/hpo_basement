@@ -31,8 +31,8 @@ def optimize_EI(gp, best_f, n_dim):
     x = joint_optimize(ei,
                        bounds=bounds,
                        q=1,
-                       num_restarts=1,
-                       raw_samples=5)
+                       num_restarts=3,
+                       raw_samples=15)
 
     return np.array(x[0])
 

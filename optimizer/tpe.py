@@ -35,6 +35,7 @@ class SingleTaskTPE(BaseOptimizer):
                  verbose=True,
                  print_freq=1,
                  n_ei_candidates=24,
+                 rule="james",
                  gamma_func=default_gamma,
                  weight_func=default_weights):
         """
@@ -61,6 +62,7 @@ class SingleTaskTPE(BaseOptimizer):
         self.gamma_func = gamma_func
         self.weight_func = weight_func
         self.opt = self.sample
+        self.rule = rule
 
     def sample(self):
         hps_conf, _ = self.hp_utils.load_hps_conf(convert=True, do_sort=True, index_from_conf=False)
@@ -103,8 +105,13 @@ class SingleTaskTPE(BaseOptimizer):
                 lb -= 0.5 * converted_q
                 ub += 0.5 * converted_q
 
-        pe_lower = NumericalParzenEstimator(lower_vals, lb, ub, self.weight_func, q=converted_q)
-        pe_upper = NumericalParzenEstimator(upper_vals, lb, ub, self.weight_func, q=converted_q)
+        pe_lower = NumericalParzenEstimator(lower_vals, lb, ub, self.weight_func, q=converted_q, rule=self.rule)
+        pe_upper = NumericalParzenEstimator(upper_vals, lb, ub, self.weight_func, q=converted_q, rule=self.rule)
+
+        """
+        from optimizer.parzen_estimator import plot_density_estimators
+        plot_density_estimators(pe_lower, pe_upper, var_name, pr_basis=True, pr_basis_mu=True)
+        """
 
         return self._compare_candidates(pe_lower, pe_upper)
 

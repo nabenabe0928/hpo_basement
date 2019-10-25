@@ -29,7 +29,7 @@ if __name__ == '__main__':
                                              experimental_settings=experimental_settings,
                                              )
     opt = optimizer.NelderMead(hp_utils, **requirements)
-    opt.optimize()
+    best_conf, best_performance = opt.optimize()
 ```
 
 Run from termianl by (one example):
