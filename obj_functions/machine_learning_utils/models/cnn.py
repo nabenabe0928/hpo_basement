@@ -72,6 +72,7 @@ class CNN(nn.Module):
         self.bn3 = nn.BatchNorm2d(self.ch3)
         self.full_conn1 = nn.Linear(self.ch3 * 3 ** 2, self.ch4)
         self.full_conn2 = nn.Linear(self.ch4, n_cls)
+        self.init_inner_params()
 
     def init_inner_params(self):
         for m in self.modules():
