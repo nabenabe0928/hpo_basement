@@ -88,7 +88,9 @@ class MultiTaskGPBO(BaseOptimizer):
                  n_experiments=0,
                  restart=True,
                  seed=None,
-                 transfer_info_pathes=None
+                 verbose=True,
+                 print_freq=1,
+                 transfer_info_pathes=None                 
                  ):
 
         super().__init__(hp_utils,
@@ -98,6 +100,8 @@ class MultiTaskGPBO(BaseOptimizer):
                          n_experiments=n_experiments,
                          restart=restart,
                          seed=seed,
+                         verbose=verbose,
+                         print_freq=print_freq,
                          transfer_info_pathes=transfer_info_pathes
                          )
         self.opt = self.sample
@@ -131,15 +135,16 @@ class MultiTaskGPBO(BaseOptimizer):
 
         task_feature: int
             The index to obtain the task id. Generally, task_feature=D
-        output_tasks: int
-            The id of the target task.
+        output_tasks: list of int
+            The id of the target tasks.
         """
 
         X, Y = self.create_multi_task_X()
         X = torch.from_numpy(X)
         Y = torch.from_numpy(Y)
 
-        mtgp = MultiTaskGP(X, Y, task_feature=self.n_dim, output_tasks=0)
+
+        mtgp = MultiTaskGP(X, Y, task_feature=self.n_dim, output_tasks=[0])
         x = optimize_EI(mtgp, self.Y[0][0].min(), self.n_dim)
 
         return self.hp_utils.revert_hp_conf(x)

@@ -516,7 +516,6 @@ class HyperparameterUtilities():
 
         for y_name in self.y_names:
             load_file_path = self.save_path + "/" + y_name + ".csv" if another_src is None else another_src + "/" + y_name + ".csv"
-            load_file_path = self.save_path + "/" + y_name + ".csv"
             y = load_hps(load_file_path, self.lock, float)
             ys.append(np.array(y))
 
@@ -551,7 +550,7 @@ class HyperparameterUtilities():
         Y = [[]]
 
         if transfer_info_pathes is None:
-            raise ValueError("transfer_info_pathes has to be list of pathes of information to transfer.")
+            raise ValueError("transfer_info_pathes has to be list of pathes of information to transfer, but None was given.")
 
         for path in transfer_info_pathes:
             _X, _Y = self.load_hps_conf(convert=convert, do_sort=do_sort, another_src=path)

@@ -68,6 +68,8 @@ class MultiTaskBOHAMIANN(BaseOptimizer):
                  n_experiments=0,
                  restart=True,
                  seed=None,
+                 verbose=True,
+                 print_freq=1,
                  transfer_info_pathes=None
                  ):
         """
@@ -87,10 +89,13 @@ class MultiTaskBOHAMIANN(BaseOptimizer):
                          n_experiments=n_experiments,
                          restart=restart,
                          seed=seed,
+                         verbose=verbose,
+                         print_freq=print_freq,
                          transfer_info_pathes=transfer_info_pathes
                          )
         self.opt = self.sample
         self.n_tasks = len(transfer_info_pathes) + 1
+        self.n_dim = len(hp_utils.config_space._hyperparameters)
         self.X, self.Y = hp_utils.load_transfer_hps_conf(transfer_info_pathes, convert=True)
         self.lower = np.zeros(self.n_dim)
         self.upper = np.ones(self.n_dim)
