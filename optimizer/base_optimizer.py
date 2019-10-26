@@ -7,7 +7,7 @@ import obj_functions.machine_learning_utils as ml_utils
 from multiprocessing import Process
 
 
-def objective_function(hp_conf, hp_utils, gpu_id, job_id, verbose=True, print_freq=1):
+def objective_function(hp_conf, hp_utils, gpu_id, job_id, verbose=True, print_freq=1, save_time=None):
     """
     Parameters
     ----------
@@ -19,6 +19,7 @@ def objective_function(hp_conf, hp_utils, gpu_id, job_id, verbose=True, print_fr
 
     save_path = "history/stdo" + hp_utils.save_path[11:] + "/log{:0>5}.csv".format(job_id)
     is_out_of_domain = hp_utils.out_of_domain(hp_conf)
+    eval_start = time.time()
 
     if hp_utils.in_fmt == "dict":
         hp_conf = hp_utils.list_to_dict(hp_conf)
@@ -28,6 +29,8 @@ def objective_function(hp_conf, hp_utils, gpu_id, job_id, verbose=True, print_fr
     else:
         ys = {yn: 1.0e+8 for yn in hp_utils.y_names} if is_out_of_domain else hp_utils.obj_class(hp_conf, gpu_id, save_path)
         hp_utils.save_hp_conf(hp_conf, ys, job_id)
+
+    save_time(eval_start, hp_utils.lock, job_id)
 
     if verbose and job_id % print_freq == 0:
         utils.print_result(hp_conf, ys, job_id, hp_utils.list_to_dict)
@@ -121,7 +124,6 @@ class BaseOptimizer():
         self.restart = restart
         self.rng = np.random.RandomState(seed)
         self.seed = seed
-        self.ongoing_confs = [None for _ in range(self.n_parallels)]
         opt_name = self.__class__.__name__
         obj_path_name = get_path_name(hp_utils.obj_name, hp_utils.experimental_settings, transfer_info_pathes)
         self.hp_utils.save_path = "history/log/{}/{}/{:0>3}".format(opt_name, obj_path_name, n_experiments)
@@ -189,10 +191,12 @@ class BaseOptimizer():
 
         self.n_jobs = self.get_n_jobs()
 
+        save_time = utils.save_elapsed_time(self.hp_utils.save_path, self.verbose, self.print_freq)
+
         if self.n_parallels <= 1:
-            self._optimize_sequential()
+            self._optimize_sequential(save_time)
         else:
-            self._optimize_parallel()
+            self._optimize_parallel(save_time)
 
         hps_conf, losses = self.hp_utils.load_hps_conf(do_sort=True)
         best_hp_conf, best_performance = hps_conf[0], losses[0]
@@ -200,7 +204,7 @@ class BaseOptimizer():
 
         return best_hp_conf, best_performance
 
-    def _optimize_sequential(self):
+    def _optimize_sequential(self, save_time):
         while True:
             gpu_id = 0
 
@@ -211,62 +215,48 @@ class BaseOptimizer():
             else:
                 break
 
-            self.ongoing_confs[0] = hp_conf[:]
             self.obj(hp_conf,
                      self.hp_utils,
                      gpu_id,
                      self.n_jobs,
                      verbose=self.verbose,
-                     print_freq=self.print_freq)
+                     print_freq=self.print_freq,
+                     save_time=save_time)
 
             self.n_jobs += 1
 
-            if self.n_jobs >= self.max_evals:
-                break
-
-    def _optimize_parallel(self):
+    def _optimize_parallel(self, save_time):
         jobs = []
         n_runnings = 0
+        resources = [False for _ in range(self.n_parallels)]
 
         while True:
-            gpus = [False for _ in range(self.n_parallels)]
-            if len(jobs) > 0:
-                n_runnings = 0
-                new_jobs = []
-                for job in jobs:
-                    if job[1].is_alive():
-                        new_jobs.append(job)
-                        gpus[job[0]] = True
-                jobs = new_jobs
-                n_runnings = len(jobs)
-            else:
-                n_runnings = 0
+            new_jobs = []
 
-            for _ in range(max(0, self.n_parallels - n_runnings)):
-                gpu_id = gpus.index(False)
-                self.ongoing_confs[gpu_id] = None
-
-                if self.n_jobs < self.n_init:
-                    hp_conf = self._initial_sampler()
+            for job in jobs:
+                if job[1].is_alive():
+                    new_jobs.append(job)
+                    resources[job[0]] = True
                 else:
-                    hp_conf = self.opt()
+                    resources[job[0]] = False
 
-                self.ongoing_confs[gpu_id] = hp_conf[:]
+            jobs = new_jobs
+            n_runnings = len(jobs)            
+            for _ in range(max(0, self.n_parallels - n_runnings)):
+                gpu_id = resources.index(False)
+                hp_conf = self._initial_sampler() if self.n_jobs < self.n_init else self.opt()
+                
                 p = Process(target=self.obj,
                             args=(hp_conf,
                                   self.hp_utils,
                                   gpu_id,
                                   self.n_jobs,
                                   self.verbose,
-                                  self.print_freq))
+                                  self.print_freq,
+                                  save_time))
                 p.start()
                 jobs.append([gpu_id, p])
                 self.n_jobs += 1
 
                 if self.n_jobs >= self.max_evals:
-                    break
-
-                time.sleep(1.0e-4)
-
-            if self.n_jobs >= self.max_evals:
-                break
+                    return 0

@@ -1,6 +1,8 @@
 import sys
 import os
+import csv
 import subprocess as sp
+import time
 from argparse import ArgumentParser
 
 
@@ -85,6 +87,33 @@ def print_result(hp_conf, ys, job_id, list_to_dict):
         print(list_to_dict(hp_conf))
     print(ys)
     print("")
+
+
+def save_elapsed_time(save_path, verbose=True, print_freq=1):
+    start_time = time.time()
+    save_path = save_path + "/TIME.csv"
+    if not os.path.isfile(save_path):
+        with open(save_path, "w", newline="") as f:
+            pass
+
+    def _imp(eval_start, lock, n_jobs):
+        current_time = time.time()
+        eval_time = current_time - eval_start
+        elapsed_time = current_time - start_time
+
+        lock.acquire()
+        with open(save_path, "a", newline="") as f:
+            writer = csv.writer(f, delimiter=",")
+            writer.writerow([eval_time, elapsed_time])
+
+        if verbose and n_jobs % print_freq == 0:
+            print("Evaluation time : {:.4f}[s]".format(eval_time))
+            print("Elapsed    time : {:.4f}[s]".format(elapsed_time))
+            print("\n")
+        
+        lock.release()
+
+    return _imp
 
 
 def check_conflict(path):

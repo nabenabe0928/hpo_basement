@@ -11,6 +11,8 @@ if __name__ == '__main__':
     transfer_info_pathes = [path + transfer_info_path_part for transfer_info_path_part in transfer_info_pathes_part]
 
     hp_utils = utils.HyperparameterUtilities(func_name, experimental_settings=experimental_settings)
-    opt = optimizer.SingleTaskGPBO(hp_utils, **requirements)
+    # opt = optimizer.SingleTaskGPBO(hp_utils, **requirements)
+    opt = optimizer.SingleTaskTPE(hp_utils, **requirements)
+    # opt = optimizer.RandomSearch(hp_utils, **requirements)
     # opt = optimizer.MultiTaskGPBO(hp_utils, **requirements, transfer_info_pathes=transfer_info_pathes)
     best_conf, best_performance = opt.optimize()

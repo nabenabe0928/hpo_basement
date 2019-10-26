@@ -4,6 +4,7 @@ from utils.utils import (load_class,
                          import_module,
                          check_conflict,
                          parse_requirements,
+                         save_elapsed_time,
                          print_result)
 
 
@@ -15,5 +16,6 @@ __all__ = ['HyperparameterUtilities',
            'import_module',
            'check_conflict',
            'parse_requirements',
+           'save_elapsed_time',
            'print_result'
            ]
