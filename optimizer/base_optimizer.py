@@ -218,6 +218,7 @@ class BaseOptimizer():
                      self.n_jobs,
                      verbose=self.verbose,
                      print_freq=self.print_freq)
+
             self.n_jobs += 1
 
             if self.n_jobs >= self.max_evals:
