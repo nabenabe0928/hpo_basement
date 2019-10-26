@@ -7,9 +7,15 @@
 
 ・pybnn 0.0.5 [ (github)](https://github.com/automl/pybnn)
 
+・Pytorch 1.2.0 [ (github)](https://github.com/pytorch/pytorch)
+
+・botorch 0.1.3 [ (github)](https://github.com/pytorch/botorch)
+
 ```
 pip install ConfigSpace
 pip install pybnn
+pip install torch torchvision
+pip install botorch
 pip install -r requirements.txt
 ```
 
