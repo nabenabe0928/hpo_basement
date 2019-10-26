@@ -53,9 +53,11 @@ def get_path_name(obj_name, experimental_settings, transfer_info_pathes):
         obj_path_name += "_biased"
     if transfer_info_pathes is not None:
         obj_path_name += "_transfers"
-        for path in transfer_info_pathes:
-            p = "{}{}{}".format(*path[12:].split("/"))
+        n_tasks = len(transfer_info_pathes)
+        for i, path in enumerate(transfer_info_pathes):
+            p = "{}{}_{}".format(*path[12:].split("/"))
             obj_path_name += "_" + p
+            obj_path_name += "_and" if i + 1 < n_tasks else ""
 
     return obj_path_name
 
