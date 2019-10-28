@@ -243,11 +243,11 @@ class BaseOptimizer():
                     resources[job[0]] = False
 
             jobs = new_jobs
-            n_runnings = len(jobs)            
+            n_runnings = len(jobs)
             for _ in range(max(0, self.n_parallels - n_runnings)):
                 gpu_id = resources.index(False)
                 hp_conf = self._initial_sampler() if self.n_jobs < self.n_init else self.opt()
-                
+
                 p = Process(target=self.obj,
                             args=(hp_conf,
                                   self.hp_utils,

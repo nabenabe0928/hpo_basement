@@ -90,7 +90,7 @@ class MultiTaskGPBO(BaseOptimizer):
                  seed=None,
                  verbose=True,
                  print_freq=1,
-                 transfer_info_pathes=None                 
+                 transfer_info_pathes=None
                  ):
 
         super().__init__(hp_utils,
@@ -142,7 +142,6 @@ class MultiTaskGPBO(BaseOptimizer):
         X, Y = self.create_multi_task_X()
         X = torch.from_numpy(X)
         Y = torch.from_numpy(Y)
-
 
         mtgp = MultiTaskGP(X, Y, task_feature=self.n_dim, output_tasks=[0])
         x = optimize_EI(mtgp, self.Y[0][0].min(), self.n_dim)

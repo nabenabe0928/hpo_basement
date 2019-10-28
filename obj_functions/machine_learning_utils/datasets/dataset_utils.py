@@ -85,12 +85,16 @@ def process_raw_dataset(train_raw_dataset,
         return train_raw_dataset, test_raw_dataset
     else:
         print("Processing raw dataset...")
+        n_all = len(train_raw_dataset)
+        n_train = int(n_all * 0.8)
         if dataset_name.upper() == "CIFAR":
-            train_labels = np.array([train_raw_dataset.targets, list(range(len(train_raw_dataset)))])
-            test_labels = np.array([test_raw_dataset.targets, list(range(len(test_raw_dataset)))])
+            train_labels = np.array([train_raw_dataset.targets[:n_train], list(range(n_train))])
+            test_labels = np.array([train_raw_dataset.targets[n_train:], list(range(n_train, n_all))])
+            # test_labels = np.array([test_raw_dataset.targets, list(range(len(test_raw_dataset)))])
         elif dataset_name.upper() == "SVHN":
-            train_labels = np.array([train_raw_dataset.labels, list(range(len(train_raw_dataset)))])
-            test_labels = np.array([test_raw_dataset.labels, list(range(len(test_raw_dataset)))])
+            train_labels = np.array([train_raw_dataset.labels[:n_train], list(range(n_train))])
+            test_labels = np.array([train_raw_dataset.labels[n_train:], list(range(n_train, n_all))])
+            # test_labels = np.array([test_raw_dataset.labels, list(range(len(test_raw_dataset)))])
         print("Start processing...")
         print("")
 
@@ -105,7 +109,8 @@ def process_raw_dataset(train_raw_dataset,
             print("Biased labels")
             train_labels = get_biased_class(train_labels, biased_cls, n_cls, raw_n_cls)
 
-        return Subset(train_raw_dataset, train_labels[1]), Subset(test_raw_dataset, test_labels[1])
+        # return Subset(train_raw_dataset, train_labels[1]), Subset(test_raw_dataset, test_labels[1])
+        return Subset(train_raw_dataset, train_labels[1]), Subset(train_raw_dataset, test_labels[1])
 
 
 def get_small_class(train_labels, test_labels, n_cls):
