@@ -5,10 +5,12 @@ from utils.utils import (load_class,
                          check_conflict,
                          parse_requirements,
                          save_elapsed_time,
-                         print_result)
+                         print_result,
+                         ExperimentalSettings)
 
 
 __all__ = ['HyperparameterUtilities',
+           'ExperimentalSettings',
            'get_hp_info',
            'distribution_type',
            'load_class',

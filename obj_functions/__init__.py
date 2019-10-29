@@ -15,8 +15,14 @@ from obj_functions.benchmarks import (ackley,
                                       xin_she_yang,
                                       zakharov)
 
-from obj_functions.machine_learnings import (cnn)
+from obj_functions.machine_learnings import (cnn,
+                                             wrn)
 
+n_non_func = len(["machine_learning_utils",
+                  "datasets",
+                  "models",
+                  "print_config",
+                  "start_train"])
 
 __all__ = ["machine_learning_utils",
            "datasets",
@@ -36,4 +42,5 @@ __all__ = ["machine_learning_utils",
            "weighted_sphere",
            "xin_she_yang",
            "zakharov",
-           "cnn"]
+           "cnn",
+           "wrn"]

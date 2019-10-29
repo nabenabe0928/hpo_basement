@@ -166,11 +166,13 @@ class HyperparameterUtilities():
     """
     Parameters
     ----------
-    obj_name: string
-        The name of the objective function's file
-    experimental_settings: dict
+    experimental_settings: NamedTuple
+        func_name: string
+            The name of the objective function's file
         *dim: int
             the dimension of a benchmark function. Required only when using a benchmark function.
+        *default: bool
+            If using default hyperparameter configuration or not.
         *dataset_name: string
             the name of dataset. e.g.) cifar, svhn etc...
         *n_cls: int
@@ -182,18 +184,11 @@ class HyperparameterUtilities():
         *biased_cls: list of float (K, )
             How much percentages of i-th labeled data to use in training.
             The length must be same as n_cls. Each element must be (0, 1].
+        *test: bool
+            If using validation dataset or test dataset. If false, using validation dataset.
     """
 
-    def __init__(self,
-                 obj_name,
-                 experimental_settings={"dim": None,
-                                        "dataset_name": None,
-                                        "n_cls": None,
-                                        "image_size": None,
-                                        "data_frac": None,
-                                        "biased_cls": None
-                                        }
-                 ):
+    def __init__(self, experimental_settings):
         """
         Member Variables
         config_space: ConfigurationSpace
@@ -209,14 +204,13 @@ class HyperparameterUtilities():
             history/{log, stdo}/name of optimizer/name of algorithm/number of experiments
         """
 
-        self.obj_name = obj_name
+        self.obj_name = experimental_settings.func_name
         self.config_space = CS.ConfigurationSpace()
         self.y_names = None
         self.in_fmt = None
         self.lock = Lock()
-        self.experimental_settings = experimental_settings
         self.save_path = None
-        self.obj_class = self.prepare_opt_env()
+        self.obj_class = self.prepare_opt_env(experimental_settings)
         self.var_names = list(self.config_space._hyperparameters.keys())
 
     def dict_to_list(self, hp_dict):
@@ -558,7 +552,7 @@ class HyperparameterUtilities():
             Y.append(_Y)
         return X, Y
 
-    def prepare_opt_env(self):
+    def prepare_opt_env(self, experimental_settings):
         """
         The function to create ConfigSpace and load the objective function's class
         """
@@ -570,13 +564,13 @@ class HyperparameterUtilities():
         self.y_names = json_params["y_names"]
         self.in_fmt = json_params["in_fmt"]
 
-        if self.experimental_settings["dim"] is not None:
+        if experimental_settings.dim is not None:
             try:
                 v = config_info['x']
             except ValueError:
                 raise ValueError("'x' is allowed to be the name of hyperparameters of benchmark functions ONLY in params.json.")
             lb, ub = v["lower"], v["upper"]
-            for i in range(self.experimental_settings["dim"]):
+            for i in range(experimental_settings.dim):
                 var_name = 'x{:0>5}'.format(i)
                 hp = create_hyperparameter(float, var_name, lower=lb, upper=ub)
                 self.config_space.add_hyperparameter(hp)
@@ -593,7 +587,7 @@ class HyperparameterUtilities():
                 hp = self.get_hp_info_from_json(v, var_name)
                 self.config_space.add_hyperparameter(hp)
 
-        return utils.load_class("obj_functions.{}".format(self.obj_name))(self.experimental_settings)
+        return utils.load_class("obj_functions.{}".format(self.obj_name))(experimental_settings)
 
     def get_hp_info_from_json(self, v, var_name):
         """

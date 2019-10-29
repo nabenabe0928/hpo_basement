@@ -9,15 +9,21 @@ def train(model, hp_dict, train_data, test_data, cuda_id, save_path):
 
 
 def cnn(experimental_settings):
-    train_dataset, test_dataset = datasets.get_dataset(dataset_name=experimental_settings["dataset_name"],
-                                                       n_cls=experimental_settings["n_cls"],
-                                                       image_size=experimental_settings["image_size"],
-                                                       data_frac=experimental_settings["data_frac"],
-                                                       biased_cls=experimental_settings["biased_cls"]
-                                                       )
+    train_dataset, test_dataset = datasets.get_dataset(experimental_settings)
 
     def _imp(hp_dict, cuda_id, save_path):
-        model = models.CNN(**hp_dict, n_cls=experimental_settings["n_cls"])
+        model = models.CNN(**hp_dict, n_cls=experimental_settings.n_cls)
+        train_data, test_data = datasets.get_data(train_dataset, test_dataset, batch_size=model.batch_size)
+        return train(model, hp_dict, train_data, test_data, cuda_id, save_path)
+
+    return _imp
+
+
+def wrn(experimental_settings):
+    train_dataset, test_dataset = datasets.get_dataset(experimental_settings)
+
+    def _imp(hp_dict, cuda_id, save_path):
+        model = models.WideResNet(**hp_dict, n_cls=experimental_settings.n_cls)
         train_data, test_data = datasets.get_data(train_dataset, test_dataset, batch_size=model.batch_size)
         return train(model, hp_dict, train_data, test_data, cuda_id, save_path)
 

@@ -17,23 +17,24 @@ bibtex
 }
 """
 
+
 class BasicBlock(nn.Module):
-    def __init__(self, in_ch, out_ch, stride = 1, drop_rate = 0.3, kernel_size = 3):
+    def __init__(self, in_ch, out_ch, stride=1, drop_rate=0.3, kernel_size=3):
         super(BasicBlock, self).__init__()
         self.in_is_out = (in_ch == out_ch and stride == 1)
         self.drop_rate = drop_rate
-        
-        self.shortcut = nn.Sequential() if self.in_is_out else nn.Conv2d(in_ch, out_ch, 1, padding = 0, stride = stride, bias = False)
-        self.bn1 = nn.BatchNorm2d(in_ch)        
-        self.c1 = nn.Conv2d(in_ch, out_ch, kernel_size, stride = stride, padding = 1, bias = False)
+
+        self.shortcut = nn.Sequential() if self.in_is_out else nn.Conv2d(in_ch, out_ch, 1, padding=0, stride=stride, bias=False)
+        self.bn1 = nn.BatchNorm2d(in_ch)
+        self.c1 = nn.Conv2d(in_ch, out_ch, kernel_size, stride=stride, padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(out_ch)
-        self.c2 = nn.Conv2d(out_ch, out_ch, kernel_size, padding = 1, bias = False)
+        self.c2 = nn.Conv2d(out_ch, out_ch, kernel_size, padding=1, bias=False)
 
     def forward(self, x):
-        h = F.relu(self.bn1(x), inplace = True)
+        h = F.relu(self.bn1(x), inplace=True)
         h = self.c1(h)
-        h = F.relu(self.bn2(h), inplace = True)
-        h = F.dropout(h, p = self.drop_rate, training = self.training)
+        h = F.relu(self.bn2(h), inplace=True)
+        h = F.dropout(h, p=self.drop_rate, training=self.training)
         h = self.c2(h)
 
         return h + self.shortcut(x)
@@ -70,7 +71,7 @@ class WideResNet(nn.Module):
         The number of classes on a given task.
     """
 
-    def __init__(self, 
+    def __init__(self,
                  batch_size=128,
                  lr=1.0e-1,
                  momentum=0.9,
@@ -90,7 +91,7 @@ class WideResNet(nn.Module):
                  n_cls=100
                  ):
         super(WideResNet, self).__init__()
-        
+
         # Hyperparameter Configuration for CNN.
         self.batch_size = int(batch_size)
         self.lr = lr
@@ -103,11 +104,11 @@ class WideResNet(nn.Module):
         self.nesterov = nesterov
         self.lr_decay = lr_decay
 
-        # Architecture of CNN.        
-        self.conv1 = nn.Conv2d(3, self.n_chs[0], 3, padding = 1, bias = False)
+        # Architecture of CNN.
+        self.conv1 = nn.Conv2d(3, self.n_chs[0], 3, padding=1, bias=False)
         self.conv2 = self._add_groups(self.n_blocks[0], self.n_chs[0], self.n_chs[1], drop_rate1)
-        self.conv3 = self._add_groups(self.n_blocks[1], self.n_chs[1], self.n_chs[2], drop_rate2, stride = 2)
-        self.conv4 = self._add_groups(self.n_blocks[2], self.n_chs[2], self.n_chs[3], drop_rate3, stride = 2)
+        self.conv3 = self._add_groups(self.n_blocks[1], self.n_chs[1], self.n_chs[2], drop_rate2, stride=2)
+        self.conv4 = self._add_groups(self.n_blocks[2], self.n_chs[2], self.n_chs[3], drop_rate3, stride=2)
         self.bn = nn.BatchNorm2d(self.n_chs[3])
         self.full_conn = nn.Linear(self.n_chs[3], n_cls)
         self.init_inner_params()
@@ -128,19 +129,18 @@ class WideResNet(nn.Module):
         h = self.conv2(h)
         h = self.conv3(h)
         h = self.conv4(h)
-        h = F.relu(self.bn(h), inplace = True)
+        h = F.relu(self.bn(h), inplace=True)
         h = F.avg_pool2d(h, 8)
         h = h.view(-1, self.n_chs[3])
         h = self.full_conn(h)
-        
-        return F.log_softmax(h, dim = 1)
 
-    def _add_groups(self, n_blocks, in_ch, out_ch, drop_rate, stride = 1):
+        return F.log_softmax(h, dim=1)
+
+    def _add_groups(self, n_blocks, in_ch, out_ch, drop_rate, stride=1):
         blocks = []
 
         for _ in range(int(n_blocks)):
-            blocks.append(BasicBlock(in_ch, out_ch, stride = stride, drop_rate = drop_rate))
-            
+            blocks.append(BasicBlock(in_ch, out_ch, stride=stride, drop_rate=drop_rate))
             in_ch, stride = out_ch, 1
 
         return nn.Sequential(*blocks)

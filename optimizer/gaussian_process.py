@@ -38,30 +38,11 @@ def optimize_EI(gp, best_f, n_dim):
 
 
 class SingleTaskGPBO(BaseOptimizer):
-    def __init__(self,
-                 hp_utils,
-                 n_parallels=1,
-                 n_init=10,
-                 max_evals=100,
-                 n_experiments=0,
-                 restart=True,
-                 seed=None,
-                 verbose=True,
-                 print_freq=1
-                 ):
+    def __init__(self, hp_utils, opt_requirements, experimental_settings):
 
-        super().__init__(hp_utils,
-                         n_parallels=n_parallels,
-                         n_init=n_init,
-                         max_evals=max_evals,
-                         n_experiments=n_experiments,
-                         restart=restart,
-                         seed=seed,
-                         verbose=verbose,
-                         print_freq=print_freq
-                         )
+        super().__init__(hp_utils, opt_requirements, experimental_settings)
         self.opt = self.sample
-        self.n_dim = len(hp_utils.config_space._hyperparameters)
+        self.n_dim = len(self.hp_utils.config_space._hyperparameters)
 
     def sample(self):
         """
@@ -80,33 +61,13 @@ class SingleTaskGPBO(BaseOptimizer):
 
 
 class MultiTaskGPBO(BaseOptimizer):
-    def __init__(self,
-                 hp_utils,
-                 n_parallels=1,
-                 n_init=10,
-                 max_evals=100,
-                 n_experiments=0,
-                 restart=True,
-                 seed=None,
-                 verbose=True,
-                 print_freq=1,
-                 transfer_info_pathes=None
-                 ):
+    def __init__(self, hp_utils, opt_requirements, experimental_settings, transfer_info_pathes):
 
-        super().__init__(hp_utils,
-                         n_parallels=n_parallels,
-                         n_init=n_init,
-                         max_evals=max_evals,
-                         n_experiments=n_experiments,
-                         restart=restart,
-                         seed=seed,
-                         verbose=verbose,
-                         print_freq=print_freq,
-                         transfer_info_pathes=transfer_info_pathes
-                         )
+        super().__init__(hp_utils, opt_requirements, experimental_settings, transfer_info_pathes)
+        transfer_info_pathes = opt_requirements.transfer_info_pathes
         self.opt = self.sample
-        self.n_dim = len(hp_utils.config_space._hyperparameters)
-        self.X, self.Y = hp_utils.load_transfer_hps_conf(transfer_info_pathes, convert=True)
+        self.n_dim = len(self.hp_utils.config_space._hyperparameters)
+        self.X, self.Y = self.hp_utils.load_transfer_hps_conf(transfer_info_pathes, convert=True)
 
     def create_multi_task_X(self):
         _X, _y = self.hp_utils.load_hps_conf(convert=True, do_sort=False)

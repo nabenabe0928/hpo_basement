@@ -5,6 +5,47 @@ import csv
 import time
 import obj_functions.machine_learning_utils as ml_utils
 from multiprocessing import Process
+from typing import NamedTuple
+
+
+"""
+Parameters
+----------
+n_parallels: int
+    the number of computer resources we use in an experiment
+n_init: int
+    the number of initial configurations
+n_experiments: int
+    the index of experiments. Used only to specify the path of log file.
+restart: bool
+    if restart the experiment or not.
+    if True, continue the experiment based on log files.
+default: bool
+    If using default hyperparameter configuration or not.
+max_evals: int
+    the number of evlauations in an experiment.
+seed: int or None
+    The number specifying the seed on a random number generator.
+verbose: bool
+    Whether print the result or not.
+print_freq: int
+    Every print_freq iteration, the result will be printed.
+"""
+
+
+class BaseOptimizerRequirements(
+    NamedTuple("_BaseOptimizerRequirements",
+               [("n_parallels", int),  # 1
+                ("n_init", int),  # 10
+                ("n_experiments", int),  # 0
+                ("max_evals", int),  # 100
+                ("restart", bool),  # True
+                ("default", bool),  # False
+                ("seed", int),  # None
+                ("verbose", bool),  # True
+                ("print_freq", int),  # 1
+                ])):
+    pass
 
 
 def objective_function(hp_conf, hp_utils, gpu_id, job_id, verbose=True, print_freq=1, save_time=None):
@@ -39,18 +80,20 @@ def objective_function(hp_conf, hp_utils, gpu_id, job_id, verbose=True, print_fr
 def get_path_name(obj_name, experimental_settings, transfer_info_pathes):
     obj_path_name = obj_name
 
-    if experimental_settings["dim"] is not None:
-        obj_path_name += "_{}d".format(experimental_settings["dim"])
-    if experimental_settings["dataset_name"] is not None:
-        obj_path_name += "_{}".format(experimental_settings["dataset_name"])
-    if experimental_settings["n_cls"] is not None:
-        obj_path_name += str(experimental_settings["n_cls"])
-    if experimental_settings["image_size"] is not None:
-        obj_path_name += "_img{}".format(experimental_settings["image_size"])
-    if experimental_settings["data_frac"] is not None:
-        obj_path_name += "_{}per".format(int(100 * experimental_settings["data_frac"]))
-    if experimental_settings["biased_cls"] is not None:
+    if experimental_settings.dim is not None:
+        obj_path_name += "_{}d".format(experimental_settings.dim)
+    if experimental_settings.dataset_name is not None:
+        obj_path_name += "_{}".format(experimental_settings.dataset_name)
+    if experimental_settings.n_cls is not None:
+        obj_path_name += str(experimental_settings.n_cls)
+    if experimental_settings.image_size is not None:
+        obj_path_name += "_img{}".format(experimental_settings.image_size)
+    if experimental_settings.data_frac is not None:
+        obj_path_name += "_{}per".format(int(100 * experimental_settings.data_frac))
+    if experimental_settings.biased_cls is not None:
         obj_path_name += "_biased"
+    if experimental_settings.test is not None:
+        obj_path_name += "_TEST"
     if transfer_info_pathes is not None:
         obj_path_name += "_transfers"
         n_tasks = len(transfer_info_pathes)
@@ -63,48 +106,20 @@ def get_path_name(obj_name, experimental_settings, transfer_info_pathes):
 
 
 class BaseOptimizer():
-    """
-    Parameters
-    ----------
-    hp_utils: HyperparametersUtilities object
-        ./utils/hp_utils.py/HyperparameterUtilities
-    obj: function
-        the objective function whose input is a hyperparameter configuration
-        and output is the corresponding performance.
-    n_parallels: int
-        the number of computer resources we use in an experiment
-    n_init: int
-        the number of initial configurations
-    n_experiments: int
-        the index of experiments. Used only to specify the path of log file.
-    restart: bool
-        if restart the experiment or not.
-        if True, continue the experiment based on log files.
-    max_evals: int
-        the number of evlauations in an experiment.
-    seed: int or None
-        The number specifying the seed on a random number generator.
-    verbose: bool
-        Whether print the result or not.
-    print_freq: int
-        Every print_freq iteration, the result will be printed.
-    """
-
     def __init__(self,
                  hp_utils,
-                 n_parallels=1,
-                 n_init=10,
-                 n_experiments=0,
-                 max_evals=100,
-                 restart=True,
-                 seed=None,
-                 verbose=True,
-                 print_freq=1,
+                 requirements,
+                 experimental_settings,
                  transfer_info_pathes=None,
                  obj=objective_function):
         """
         Member Variables
         ----------------
+        hp_utils: HyperparametersUtilities object
+            ./utils/hp_utils.py/HyperparameterUtilities
+        obj: function
+            the objective function whose input is a hyperparameter configuration
+            and output is the corresponding performance.
         save_file_path: string
             the path where recording the configurations and performances
         n_jobs: int
@@ -113,25 +128,26 @@ class BaseOptimizer():
             the optimizer of hyperparameter configurations
         rng: numpy.random.RandomState object
             Sampling random numbers based on the seed argument.
-        ongoing_confs: 2d list [gpu_id][hp idx]
-            Hyperparameter configurations being evaluated now.
+        transfer_info_pathes: list of str (M - 1, )
+            The list of pathes where there are previous log you want to transfer.
         """
 
         self.hp_utils = hp_utils
         self.obj = obj
-        self.max_evals = max_evals
-        self.n_init = n_init
-        self.n_parallels = max(n_parallels, 1)
+        self.max_evals = requirements.max_evals
+        self.n_init = requirements.n_init
+        self.n_parallels = max(requirements.n_parallels, 1)
         self.opt = callable
-        self.restart = restart
-        self.rng = np.random.RandomState(seed)
-        self.seed = seed
-        opt_name = self.__class__.__name__
-        obj_path_name = get_path_name(hp_utils.obj_name, hp_utils.experimental_settings, transfer_info_pathes)
-        self.hp_utils.save_path = "history/log/{}/{}/{:0>3}".format(opt_name, obj_path_name, n_experiments)
+        self.restart = requirements.restart
+        self.default = requirements.default
+        self.rng = np.random.RandomState(requirements.seed)
+        self.seed = requirements.seed
+        opt_name = self.__class__.__name__ if not self.default else "DefaultConfs"
+        obj_path_name = get_path_name(self.hp_utils.obj_name, experimental_settings, transfer_info_pathes)
+        self.hp_utils.save_path = "history/log/{}/{}/{:0>3}".format(opt_name, obj_path_name, requirements.n_experiments)
         self.n_jobs = 0
-        self.verbose = verbose
-        self.print_freq = print_freq
+        self.verbose = requirements.verbose
+        self.print_freq = requirements.print_freq
 
     def get_n_jobs(self):
         """
@@ -210,7 +226,9 @@ class BaseOptimizer():
         while True:
             gpu_id = 0
 
-            if self.n_jobs < self.n_init:
+            if self.default:
+                hp_conf = []
+            elif self.n_jobs < self.n_init:
                 hp_conf = self._initial_sampler()
             elif self.n_jobs < self.max_evals:
                 hp_conf = self.opt()
@@ -246,7 +264,13 @@ class BaseOptimizer():
             n_runnings = len(jobs)
             for _ in range(max(0, self.n_parallels - n_runnings)):
                 gpu_id = resources.index(False)
-                hp_conf = self._initial_sampler() if self.n_jobs < self.n_init else self.opt()
+
+                if self.default:
+                    hp_conf = []
+                elif self.n_jobs < self.n_init:
+                    hp_conf = self._initial_sampler()
+                else:
+                    hp_conf = self.opt()
 
                 p = Process(target=self.obj,
                             args=(hp_conf,

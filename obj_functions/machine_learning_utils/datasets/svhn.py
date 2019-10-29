@@ -1,11 +1,12 @@
 from torchvision import datasets, transforms
+import numpy as np
 import warnings
 
 
 # https://github.com/Coderx7/SimpleNet_Pytorch/issues/3
 
 
-def get_svhn(image_size=32):
+def get_svhn(image_size=32, test=False):
     warnings.filterwarnings("ignore", message="numpy.dtype size changed")
     warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
     normalize = transforms.Normalize(mean=[0.5071, 0.4867, 0.4408],
@@ -25,9 +26,22 @@ def get_svhn(image_size=32):
                                   split="train",
                                   download=True,
                                   transform=transform_train)
-    test_dataset = datasets.SVHN(root="svhn",
-                                 split="test",
-                                 download=True,
-                                 transform=transform_test)
 
-    return train_dataset, test_dataset, 10
+    n_all = len(train_dataset)
+    n_train = int(n_all * 0.8)
+    train_labels = np.array([train_dataset.labels[:n_train], list(range(n_train))])
+
+    if test:
+        test_dataset = datasets.SVHN(root="svhn",
+                                     split="test",
+                                     download=True,
+                                     transform=transform_test)
+        test_labels = np.array([test_dataset.labels, list(range(len(test_dataset)))])
+    else:
+        test_dataset = datasets.SVHN(root="svhn",
+                                     split="train",
+                                     download=True,
+                                     transform=transform_test)
+        test_labels = np.array([test_dataset.labels[n_train:], list(range(n_train, n_all))])
+
+    return train_dataset, train_labels, test_dataset, test_labels, 10

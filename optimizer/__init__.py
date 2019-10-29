@@ -1,4 +1,4 @@
-from optimizer.base_optimizer import BaseOptimizer
+from optimizer.base_optimizer import BaseOptimizer, BaseOptimizerRequirements
 from optimizer.nelder_mead import NelderMead
 from optimizer.random_search import RandomSearch
 from optimizer.gaussian_process import SingleTaskGPBO, MultiTaskGPBO
@@ -10,6 +10,7 @@ from optimizer import robo
 
 
 __all__ = ['BaseOptimizer',
+           'BaseOptimizerRequirements',
            'NelderMead',
            'RandomSearch',
            'SingleTaskGPBO',

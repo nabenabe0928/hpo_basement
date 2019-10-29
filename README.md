@@ -32,9 +32,9 @@ import optimizer
 
 
 if __name__ == '__main__':
-    requirements, experimental_settings = utils.parse_requirements()
-    hp_utils = utils.HyperparameterUtilities("sphere", experimental_settings=experimental_settings)
-    opt = optimizer.SingleTaskGPBO(hp_utils, **requirements)
+    opt_requirements, experimental_settings = utils.parse_requirements()
+    hp_utils = utils.HyperparameterUtilities(experimental_settings)
+    opt = optimizer.SingleTaskGPBO(hp_utils, opt_requirements, experimental_settings)
     best_conf, best_performance = opt.optimize()
 ```
 
@@ -50,9 +50,11 @@ if __name__ == '__main__':
     transfer_info_pathes_part = ["SingleTaskGPBO/sphere_3d/000"]  # the name of path
     transfer_info_pathes = [path + transfer_info_path_part for transfer_info_path_part in transfer_info_pathes_part]
 
-    requirements, experimental_settings = utils.parse_requirements()
-    hp_utils = utils.HyperparameterUtilities("sphere", experimental_settings=experimental_settings)
-    opt = optimizer.MultiTaskGPBO(hp_utils, **requirements, transfer_info_pathes=transfer_info_pathes)
+    opt_requirements, experimental_settings = utils.parse_requirements()
+    hp_utils = utils.HyperparameterUtilities(experimental_settings)
+    opt = optimizer.MultiTaskGPBO(hp_utils, opt_requirements, experimental_settingstransfer_info_pathes=transfer_info_pathes)
+    best_conf, best_performance = opt.optimize()
+    opt = optimizer.MultiTaskGPBO(hp_utils, **requirements, )
     best_conf, best_performance = opt.optimize()
 ```
 
@@ -63,6 +65,9 @@ python main.py -dim 2 -par 1 -ini 3 -exp 0 -eva 100 -res 0 -seed 0 -veb 1 -fre 1
 ```
 
 where all the arguments are integer.
+
+### fuc (Required)
+The name of callable you want to optimize.
 
 ### dim (optional: Default is None)
 The dimension of input space.
@@ -107,6 +112,14 @@ The pixel size of training data.
 ### sub (optional: Default is None)
 How many percentages of training data to use in training (Must be between 0. and 1.).
 
+### test (optional: Default is 0)
+If using validation set or test set.
+If 1, using test dataset.
+
+### defa (optional: Default is 0)
+Evaluating the default configuration or not.
+If 1, evaluate the default one.
+
 ## Optimizer
 You can add whatever optimizers you would like to use in this basement.
 By inheriting the `BaseOptimizer` object, you can use basic function needed to start HPO.
@@ -119,28 +132,13 @@ from optimizer.base_optimizer import BaseOptimizer
 class OptName(BaseOptimizer):
     def __init__(self,
                  hp_utils,  # hyperparameter utility object
-                 n_parallels=1,  # the number of parallel computer resourses
-                 n_init=10,  # the number of initial sampling
-                 n_experiments=0,  # the index of experiments. Used only to specify the path of log files.
-                 max_evals=100,  # the number of maximum evaluations in an experiment
-                 restart=True,  # Whether restarting the previous experiment or not. If False, removes the previous log files.
-                 seed=None,  # The number to specify the seed for a random number generator.
-                 verbose=True,  # Whether print the result or not.
-                 print_freq=1  # Every print_freq iteration, the result will be printed.
+                 opt_requirements,  # the variables obtained from parser
+                 experimental_settings,  # the variables obtained from parser
                  **kwargs
                  ):
 
         # inheritance
-        super().__init__(hp_utils,
-                         n_parallels=n_parallels,
-                         n_init=n_init,
-                         n_experiments=n_experiments,
-                         max_evals=max_evals,
-                         restart=restart,
-                         seed=seed,
-                         verbose=verbose,
-                         print_freq=print_freq
-                         )
+        super().__init__(hp_utils, opt_requirements, experimental_settings)
 
         # optimizer in BaseOptimizer object
         self.opt = self.sample
@@ -255,8 +253,8 @@ import numpy as np
 """
 Parameters
 ----------
-experimental_settings: dict
-    The dict of experimental settings.
+experimental_settings: NamedTuple
+    The NamedTuple of experimental settings.
 
 Returns
 -------
@@ -289,6 +287,9 @@ def f(experimental_settings):
 
 Also, the keys and corresponding values of `experimental_settings` are as follows:
 
+### func_name: str
+The name of objective function.
+
 ### dim: int
 The dimension of input space.
 Only for benchmark functions.
@@ -308,3 +309,7 @@ How many percentages of training data to use in training (Must be between 0. and
 ### biased_cls: list of float
 The size of this list must be the same as n_cls.
 The i-th element of this list is the percentages of training data to use in learning.
+
+### test: bool
+If using validation set or test set.
+If True, using test set.

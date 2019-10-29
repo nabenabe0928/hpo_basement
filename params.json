@@ -85,7 +85,7 @@
         }
     },
 
-    "wideresnet": {"y_names": ["error", "cross_entropy"], "in_fmt": "dict",
+    "wrn": {"y_names": ["error", "cross_entropy"], "in_fmt": "dict",
       "config": {
             "batch_size": {"lower": 64, "upper": 256, "dist": "u", "log": "True", "var_type": "int"},
             "lr": {"lower": 1.0e-4, "upper": 1.0, "dist": "u", "log": "True", "var_type": "float"},

@@ -5,37 +5,22 @@ from optimizer.base_optimizer import BaseOptimizer
 class NelderMead(BaseOptimizer):
     def __init__(self,
                  hp_utils,
-                 n_parallels=1,
-                 n_init=10,
-                 max_evals=100,
-                 n_experiments=0,
-                 restart=True,
-                 seed=None,
-                 verbose=True,
-                 print_freq=1,
+                 opt_requirements,
+                 experimental_settings,
                  delta_r=1.0,
                  delta_oc=0.5,
                  delta_ic=-0.5,
                  delta_e=2.0,
                  delta_s=0.5):
 
-        super().__init__(hp_utils,
-                         n_parallels=n_parallels,
-                         n_init=n_init,
-                         max_evals=max_evals,
-                         n_experiments=n_experiments,
-                         restart=restart,
-                         seed=seed,
-                         verbose=verbose,
-                         print_freq=print_freq
-                         )
+        super().__init__(hp_utils, opt_requirements, experimental_settings)
         self.delta = {"r": delta_r,
                       "e": delta_e,
                       "s": delta_s,
                       "ic": delta_ic,
                       "oc": delta_oc}
         self.opt = self.sample
-        self.n_dim = n_init - 1
+        self.n_dim = self.n_init - 1
         self.idx = 0
         self.n_evals = 0
         self.xc = None
