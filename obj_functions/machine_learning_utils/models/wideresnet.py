@@ -100,7 +100,7 @@ class WideResNet(nn.Module):
         self.n_blocks = [n_blocks1, n_blocks2, n_blocks3]
         self.n_chs = [16, 16 * width_coef1, 32 * width_coef2, 64 * width_coef3]
         self.epochs = 200
-        self.lr_step = lr_step
+        self.lr_step = [int(step * self.epochs) for step in lr_step]
         self.nesterov = nesterov
         self.lr_decay = lr_decay
 
