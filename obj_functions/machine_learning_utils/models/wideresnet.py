@@ -3,6 +3,20 @@ import torch.nn.functional as F
 import math
 
 
+"""
+reference: https://arxiv.org/pdf/1605.07146.pdf
+Wide Residual Networks
+Zagoruyko, Sergey et al.
+
+bibtex
+@article{zagoruyko2016wide,
+  title={Wide residual networks},
+  author={Zagoruyko, Sergey and Komodakis, Nikos},
+  journal={arXiv preprint arXiv:1605.07146},
+  year={2016}
+}
+"""
+
 class BasicBlock(nn.Module):
     def __init__(self, in_ch, out_ch, stride = 1, drop_rate = 0.3, kernel_size = 3):
         super(BasicBlock, self).__init__()
@@ -26,6 +40,36 @@ class BasicBlock(nn.Module):
 
 
 class WideResNet(nn.Module):
+    """
+    Parameters
+    ----------
+    batch_size: int
+        batch size of image dataset
+    lr: float
+        The learning rate of inner weight parameter of CNN.
+    momentum: float
+        momentum coefficient for Stochastic Gradient Descent (SGD)
+    weight_decay: float
+        the coefficients of a regularization term for cross entropy
+    n_blocks1 ,2 ,3 : int
+        The number of repeating the residual groups in a bottleneck block
+    drop_rate1, 2, 3: float
+        The probability of dropout a weight of connections in a bottleneck block 1, 2, 3
+    width_coef1, 2, 3: int
+        The factor of widening the number of kernel feature maps of each residual link in a bottleneck block 1, 2, 3
+    nesterov: bool
+        Whether using nesterov or not in SGD.
+    epochs: int
+        The number of training throughout one learning process.
+    lr_step: list of float
+        When to decrease the learning rate.
+        The learning rate will decline at lr_step[k] * epochs epoch.
+    lr_decay: float
+        How much make learning rate decline at epochs * lr_step[k]
+    n_cls: int
+        The number of classes on a given task.
+    """
+
     def __init__(self, 
                  batch_size=128,
                  lr=1.0e-1,
