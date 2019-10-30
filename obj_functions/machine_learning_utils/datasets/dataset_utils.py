@@ -64,8 +64,8 @@ def get_raw_dataset(dataset_name, image_size=None, n_cls=10, test=False):
             nc = 100
         else:
             raise ValueError("n_cls must be between 2 and 100.")
-
         return get_cifar(nc, test=test) if image_size is None else get_cifar(nc, image_size, test=test)
+
     elif dataset_name.upper() == "SVHN":
         return get_svhn(test=test) if image_size is None else get_svhn(image_size, test=test)
     elif dataset_name.upper() == "IMAGENET":
