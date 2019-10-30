@@ -90,7 +90,7 @@ def parse_requirements():
     ap.add_argument("-exp", type=int, default=0)
     ap.add_argument("-eva", type=int, default=100)
     ap.add_argument("-seed", type=int, default=None)
-    ap.add_argument("-res", type=int, choices=[0, 1], default=1)
+    ap.add_argument("-res", type=int, choices=[0, 1], default=0)
     ap.add_argument("-dat", type=str, default=None)
     ap.add_argument("-cls", type=int, default=None)
     ap.add_argument("-img", type=int, default=None)

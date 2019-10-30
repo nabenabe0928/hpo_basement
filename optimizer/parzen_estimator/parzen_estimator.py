@@ -1,5 +1,5 @@
 import numpy as np
-from optimizer.parzen_estimator import GaussKernel, AitchisonAitkenKernel
+from optimizer.parzen_estimator import GaussKernel, AitchisonAitkenKernel, UniformKernel
 
 
 EPS = 1e-12
@@ -37,7 +37,7 @@ def plot_density_estimators(pe_lower, pe_upper, var_name, pr_basis=False, pr_ei=
     plt.show()
 
 
-class NumericalParzenEstimator(object):
+class NumericalParzenEstimator():
     """
     samples: ndarray (n, )
         The observed hyperparameter values.
@@ -56,25 +56,15 @@ class NumericalParzenEstimator(object):
         Here, the number of basis is n + 1.
         n basis are from observed values and 1 basis is from the prior distribution which is N((lb + ub) / 2, (ub - lb) ** 2).
 
-        if james rule...
-            weights: ndarray (n + 1, ) 
-                the weight of each basis. The total must be 1.
-            mus: ndarray (n + 1, )
-                The center of each basis.
-                The values themselves are the observed hyperparameter values. Sorted in ascending order.
-            sigmas: ndarray (n + 1, )
-                The band width of each basis.
-                The values are determined by a heuristic.
-            basis: the list of kernel.GaussKernel object (n + 1, )
-        if scott rule...
-            weights: ndarray (n, ) 
-                the weight of each basis. The total must be 1.
-            mus: ndarray (n, )
-                The center of each basis.
-            sigmas: ndarray (n, )
-                The band width of each basis.
-                The values are determined by a scott rule.
-            basis: the list of kernel.GaussKernel object (n, )
+        weights: ndarray (n + 1, )
+            the weight of each basis. The total must be 1.
+        mus: ndarray (n + 1, )
+            The center of each basis.
+            The values themselves are the observed hyperparameter values. Sorted in ascending order.
+        sigmas: ndarray (n + 1, )
+            The band width of each basis.
+            The values are determined by a heuristic.
+        basis: the list of kernel.GaussKernel object (n + 1, )
         """
 
         self.lb, self.ub, self.q, self.rule = lb, ub, q, rule
@@ -122,6 +112,19 @@ class NumericalParzenEstimator(object):
 
         return np.log(ps + EPS)
 
+    def basis_likelihood(self, xs):
+        """
+        Returns
+        -------
+        likelihood of each basis at given points: ndarray (n_basis, n_ei_candidates)
+        """
+
+        return_vals = np.zeros((len(self.basis), xs.size), dtype=float)
+        for basis_idx, b in enumerate(self.basis):
+            return_vals[basis_idx] += b.pdf(xs)
+
+        return return_vals
+
     def _calculate(self, samples, weights_func):
         if self.rule == "james":
             return self._calculate_by_james_rule(samples, weights_func)
@@ -129,27 +132,25 @@ class NumericalParzenEstimator(object):
             return self._calculate_by_scott_rule(samples)
         else:
             raise ValueError("Rule must be 'scott' or 'james'.")
-    
-    def _calculate_by_james_rule(self, samples, weights_func):
-        samples = np.asarray(samples)
-        prior_mu = 0.5 * (self.lb + self.ub)
-        sigma_bounds = [(self.ub - self.lb) / min(100.0, (1.0 + samples.size)), self.ub - self.lb]
 
-        order = np.argsort(samples)
-        sorted_mus = samples[order]
-        prior_pos = np.searchsorted(samples[order], prior_mu)
-        sorted_mus = np.insert(sorted_mus, prior_pos, prior_mu)
+    def _calculate_by_james_rule(self, samples, weights_func):
+        mus = np.append(samples, 0.5 * (self.lb + self.ub))
+        sigma_bounds = [(self.ub - self.lb) / min(100.0, mus.size), self.ub - self.lb]
+
+        order = np.argsort(mus)
+        sorted_mus = mus[order]
+        original_order = np.arange(mus.size)[order]
+        prior_pos = np.where(original_order == mus.size - 1)[0][0]
 
         sorted_mus_with_bounds = np.insert([sorted_mus[0], sorted_mus[-1]], 1, sorted_mus)
         sigmas = np.maximum(sorted_mus_with_bounds[1:-1] - sorted_mus_with_bounds[0:-2], sorted_mus_with_bounds[2:] - sorted_mus_with_bounds[1:-1])
         sigmas = np.clip(sigmas, sigma_bounds[0], sigma_bounds[1])
         sigmas[prior_pos] = sigma_bounds[1]
 
-        sorted_weights = weights_func(samples.size)[order]
-        sorted_weights = np.insert(sorted_weights, prior_pos, 1.)
-        sorted_weights /= sorted_weights.sum()
+        weights = weights_func(mus.size)
+        weights /= weights.sum()
 
-        return np.array(sorted_weights), np.array(sorted_mus), np.array(sigmas)
+        return weights, mus, sigmas[original_order]
 
     def _calculate_by_scott_rule(self, samples):
         samples = np.array(samples)
@@ -170,7 +171,8 @@ class CategoricalParzenEstimator():
         self.n_choices = n_choices
         self.mus = samples
         self.basis = [AitchisonAitkenKernel(c, n_choices, top=top) for c in samples]
-        self.weights = weights_func(len(samples))
+        self.basis.append(UniformKernel(n_choices))
+        self.weights = weights_func(samples.size + 1)
         self.weights /= self.weights.sum()
 
     def sample_from_density_estimator(self, rng, n_samples):
@@ -178,8 +180,15 @@ class CategoricalParzenEstimator():
         basis_idxs = np.dot(basis_samples, np.arange(self.weights.size))
         return np.array([self.basis[idx].sample_from_kernel(rng) for idx in basis_idxs])
 
-    def log_likelihood(self, samples):
-        ps = np.zeros(samples.shape, dtype=float)
+    def log_likelihood(self, values):
+        ps = np.zeros(values.shape, dtype=float)
         for w, b in zip(self.weights, self.basis):
-            ps += w * b.cdf_for_numpy(samples)
+            ps += w * b.cdf_for_numpy(values)
         return np.log(ps + EPS)
+
+    def basis_likelihood(self, xs):
+        return_vals = np.zeros((len(self.basis), xs.size), dtype=float)
+        for basis_idx, b in enumerate(self.basis):
+            return_vals[basis_idx] += b.cdf_for_numpy(xs)
+
+        return return_vals
