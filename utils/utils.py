@@ -133,7 +133,7 @@ def parse_requirements():
                                  "biased_cls": None,
                                  "test": bool(args.test)
                                  }
-    elif args.ini is None or args.fuc is None:
+    if args.ini is None or args.fuc is None:
         print("The list of func_name is as follows:")
         print(obj_functions.__all__[obj_functions.n_non_func:])
         print("")

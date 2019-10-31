@@ -112,16 +112,16 @@ class NumericalParzenEstimator():
 
         return np.log(ps + EPS)
 
-    def basis_likelihood(self, xs):
+    def basis_loglikelihood(self, xs):
         """
         Returns
         -------
-        likelihood of each basis at given points: ndarray (n_basis, n_ei_candidates)
+        loglikelihood of each basis at given points: ndarray (n_basis, n_ei_candidates)
         """
 
         return_vals = np.zeros((len(self.basis), xs.size), dtype=float)
         for basis_idx, b in enumerate(self.basis):
-            return_vals[basis_idx] += b.pdf(xs)
+            return_vals[basis_idx] += b.log_pdf(xs)
 
         return return_vals
 
@@ -186,9 +186,9 @@ class CategoricalParzenEstimator():
             ps += w * b.cdf_for_numpy(values)
         return np.log(ps + EPS)
 
-    def basis_likelihood(self, xs):
+    def basis_loglikelihood(self, xs):
         return_vals = np.zeros((len(self.basis), xs.size), dtype=float)
         for basis_idx, b in enumerate(self.basis):
-            return_vals[basis_idx] += b.cdf_for_numpy(xs)
+            return_vals[basis_idx] += b.log_cdf_for_numpy(xs)
 
         return return_vals

@@ -39,7 +39,17 @@ class GaussKernel():
         else:
             integral_u = self.cdf(np.minimum(x + 0.5 * self.q, self.ub))
             integral_l = self.cdf(np.maximum(x + 0.5 * self.q, self.lb))
-            return integral_u - integral_l
+            return np.maximum(integral_u - integral_l, EPS)
+
+    def log_pdf(self, x):
+        if self.q is None:
+            z = np.sqrt(2 * np.pi) * self.sigma
+            mahalanobis = ((x - self.mu) / self.sigma) ** 2
+            return np.log(self.norm_const / z) - 0.5 * mahalanobis
+        else:
+            integral_u = self.cdf(np.minimum(x + 0.5 * self.q, self.ub))
+            integral_l = self.cdf(np.maximum(x + 0.5 * self.q, self.lb))
+            return np.log(np.maximum(integral_u - integral_l, EPS))
 
     def cdf(self, x):
         """
@@ -47,7 +57,7 @@ class GaussKernel():
         """
 
         z = (x - self.mu) / (np.sqrt(2) * self.sigma)
-        return self.norm_const * 0.5 * (1. + erf(z))
+        return np.maximum(self.norm_const * 0.5 * (1. + erf(z)), EPS)
 
     def sample_from_kernel(self, rng):
         """
@@ -91,6 +101,9 @@ class AitchisonAitkenKernel():
         else:
             raise ValueError("The choice must be between {} and {}, but {} was given.".format(0, self.n_choices - 1, x))
 
+    def log_cdf(self, x):
+        return np.log(self.cdf(x))
+
     def cdf_for_numpy(self, xs):
         """
         Returning probabilities of a given list x.
@@ -99,6 +112,12 @@ class AitchisonAitkenKernel():
         return_val = np.array([])
         for x in xs:
             np.append(return_val, self.cdf(x))
+        return return_val
+
+    def log_cdf_for_numpy(self, xs):
+        return_val = np.array([])
+        for x in xs:
+            np.append(return_val, self.log_cdf(x))
         return return_val
 
     def probabilities(self):
@@ -138,6 +157,9 @@ class UniformKernel():
         else:
             raise ValueError("The choice must be between {} and {}, but {} was given.".format(0, self.n_choices - 1, x))
 
+    def log_cdf(self, x):
+        return np.log(self.cdf(x))
+
     def cdf_for_numpy(self, xs):
         """
         Returning probabilities of a given list x.
@@ -146,6 +168,12 @@ class UniformKernel():
         return_val = np.array([])
         for x in xs:
             np.append(return_val, self.cdf(x))
+        return return_val
+
+    def log_cdf_for_numpy(self, xs):
+        return_val = np.array([])
+        for x in xs:
+            np.append(return_val, self.log_cdf(x))
         return return_val
 
     def probabilities(self):

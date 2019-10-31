@@ -1,10 +1,8 @@
 import numpy as np
 import utils
+from scipy.special import logsumexp
 from optimizer.parzen_estimator import NumericalParzenEstimator, CategoricalParzenEstimator
 from optimizer import BaseOptimizer
-
-
-EPS = 1e-12
 
 
 def default_gamma(x, n_samples_lower=25):
@@ -139,7 +137,6 @@ class SingleTaskUnivariateTPE(SingleTaskTPE):
     def _compare_candidates(self, pe_lower, pe_upper, choices=None):
         samples_lower = pe_lower.sample_from_density_estimator(self.rng, self.n_ei_candidates)
         best_idx = np.argmax(pe_lower.log_likelihood(samples_lower) - pe_upper.log_likelihood(samples_lower))
-
         if choices is None:
             return samples_lower[best_idx]
         else:
@@ -173,8 +170,8 @@ class SingleTaskMultivariateTPE(SingleTaskTPE):
         choices_list = []
         n_evals = len(hps_conf[0])
         n_lower = self.gamma_func(n_evals)
-        basis_likelihoods_lower = np.zeros((len(hps_conf), n_lower + 1, self.n_ei_candidates))
-        basis_likelihoods_upper = np.zeros((len(hps_conf), n_evals - n_lower + 1, self.n_ei_candidates))
+        basis_loglikelihoods_lower = np.zeros((len(hps_conf), n_lower + 1, self.n_ei_candidates))
+        basis_loglikelihoods_upper = np.zeros((len(hps_conf), n_evals - n_lower + 1, self.n_ei_candidates))
 
         for idx, hps in enumerate(hps_conf):
             lower_hps, upper_hps = hps[:n_lower], hps[n_lower:]
@@ -189,22 +186,21 @@ class SingleTaskMultivariateTPE(SingleTaskTPE):
                 choices_list.append(choices)
             samples_lower = pe_lower.sample_from_density_estimator(self.rng, self.n_ei_candidates)
             hp_confs.append(samples_lower)
-            basis_likelihoods_lower[idx] += pe_lower.basis_likelihood(samples_lower)
-            basis_likelihoods_upper[idx] += pe_upper.basis_likelihood(samples_lower)
+            basis_loglikelihoods_lower[idx] += pe_lower.basis_loglikelihood(samples_lower)
+            basis_loglikelihoods_upper[idx] += pe_upper.basis_loglikelihood(samples_lower)
 
-        hp_conf = self._compare_configurations(basis_likelihoods_lower, basis_likelihoods_upper, hp_confs, choices_list)
+        hp_conf = self._compare_configurations(basis_loglikelihoods_lower, basis_loglikelihoods_upper, hp_confs, choices_list)
 
         return self.hp_utils.revert_hp_conf(hp_conf)
 
-    def _calculate_conf_loglikelihood(self, basis_likelihood):
+    def _calculate_conf_loglikelihood(self, basis_loglikelihood):
         """
         calculate loglikelihood of multivariate parzen estimator
-        Warning: Multivariate Parzen Estimator usually cancels significant digits...
 
         Parameters
         ----------
-        basis_likelihood: ndarray (D=n_dim, B=n_basis, N=n_ei_candidates)
-            Each element is the likelihood of D-th dimension's hyperparameter's
+        basis_loglikelihood: ndarray (D=n_dim, B=n_basis, N=n_ei_candidates)
+            Each element is the loglikelihood of D-th dimension's hyperparameter's
             parzen estimator's B-th basis of sample N.
 
         Returns
@@ -212,20 +208,20 @@ class SingleTaskMultivariateTPE(SingleTaskTPE):
         loglikelihood of each configuration: ndarray (n_ei_candidates, )
         """
 
-        conf_basis_likelihood = basis_likelihood.prod(axis=0)
-        (n_basis, n_confs) = conf_basis_likelihood.shape
+        conf_basis_loglikelihood = basis_loglikelihood.sum(axis=0)
+        (n_basis, n_confs) = conf_basis_loglikelihood.shape
         weights = self.weight_func(n_basis)
         weights /= weights.sum()
-        ps = np.zeros(n_confs)
+        ll_confs = np.zeros(n_confs)
 
-        for w, ll in zip(weights, conf_basis_likelihood):
-            ps += w * np.maximum(ll, EPS)
+        for n in range(n_confs):
+            ll_confs[n] = logsumexp(conf_basis_loglikelihood[:, n], b=weights)
 
-        return np.log(ps)
+        return ll_confs
 
-    def _compare_configurations(self, basis_likelihood_lower, basis_likelihood_upper, hp_confs, choices_list):
-        ll_lower = self._calculate_conf_loglikelihood(basis_likelihood_lower)
-        ll_upper = self._calculate_conf_loglikelihood(basis_likelihood_upper)
+    def _compare_configurations(self, basis_loglikelihood_lower, basis_loglikelihood_upper, hp_confs, choices_list):
+        ll_lower = self._calculate_conf_loglikelihood(basis_loglikelihood_lower)
+        ll_upper = self._calculate_conf_loglikelihood(basis_loglikelihood_upper)
         hp_confs = np.array(hp_confs)
 
         best_idx = np.argmax(ll_lower - ll_upper)
