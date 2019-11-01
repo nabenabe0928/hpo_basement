@@ -491,7 +491,7 @@ class HyperparameterUtilities():
         Returns
         -------
         the list of hyperparameter configurations and the corresponding performance
-        hp_conf: list (N, D)
+        hp_conf: list if index_from_conf (N, D) else (D, N)
         ys: list (yN, N)
         """
 

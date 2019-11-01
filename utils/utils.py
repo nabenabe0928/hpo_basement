@@ -57,7 +57,7 @@ def print_parser_warning():
     print("One example to run the file is described below:")
     print("")
     print("user@user:~$ python main.py -fuc sphere -dim 2 -par 1 -ini 10 -exp 0 -eva 100 \
--res 0 [-seed 0 -veb 1 -fre 1 -dat cifar -cls 10 -img 32 -sub 0.1 -defa 0]")
+-res 0 [-seed 0 -veb 1 -fre 1 -dat cifar -cls 10 -img 32 -sub 0.1 -defa 0 -che 0]")
     print("")
     print("  -fuc (Both  Required): The name of callable you would like to optimize.")
     print("  -ini (Both  Required): The number of initial samplings.")
@@ -75,6 +75,7 @@ def print_parser_warning():
     print("  -seed(Both  Optional): The number to specify a random number generator.")
     print("  -veb (Both  Optional): Whether print the result or not. If 0, do not print.")
     print("  -fre (Both  Optional): Every print_freq iteration, the result will be printed.")
+    print("  -che (Both  Optional): If asking when removing files or not at the initialization.")
     print("")
     sys.exit()
 
@@ -86,6 +87,7 @@ def parse_requirements():
     ap.add_argument("-par", type=int, default=1)
     ap.add_argument("-ini", type=int, default=None)
     ap.add_argument("-veb", type=int, choices=[0, 1], default=1)
+    ap.add_argument("-che", type=int, choices=[0, 1], default=1)
     ap.add_argument("-fre", type=int, default=1)
     ap.add_argument("-exp", type=int, default=0)
     ap.add_argument("-eva", type=int, default=100)
@@ -107,7 +109,8 @@ def parse_requirements():
                     "seed": args.seed,
                     "verbose": bool(args.veb),
                     "print_freq": args.fre,
-                    "default": bool(args.defa)
+                    "default": bool(args.defa),
+                    "check": bool(args.che)
                     }
 
     if args.dim is not None and args.dat is not None:
@@ -188,33 +191,34 @@ def save_elapsed_time(save_path, verbose=True, print_freq=1):
     return _imp
 
 
-def check_conflict(path):
+def check_conflict(path, check=True):
     stdo = get_stdo_path(path)
 
     n_files = len(os.listdir(stdo)) + len(os.listdir(path))
 
     if n_files > 0:
         print("")
-        print("#### CAUTION ###")
+        print("########## CAUTION #########")
         print(pycolor.RED + "You are going to remove {} files in {} and {}.".format(n_files, path, stdo) + pycolor.END)
         print("")
 
-        answer = ""
-        while answer not in {"y", "n"}:
-            print("")
-            answer = input("Is it okay? [y or n] : ")
-        if answer == "y":
-            pass
-        else:
-            print("Permission Denied.")
-            sys.exit()
+        if check:
+            answer = ""
+            while answer not in {"y", "n"}:
+                print("")
+                answer = input("Is it okay? [y or n] : ")
+            if answer == "y":
+                pass
+            else:
+                print("Permission Denied.")
+                sys.exit()
 
         sp.call("rm -r {}".format(stdo), shell=True)
         sp.call("rm -r {}".format(path), shell=True)
         print("")
-        print("#########################")
-        print("### REMOVED THE FILES ###")
-        print("#########################")
+        print("############################")
+        print("##### REMOVE THE FILES #####")
+        print("############################")
         print("")
 
 

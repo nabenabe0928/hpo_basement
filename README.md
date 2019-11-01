@@ -100,6 +100,9 @@ Whether print the result or not. If 0, not print.
 ### fre (optional: Default is 1)
 Every print_freq iteration, the result will be printed.
 
+### che (optional: Default is 1)
+If asking when removing files or not at the initialization.
+
 ### dat (supervised learning)
 The name of dataset.
 

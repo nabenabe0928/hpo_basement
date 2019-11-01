@@ -30,6 +30,8 @@ verbose: bool
     Whether print the result or not.
 print_freq: int
     Every print_freq iteration, the result will be printed.
+check: bool
+    If asking when removing files or not at the initialization.
 """
 
 
@@ -44,6 +46,7 @@ class BaseOptimizerRequirements(
                 ("seed", int),  # None
                 ("verbose", bool),  # True
                 ("print_freq", int),  # 1
+                ("check", bool)  # False
                 ])):
     pass
 
@@ -140,6 +143,7 @@ class BaseOptimizer():
         self.opt = callable
         self.restart = requirements.restart
         self.default = requirements.default
+        self.check = requirements.check
         self.rng = np.random.RandomState(requirements.seed)
         self.seed = requirements.seed
         opt_name = self.__class__.__name__ if not self.default else "DefaultConfs"
@@ -204,7 +208,7 @@ class BaseOptimizer():
     def optimize(self):
         utils.create_log_dir(self.hp_utils.save_path)
         if not self.restart:
-            utils.check_conflict(self.hp_utils.save_path)
+            utils.check_conflict(self.hp_utils.save_path, check=self.check)
         utils.create_log_dir(self.hp_utils.save_path)
 
         self.n_jobs = self.get_n_jobs()
@@ -217,8 +221,8 @@ class BaseOptimizer():
             self._optimize_parallel(save_time)
 
         hps_conf, losses = self.hp_utils.load_hps_conf(do_sort=True)
-        best_hp_conf, best_performance = hps_conf[0], losses[0]
-        self.print_optimized_result(best_hp_conf, best_performance[0])
+        best_hp_conf, best_performance = hps_conf[0], losses[0][0]
+        self.print_optimized_result(best_hp_conf, best_performance)
 
         return best_hp_conf, best_performance
 

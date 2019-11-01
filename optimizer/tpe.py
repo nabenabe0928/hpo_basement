@@ -5,12 +5,12 @@ from optimizer.parzen_estimator import NumericalParzenEstimator, CategoricalParz
 from optimizer import BaseOptimizer
 
 
-def default_gamma(x, n_samples_lower=25):
+def default_gamma(x, n_samples_lower=26):
 
     return min(int(np.ceil(0.25 * np.sqrt(x))), n_samples_lower)
 
 
-def default_weights(x, n_samples_lower=25):
+def default_weights(x, n_samples_lower=26):
     if x < n_samples_lower:
         return np.ones(x)
     else:
@@ -43,7 +43,6 @@ class SingleTaskTPE(BaseOptimizer):
         """
 
         super().__init__(hp_utils, opt_requirements, experimental_settings)
-
         self.n_ei_candidates = n_ei_candidates
         self.gamma_func = gamma_func
         self.weight_func = weight_func
@@ -107,10 +106,10 @@ class SingleTaskUnivariateTPE(SingleTaskTPE):
         super().__init__(hp_utils,
                          opt_requirements,
                          experimental_settings,
-                         n_ei_candidates=24,
-                         rule="james",
-                         gamma_func=default_gamma,
-                         weight_func=default_weights)
+                         n_ei_candidates=n_ei_candidates,
+                         rule=rule,
+                         gamma_func=gamma_func,
+                         weight_func=weight_func)
 
         self.opt = self.sample
 
@@ -157,10 +156,10 @@ class SingleTaskMultivariateTPE(SingleTaskTPE):
         super().__init__(hp_utils,
                          opt_requirements,
                          experimental_settings,
-                         n_ei_candidates=24,
-                         rule="james",
-                         gamma_func=default_gamma,
-                         weight_func=default_weights)
+                         n_ei_candidates=n_ei_candidates,
+                         rule=rule,
+                         gamma_func=gamma_func,
+                         weight_func=weight_func)
 
         self.opt = self.sample
 
