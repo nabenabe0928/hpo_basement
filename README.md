@@ -61,7 +61,7 @@ if __name__ == '__main__':
 Run from termianl by (one example):
 
 ```
-python main.py -dim 2 -par 1 -ini 3 -exp 0 -eva 100 -res 0 -seed 0 -veb 1 -fre 1
+python main.py -fuc sphere -dim 2 -par 1 -ini 10 -exp 0 -eva 100 -res 0
 ```
 
 where all the arguments are integer.
