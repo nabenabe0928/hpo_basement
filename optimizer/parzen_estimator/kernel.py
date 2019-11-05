@@ -1,8 +1,6 @@
 import numpy as np
 from scipy.special import erf
-
-
-EPS = 1.0e-12
+from optimizer.constants import EPS, sq2, sq_pi
 
 
 class GaussKernel():
@@ -24,8 +22,10 @@ class GaussKernel():
         self.mu = mu
         self.sigma = max(sigma, EPS)
         self.lb, self.ub, self.q = lb, ub, q
+        self.norm_coef = 1. / sq2 / sq_pi / self.sigma
         self.norm_const = 1.
         self.norm_const = 1. / (self.cdf(ub) - self.cdf(lb))
+        self.log_norm_coef = np.log(self.norm_coef * self.norm_const)
 
     def pdf(self, x):
         """
@@ -33,9 +33,8 @@ class GaussKernel():
         """
 
         if self.q is None:
-            z = np.sqrt(2 * np.pi) * self.sigma
             mahalanobis = ((x - self.mu) / self.sigma) ** 2
-            return self.norm_const / z * np.exp(-0.5 * mahalanobis)
+            return self.norm_const * self.norm_coef * np.exp(-0.5 * mahalanobis)
         else:
             integral_u = self.cdf(np.minimum(x + 0.5 * self.q, self.ub))
             integral_l = self.cdf(np.maximum(x + 0.5 * self.q, self.lb))
@@ -43,9 +42,8 @@ class GaussKernel():
 
     def log_pdf(self, x):
         if self.q is None:
-            z = np.sqrt(2 * np.pi) * self.sigma
             mahalanobis = ((x - self.mu) / self.sigma) ** 2
-            return np.log(self.norm_const / z) - 0.5 * mahalanobis
+            return self.log_norm_coef - 0.5 * mahalanobis
         else:
             integral_u = self.cdf(np.minimum(x + 0.5 * self.q, self.ub))
             integral_l = self.cdf(np.maximum(x + 0.5 * self.q, self.lb))
@@ -56,7 +54,7 @@ class GaussKernel():
         Returning the value of Cumulative distribution function at a given x.
         """
 
-        z = (x - self.mu) / (np.sqrt(2) * self.sigma)
+        z = (x - self.mu) / (sq2 * self.sigma)
         return np.maximum(self.norm_const * 0.5 * (1. + erf(z)), EPS)
 
     def sample_from_kernel(self, rng):

@@ -7,9 +7,11 @@ from optimizer.bohamiann import SingleTaskBOHAMIANN, MultiTaskBOHAMIANN
 from optimizer import parzen_estimator
 from optimizer.parzen_estimator import plot_density_estimators
 from optimizer import robo
+from optimizer import constants
 
 
-__all__ = ['BaseOptimizer',
+__all__ = ['constants',
+           'BaseOptimizer',
            'BaseOptimizerRequirements',
            'NelderMead',
            'RandomSearch',

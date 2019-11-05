@@ -1,8 +1,6 @@
 import numpy as np
 from optimizer.parzen_estimator import GaussKernel, AitchisonAitkenKernel, UniformKernel
-
-
-EPS = 1e-12
+from optimizer.constants import EPS
 
 
 def plot_density_estimators(pe_lower, pe_upper, var_name, pr_basis=False, pr_ei=False, pr_basis_mu=False):
