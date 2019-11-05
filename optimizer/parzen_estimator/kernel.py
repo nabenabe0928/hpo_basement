@@ -24,7 +24,7 @@ class GaussKernel():
         self.lb, self.ub, self.q = lb, ub, q
         self.norm_coef = 1. / sq2 / sq_pi / self.sigma
         self.norm_const = 1.
-        self.norm_const = 1. / (self.cdf(ub) - self.cdf(lb))
+        self.norm_const = 1. / self.cdf_with_range(lb, ub)
         self.log_norm_coef = np.log(self.norm_coef * self.norm_const)
 
     def pdf(self, x):
@@ -36,26 +36,33 @@ class GaussKernel():
             mahalanobis = ((x - self.mu) / self.sigma) ** 2
             return self.norm_const * self.norm_coef * np.exp(-0.5 * mahalanobis)
         else:
-            integral_u = self.cdf(np.minimum(x + 0.5 * self.q, self.ub))
-            integral_l = self.cdf(np.maximum(x + 0.5 * self.q, self.lb))
-            return np.maximum(integral_u - integral_l, EPS)
+            xl = np.maximum(x + 0.5 * self.q, self.lb)
+            xu = np.minimum(x + 0.5 * self.q, self.ub)
+            integral = self.cdf_with_range(xl, xu)
+            return integral
 
     def log_pdf(self, x):
         if self.q is None:
             mahalanobis = ((x - self.mu) / self.sigma) ** 2
             return self.log_norm_coef - 0.5 * mahalanobis
         else:
-            integral_u = self.cdf(np.minimum(x + 0.5 * self.q, self.ub))
-            integral_l = self.cdf(np.maximum(x + 0.5 * self.q, self.lb))
-            return np.log(np.maximum(integral_u - integral_l, EPS))
+            xl = np.maximum(x + 0.5 * self.q, self.lb)
+            xu = np.minimum(x + 0.5 * self.q, self.ub)
+            integral = self.cdf_with_range(xl, xu)
+            return np.log(integral)
 
     def cdf(self, x):
         """
         Returning the value of Cumulative distribution function at a given x.
         """
 
-        z = (x - self.mu) / (sq2 * self.sigma)
+        z = (x - self.mu) / sq2 / self.sigma
         return np.maximum(self.norm_const * 0.5 * (1. + erf(z)), EPS)
+
+    def cdf_with_range(self, lb, ub):
+        zl = (lb - self.mu) / sq2 / self.sigma
+        zu = (ub - self.mu) / sq2 / self.sigma
+        return np.maximum(self.norm_const * 0.5 * (erf(zu) - erf(zl)), EPS)
 
     def sample_from_kernel(self, rng):
         """
