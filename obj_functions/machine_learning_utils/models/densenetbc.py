@@ -40,7 +40,7 @@ class DenseBlock(nn.Module):
         super(DenseBlock, self).__init__()
         self.bn1 = nn.BatchNorm2d(in_ch)
         self.bn2 = nn.BatchNorm2d(growth_rate * growth_coef)
-        self.conv1 = nn.Conv2d(in_ch, growth_rate * growth_coef, 1, padding=0, bias=False),
+        self.conv1 = nn.Conv2d(in_ch, growth_rate * growth_coef, 1, padding=0, bias=False)
         self.conv2 = nn.Conv2d(growth_rate * growth_coef, growth_rate, 3, padding=1, bias=False)
         self.drop_rates = drop_rates
 
