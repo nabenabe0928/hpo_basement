@@ -101,8 +101,8 @@ class WideResNet(nn.Module):
         # Architecture of CNN.
         self.conv1 = nn.Conv2d(3, self.n_chs[0], 3, padding=1, bias=False)
         self.conv2 = self._add_groups(n_blocks1, self.n_chs[0], self.n_chs[1], drop_rate1)
-        self.conv3 = self._add_groups(n_blocks2, self.n_chs[1], self.n_chs[2], drop_rate2)
-        self.conv4 = self._add_groups(n_blocks3, self.n_chs[2], self.n_chs[3], drop_rate3)
+        self.conv3 = self._add_groups(n_blocks2, self.n_chs[1], self.n_chs[2], drop_rate2, stride=2)
+        self.conv4 = self._add_groups(n_blocks3, self.n_chs[2], self.n_chs[3], drop_rate3, stride=2)
 
         self.bn = nn.BatchNorm2d(self.n_chs[3])
         self.full_conn = nn.Linear(self.n_chs[3], n_cls)
