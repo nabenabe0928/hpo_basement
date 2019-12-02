@@ -28,3 +28,14 @@ def wrn(experimental_settings):
         return train(model, hp_dict, train_data, test_data, cuda_id, save_path)
 
     return _imp
+
+
+def dnbc(experimental_settings):
+    train_dataset, test_dataset = datasets.get_dataset(experimental_settings)
+
+    def _imp(hp_dict, cuda_id, save_path):
+        model = models.DenseNetBC(**hp_dict, n_cls=experimental_settings.n_cls)
+        train_data, test_data = datasets.get_data(train_dataset, test_dataset, batch_size=model.batch_size)
+        return train(model, hp_dict, train_data, test_data, cuda_id, save_path)
+
+    return _imp

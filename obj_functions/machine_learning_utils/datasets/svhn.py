@@ -6,7 +6,7 @@ import warnings
 # https://github.com/Coderx7/SimpleNet_Pytorch/issues/3
 
 
-def get_svhn(image_size=32, test=False):
+def get_svhn(image_size=32, test=False, all_train=False):
     warnings.filterwarnings("ignore", message="numpy.dtype size changed")
     warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
     normalize = transforms.Normalize(mean=[0.5071, 0.4867, 0.4408],
@@ -28,7 +28,7 @@ def get_svhn(image_size=32, test=False):
                                   transform=transform_train)
 
     n_all = len(train_dataset)
-    n_train = int(n_all * 0.8)
+    n_train = int(n_all * 0.8) if not all_train else n_all
     train_labels = np.array([train_dataset.labels[:n_train], list(range(n_train))])
 
     if test:

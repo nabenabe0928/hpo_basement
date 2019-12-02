@@ -47,7 +47,8 @@ class ExperimentalSettings(
                 ("image_size", int),
                 ("data_frac", float),
                 ("biased_cls", list),
-                ("test", bool)
+                ("test", bool),
+                ("all_train", bool)
                 ])):
     pass
 
@@ -68,6 +69,7 @@ def print_parser_warning():
     print("  -sub (ML    Optional): How much percentages of training data to use in training (Must be between 0. and 1.).")
     print("  -defa(ML    Optional): If using the default hyperparameter configuration or not (If 1, using the default configuration.).")
     print("  -test(ML    Optional): If using validation dataset or test dataset. (If 1, using test dataset.).")
+    print("  -altr(ML    Optional): If using all the training data or not. (If 1, using all the data.).")
     print("  -par (Both  Optional): The number of parallel computer resources.")
     print("  -exp (Both  Optional): The index of an experiment. (Used only to specify the path of log files.)")
     print("  -eva (Both  Optional): The number of evaluations in an experiment.")
@@ -99,6 +101,7 @@ def parse_requirements():
     ap.add_argument("-sub", type=float, default=None)
     ap.add_argument("-defa", type=int, choices=[0, 1], default=0)
     ap.add_argument("-test", type=int, choices=[0, 1], default=0)
+    ap.add_argument("-altr", type=int, choices=[0, 1], default=0)
 
     args = ap.parse_args()
     requirements = {"n_parallels": args.par,
@@ -124,7 +127,8 @@ def parse_requirements():
                                  "image_size": None,
                                  "data_frac": None,
                                  "biased_cls": None,
-                                 "test": None
+                                 "test": None,
+                                 "all_train": None
                                  }
     elif args.dat is not None:
         experimental_settings = {"func_name": args.fuc,
@@ -134,7 +138,8 @@ def parse_requirements():
                                  "image_size": args.img,
                                  "data_frac": args.sub,
                                  "biased_cls": None,
-                                 "test": bool(args.test)
+                                 "test": bool(args.test),
+                                 "all_train": bool(args.altr)
                                  }
     if args.ini is None or args.fuc is None:
         print("The list of func_name is as follows:")

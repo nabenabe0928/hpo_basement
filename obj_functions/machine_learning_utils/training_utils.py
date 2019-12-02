@@ -18,7 +18,7 @@ def start_train(model, train_data, test_data, cuda_id, save_path):
     print_resource(torch.cuda.is_available(), cuda_id, save_path)
     model = model.to(device)
     cudnn.benchmark = True
-    optimizer = optim.SGD(model.parameters(), lr=model.lr, momentum=model.momentum, weight_decay=model.weight_decay, nesterov=True)
+    optimizer = optim.SGD(model.parameters(), lr=model.lr, momentum=model.momentum, weight_decay=model.weight_decay, nesterov=model.nesterov)
     loss_func = nn.CrossEntropyLoss().cuda()
     scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=model.lr_step, gamma=model.lr_decay)
 

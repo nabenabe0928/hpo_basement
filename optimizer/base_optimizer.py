@@ -95,8 +95,10 @@ def get_path_name(obj_name, experimental_settings, transfer_info_pathes):
         obj_path_name += "_{}per".format(int(100 * experimental_settings.data_frac))
     if experimental_settings.biased_cls is not None:
         obj_path_name += "_biased"
-    if experimental_settings.test is not None:
+    if experimental_settings.test:
         obj_path_name += "_TEST"
+    if experimental_settings.all_train:
+        obj_path_name += "_TrainAll"
     if transfer_info_pathes is not None:
         obj_path_name += "_transfers"
         n_tasks = len(transfer_info_pathes)

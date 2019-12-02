@@ -54,7 +54,7 @@ def get_data(train_dataset, test_dataset, batch_size):
     return train_data, test_data
 
 
-def get_raw_dataset(dataset_name, image_size=None, n_cls=10, test=False):
+def get_raw_dataset(dataset_name, image_size=None, n_cls=10, test=False, all_train=False):
     if dataset_name.upper() == "CIFAR":
         if n_cls is None:
             raise ValueError("CIFAR requires the number of classes.")
@@ -64,12 +64,10 @@ def get_raw_dataset(dataset_name, image_size=None, n_cls=10, test=False):
             nc = 100
         else:
             raise ValueError("n_cls must be between 2 and 100.")
-        return get_cifar(nc, test=test) if image_size is None else get_cifar(nc, image_size, test=test)
+        return get_cifar(nc, test=test, all_train=all_train) if image_size is None else get_cifar(nc, image_size, test=test, all_train=all_train)
 
     elif dataset_name.upper() == "SVHN":
-        return get_svhn(test=test) if image_size is None else get_svhn(image_size, test=test)
-    elif dataset_name.upper() == "IMAGENET":
-        return get_imagenet() if image_size is None else get_imagenet(image_size, test=test)
+        return get_svhn(test=test, all_train=all_train) if image_size is None else get_svhn(image_size, test=test, all_train=all_train)
 
 
 def process_raw_dataset(train_raw_dataset,
