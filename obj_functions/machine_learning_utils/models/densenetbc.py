@@ -38,20 +38,21 @@ class TransionLayer(nn.Module):
 class DenseBlock(nn.Module):
     def __init__(self, in_ch, growth_rate, growth_coef=4, drop_rates=[0.2, 0.2]):
         super(DenseBlock, self).__init__()
-        self.bns = [nn.BatchNorm2d(in_ch), nn.BatchNorm2d(growth_rate * growth_coef)]
-        self.convs = [nn.Conv2d(in_ch, growth_rate * growth_coef, 1, padding=0, bias=False),
-                      nn.Conv2d(growth_rate * growth_coef, growth_rate, 3, padding=1, bias=False)]
+        self.bn1 = nn.BatchNorm2d(in_ch)
+        self.bn2 = nn.BatchNorm2d(growth_rate * growth_coef)
+        self.conv1 = nn.Conv2d(in_ch, growth_rate * growth_coef, 1, padding=0, bias=False),
+        self.conv2 = nn.Conv2d(growth_rate * growth_coef, growth_rate, 3, padding=1, bias=False)
         self.drop_rates = drop_rates
 
     def forward(self, x):
         # Reduce the image size (bottleneck layer)
-        h = F.relu(self.bns[0](x), inplace=True)
-        h = self.convs[0](h)
+        h = F.relu(self.bn1(x), inplace=True)
+        h = self.conv1(h)
         h = F.dropout(h, p=self.drop_rates[0], training=self.training)
 
         # Feature extractor
-        h = F.relu(self.bns[1](h), inplace=True)
-        h = self.convs[1](h)
+        h = F.relu(self.bn2(h), inplace=True)
+        h = self.conv2(h)
         h = F.dropout(h, p=self.drop_rates[1], training=self.training)
 
         return torch.cat((h, x), dim=1)

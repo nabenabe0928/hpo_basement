@@ -25,16 +25,17 @@ class BasicBlock(nn.Module):
         self.drop_rate = drop_rate
 
         self.shortcut = nn.Sequential() if self.in_is_out else nn.Conv2d(in_ch, out_ch, 1, padding=0, stride=stride, bias=False)
-        self.bns = [nn.BatchNorm2d(in_ch), nn.BatchNorm2d(out_ch)]
-        self.convs = [nn.Conv2d(in_ch, out_ch, kernel_size, stride=stride, padding=1, bias=False),
-                      nn.Conv2d(out_ch, out_ch, kernel_size, padding=1, bias=False)]
+        self.bn1 = nn.BatchNorm2d(in_ch)
+        self.bn2 = nn.BatchNorm2d(out_ch)
+        self.conv1 = nn.Conv2d(in_ch, out_ch, kernel_size, stride=stride, padding=1, bias=False)
+        self.conv2 = nn.Conv2d(out_ch, out_ch, kernel_size, padding=1, bias=False)
 
     def forward(self, x):
-        h = F.relu(self.bns[0](x), inplace=True)
-        h = self.convs[0](h)
-        h = F.relu(self.bns[1](h), inplace=True)
+        h = F.relu(self.bn1(x), inplace=True)
+        h = self.conv1(h)
+        h = F.relu(self.bn2(h), inplace=True)
         h = F.dropout(h, p=self.drop_rate, training=self.training)
-        h = self.convs[1](h)
+        h = self.conv2(h)
 
         return h + self.shortcut(x)
 
@@ -96,12 +97,13 @@ class WideResNet(nn.Module):
         self.lr_step = [int(step * self.epochs) for step in lr_step]
         self.nesterov = nesterov
         self.lr_decay = lr_decay
-        drop_rates = [drop_rate1, drop_rate2, drop_rate3]
 
         # Architecture of CNN.
-        self.convs = [nn.Conv2d(3, self.n_chs[0], 3, padding=1, bias=False)]
-        for i, (drop, n_blocks, stride) in enumerate(zip(drop_rates, self.n_blocks, [1, 2, 2])):
-            self.convs.append(self._add_groups(n_blocks, self.n_chs[i], self.n_chs[i + 1], drop, stride=stride))
+        self.conv1 = nn.Conv2d(3, self.n_chs[0], 3, padding=1, bias=False)
+        self.conv2 = self._add_groups(n_blocks1, self.n_chs[0], self.n_chs[1], drop_rate1)
+        self.conv3 = self._add_groups(n_blocks2, self.n_chs[1], self.n_chs[2], drop_rate2)
+        self.conv4 = self._add_groups(n_blocks3, self.n_chs[2], self.n_chs[3], drop_rate3)
+
         self.bn = nn.BatchNorm2d(self.n_chs[3])
         self.full_conn = nn.Linear(self.n_chs[3], n_cls)
         self.init_inner_params()
@@ -118,9 +120,10 @@ class WideResNet(nn.Module):
                 m.bias.data.zero_()
 
     def forward(self, x):
-        h = None
-        for i, conv in enumerate(self.convs):
-            h = conv(x) if i == 0 else conv(h)
+        h = self.conv1(x)
+        h = self.conv2(h)
+        h = self.conv3(h)
+        h = self.conv4(h)
 
         h = F.relu(self.bn(h), inplace=True)
         h = F.avg_pool2d(h, 8)
