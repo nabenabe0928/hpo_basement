@@ -109,7 +109,7 @@ def get_hp_info(hp):
         raise NotImplementedError("Categorical parameters do not have the log scale option.")
 
 
-def save_hp(save_file_path, lock, job_id, value):
+def save_hp(save_file_path, lock, job_id, value, record=True):
     """
     recording a hyperparameter evaluated in an experiment
 
@@ -123,17 +123,20 @@ def save_hp(save_file_path, lock, job_id, value):
         the number of evaluations in an experiment
     value: float or int or string
         the value of a hyperparameter evaluated in this iteration
+    record: bool
+        if recording the configurations or not
     """
 
     if not os.path.isfile(save_file_path):
         with open(save_file_path, "w", newline="") as f:
             pass
 
-    lock.acquire()
-    with open(save_file_path, "a", newline="") as f:
-        writer = csv.writer(f, delimiter=",")
-        writer.writerow([job_id, value])
-    lock.release()
+    if record:
+        lock.acquire()
+        with open(save_file_path, "a", newline="") as f:
+            writer = csv.writer(f, delimiter=",")
+            writer.writerow([job_id, value])
+        lock.release()
 
 
 def load_hps(load_file_path, lock, var_type):
@@ -439,7 +442,7 @@ class HyperparameterUtilities():
             hp_confs.append(self.revert_hp_conf(converted_hp_conf))
         return hp_confs
 
-    def save_hp_conf(self, hp_conf, ys, job_id, converted=False):
+    def save_hp_conf(self, hp_conf, ys, job_id, converted=False, record=True):
         """
         recording a hyperparameter configuration and the corresponding performance
 
@@ -455,6 +458,8 @@ class HyperparameterUtilities():
             the number of evaluations in an experiment
         converted: bool
             if True, reverting into original scales
+        record: bool
+            if recording the configurations or not
         """
 
         if type(hp_conf) == dict:
@@ -466,11 +471,11 @@ class HyperparameterUtilities():
         for idx, hp in enumerate(hp_conf):
             var_name = self.config_space._idx_to_hyperparameter[idx]
             save_file_path = self.save_path + "/" + var_name + ".csv"
-            save_hp(save_file_path, self.lock, job_id, hp)
+            save_hp(save_file_path, self.lock, job_id, hp, record=record)
 
         for var_name, v in ys.items():
             save_file_path = self.save_path + "/" + var_name + ".csv"
-            save_hp(save_file_path, self.lock, job_id, v)
+            save_hp(save_file_path, self.lock, job_id, v, record=record)
 
     def load_hps_conf(self, convert=False, do_sort=False, index_from_conf=True, another_src=None):
         """

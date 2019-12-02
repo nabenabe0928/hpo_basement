@@ -119,6 +119,9 @@ def parse_requirements():
     if args.dim is not None and args.dat is not None:
         print("dim and dat cannot coexist.")
         print_parser_warning()
+    elif args.altr and not args.test:
+        print("if using all the training data, you have to use test dataset.")
+        print_parser_warning()
     elif args.dim is not None:
         experimental_settings = {"func_name": args.fuc,
                                  "dim": args.dim,

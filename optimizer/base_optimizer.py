@@ -212,6 +212,8 @@ class BaseOptimizer():
         if not self.restart:
             utils.check_conflict(self.hp_utils.save_path, check=self.check)
         utils.create_log_dir(self.hp_utils.save_path)
+        dy = {y_name: None for y_name in self.hp_utils.y_names}
+        self.hp_utils.save_hp_conf(list(range(len(self.hp_utils.var_names))), dy, None, record=False)
 
         self.n_jobs = self.get_n_jobs()
 
