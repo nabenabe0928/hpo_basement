@@ -126,8 +126,6 @@ class DenseNetBC(nn.Module):
         growth_rates = [int(growth_rate1), int(growth_rate2), int(growth_rate3)]
 
         # Hyperparameter Configuration for CNN.
-        self.db = []
-        self.tl = []
         self.lr = lr
         self.momentum = momentum
         self.batch_size = int(batch_size)
@@ -142,12 +140,18 @@ class DenseNetBC(nn.Module):
         in_ch = growth_coefs[0] * growth_rates[0]
         self.conv = nn.Conv2d(3, growth_coefs[0] * growth_rates[0], 3, padding=1, bias=False)
 
-        for i in range(3):
-            in_ch = int(np.floor(in_ch * compressions[i - 1])) if i != 0 else in_ch
-            self.db.append(self._add_DenseBlock(n_layers[i], in_ch, drop_db[i], growth_rates[i], growth_coefs[i + 1]))
-            in_ch += growth_rates[i] * n_layers[i]
-            if i < 2:
-                self.tl.append(TransionLayer(in_ch, int(np.floor(in_ch * compressions[i])), drop_tl[i]))
+        self.db1 = self._add_DenseBlock(n_layers[0], in_ch, drop_db[0], growth_rates[0], growth_coefs[1])
+        in_ch += growth_rates[0] * n_layers[0]
+        self.tl1 = TransionLayer(in_ch, int(np.floor(in_ch * compressions[0])), drop_tl[0])
+
+        in_ch = int(np.floor(in_ch * compressions[0]))
+        self.db2 = self._add_DenseBlock(n_layers[1], in_ch, drop_db[1], growth_rates[1], growth_coefs[2])
+        in_ch += growth_rates[1] * n_layers[1]
+        self.tl2 = TransionLayer(in_ch, int(np.floor(in_ch * compressions[1])), drop_tl[1])
+
+        in_ch = int(np.floor(in_ch * compressions[1]))
+        self.db3 = self._add_DenseBlock(n_layers[2], in_ch, drop_db[2], growth_rates[2], growth_coefs[3])
+        in_ch += growth_rates[2] * n_layers[2]
 
         self.bn = nn.BatchNorm2d(in_ch)
         self.full_conn = nn.Linear(in_ch, n_cls)
@@ -155,10 +159,11 @@ class DenseNetBC(nn.Module):
 
     def forward(self, x):
         h = self.conv(x)
-
-        for i in range(3):
-            h = self.db[i](h)
-            h = self.tl[i](h) if i < 2 else h
+        h = self.db1(h)
+        h = self.tl1(h)
+        h = self.db2(h)
+        h = self.tl2(h)
+        h = self.db3(h)
 
         h = F.relu(self.bn(h), inplace=True)
         h = F.avg_pool2d(h, h.size(2))

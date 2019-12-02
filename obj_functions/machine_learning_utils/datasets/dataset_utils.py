@@ -2,7 +2,6 @@ import torch
 import numpy as np
 from obj_functions.machine_learning_utils.datasets.cifar import get_cifar
 from obj_functions.machine_learning_utils.datasets.svhn import get_svhn
-from obj_functions.machine_learning_utils.datasets.imagenet import get_imagenet
 from torch.utils.data.dataset import Subset
 
 
