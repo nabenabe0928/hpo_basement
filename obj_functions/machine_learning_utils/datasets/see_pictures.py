@@ -27,7 +27,7 @@ test_dataset = datasets.CIFAR10(root="cifar",
 
 
 def see_cifar(dataset, idx=0):
-    classes = dataset.dataset.classes[:]
+    classes = dataset.classes[:]
 
     npimg = dataset[idx][0].numpy()
     print(classes[dataset[idx][1]])

@@ -21,11 +21,14 @@ def get_cifar10(image_size=32, test=False, all_train=False):
                                      std=[0.2470, 0.2435, 0.2616])
 
     transform_train = transforms.Compose([transforms.Pad(4, padding_mode='reflect'),
-                                          transforms.RandomCrop(32),
+                                          transforms.RandomResizedCrop(image_size),
                                           transforms.RandomHorizontalFlip(),
                                           transforms.ToTensor(),
                                           normalize])
-    transform_test = transforms.Compose([transforms.ToTensor(), normalize])
+    transform_test = transforms.Compose([transforms.Resize(32),
+                                         transforms.CenterCrop(image_size),
+                                         transforms.ToTensor(),
+                                         normalize])
 
     train_dataset = datasets.CIFAR10(root="cifar",
                                      train=True,
