@@ -29,8 +29,13 @@ def get_dataset(experimental_settings):
     data_frac = experimental_settings.data_frac
     biased_cls = experimental_settings.biased_cls
     test = experimental_settings.test
+    all_train = experimental_settings.all_train
 
-    train_raw_dataset, train_labels, test_raw_dataset, test_labels, raw_n_cls = get_raw_dataset(dataset_name, image_size, n_cls, test=test)
+    train_raw_dataset, train_labels, test_raw_dataset, test_labels, raw_n_cls = get_raw_dataset(dataset_name,
+                                                                                                image_size,
+                                                                                                n_cls,
+                                                                                                test=test,
+                                                                                                all_train=all_train)
 
     n_cls = None if n_cls == raw_n_cls else n_cls
     train_dataset, test_dataset = process_raw_dataset(train_raw_dataset,
