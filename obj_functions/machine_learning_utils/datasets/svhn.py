@@ -13,12 +13,11 @@ def get_svhn(image_size=32, test=False, all_train=False):
                                      std=[0.2675, 0.2565, 0.2761])
 
     transform_train = transforms.Compose([transforms.Pad(4, padding_mode='reflect'),
-                                          transforms.RandomResizedCrop(image_size),
                                           transforms.RandomHorizontalFlip(),
+                                          transforms.RandomCrop(image_size),
                                           transforms.ToTensor(),
                                           normalize])
-    transform_test = transforms.Compose([transforms.Resize(32),
-                                         transforms.CenterCrop(image_size),
+    transform_test = transforms.Compose([transforms.CenterCrop(image_size),
                                          transforms.ToTensor(),
                                          normalize])
 

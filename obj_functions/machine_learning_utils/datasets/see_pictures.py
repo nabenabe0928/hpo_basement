@@ -13,7 +13,8 @@ dataset: 5-d array
 """
 
 
-transform_train = transforms.Compose([transforms.ToTensor()])
+transform_train = transforms.Compose([transforms.RandomResizedCrop(32), transforms.ToTensor()])
+transform_train = transforms.Compose([transforms.RandomCrop(24), transforms.ToTensor()])
 transform_test = transforms.Compose([transforms.ToTensor()])
 
 train_dataset = datasets.CIFAR10(root="cifar",
