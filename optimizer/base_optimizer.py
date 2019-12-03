@@ -32,6 +32,8 @@ print_freq: int
     Every print_freq iteration, the result will be printed.
 check: bool
     If asking when removing files or not at the initialization.
+cuda: list of int
+    Which CUDA devices you use in the experiment. (Specify the single or multiple number(s))
 """
 
 
@@ -46,18 +48,19 @@ class BaseOptimizerRequirements(
                 ("seed", int),  # None
                 ("verbose", bool),  # True
                 ("print_freq", int),  # 1
-                ("check", bool)  # False
+                ("check", bool),  # False
+                ("cuda", list)  # [0]
                 ])):
     pass
 
 
-def objective_function(hp_conf, hp_utils, gpu_id, job_id, verbose=True, print_freq=1, save_time=None):
+def objective_function(hp_conf, hp_utils, cuda_id, job_id, verbose=True, print_freq=1, save_time=None):
     """
     Parameters
     ----------
     hp_conf: dict
         a hyperparameter configuration
-    gpu_id: int
+    cuda_id: int
         the index of gpu used in an evaluation
     """
 
@@ -68,10 +71,10 @@ def objective_function(hp_conf, hp_utils, gpu_id, job_id, verbose=True, print_fr
     if hp_utils.in_fmt == "dict":
         hp_conf = hp_utils.list_to_dict(hp_conf)
         ml_utils.print_config(hp_conf, save_path, is_out_of_domain=is_out_of_domain)
-        ys = {yn: 1.0e+8 for yn in hp_utils.y_names} if is_out_of_domain else hp_utils.obj_class(hp_conf, gpu_id, save_path)
+        ys = {yn: 1.0e+8 for yn in hp_utils.y_names} if is_out_of_domain else hp_utils.obj_class(hp_conf, cuda_id, save_path)
         hp_utils.save_hp_conf(hp_conf, ys, job_id)
     else:
-        ys = {yn: 1.0e+8 for yn in hp_utils.y_names} if is_out_of_domain else hp_utils.obj_class(hp_conf, gpu_id, save_path)
+        ys = {yn: 1.0e+8 for yn in hp_utils.y_names} if is_out_of_domain else hp_utils.obj_class(hp_conf, cuda_id, save_path)
         hp_utils.save_hp_conf(hp_conf, ys, job_id)
 
     save_time(eval_start, hp_utils.lock, job_id)
@@ -148,6 +151,7 @@ class BaseOptimizer():
         self.check = requirements.check
         self.rng = np.random.RandomState(requirements.seed)
         self.seed = requirements.seed
+        self.cuda_id = requirements.cuda
         opt_name = self.__class__.__name__ if not self.default else "DefaultConfs"
         obj_path_name = get_path_name(self.hp_utils.obj_name, experimental_settings, transfer_info_pathes)
         self.hp_utils.save_path = "history/log/{}/{}/{:0>3}".format(opt_name, obj_path_name, requirements.n_experiments)
@@ -232,8 +236,6 @@ class BaseOptimizer():
 
     def _optimize_sequential(self, save_time):
         while True:
-            gpu_id = 0
-
             if self.default:
                 hp_conf = []
             elif self.n_jobs < self.n_init:
@@ -245,7 +247,7 @@ class BaseOptimizer():
 
             self.obj(hp_conf,
                      self.hp_utils,
-                     gpu_id,
+                     self.cuda_id[0],
                      self.n_jobs,
                      verbose=self.verbose,
                      print_freq=self.print_freq,
@@ -271,7 +273,7 @@ class BaseOptimizer():
             jobs = new_jobs
             n_runnings = len(jobs)
             for _ in range(max(0, self.n_parallels - n_runnings)):
-                gpu_id = resources.index(False)
+                cidx = resources.index(False)
 
                 if self.default:
                     hp_conf = []
@@ -283,13 +285,13 @@ class BaseOptimizer():
                 p = Process(target=self.obj,
                             args=(hp_conf,
                                   self.hp_utils,
-                                  gpu_id,
+                                  self.cuda_id[cidx],
                                   self.n_jobs,
                                   self.verbose,
                                   self.print_freq,
                                   save_time))
                 p.start()
-                jobs.append([gpu_id, p])
+                jobs.append([cidx, p])
                 self.n_jobs += 1
 
                 if self.n_jobs >= self.max_evals:

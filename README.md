@@ -123,6 +123,18 @@ If 1, using test dataset.
 Evaluating the default configuration or not.
 If 1, evaluate the default one.
 
+### altr (optional: Default is 0)
+Evaluating the default configuration or not.
+If 1, evaluate the default one.
+
+### cuda (optional: list of 0 to # of GPUs)
+Which CUDA devices you use in the experiment.
+Specify the single or multiple number(s).
+
+### altr (optional: Default is 0)
+If using all the training data or not.
+If 1, using all the data.
+
 ## Optimizer
 You can add whatever optimizers you would like to use in this basement.
 By inheriting the `BaseOptimizer` object, you can use basic function needed to start HPO.

@@ -70,6 +70,7 @@ def print_parser_warning():
     print("  -defa(ML    Optional): If using the default hyperparameter configuration or not (If 1, using the default configuration.).")
     print("  -test(ML    Optional): If using validation dataset or test dataset. (If 1, using test dataset.).")
     print("  -altr(ML    Optional): If using all the training data or not. (If 1, using all the data.).")
+    print("  -cuda(ML    Optional): Which CUDA devices you use in the experiment. (Specify the single or multiple number(s))")
     print("  -par (Both  Optional): The number of parallel computer resources.")
     print("  -exp (Both  Optional): The index of an experiment. (Used only to specify the path of log files.)")
     print("  -eva (Both  Optional): The number of evaluations in an experiment.")
@@ -83,6 +84,7 @@ def print_parser_warning():
 
 
 def parse_requirements():
+    from torch.cuda import device_count
     ap = ArgumentParser()
     ap.add_argument("-fuc", type=str, default=None)
     ap.add_argument("-dim", type=int, default=None)
@@ -102,6 +104,7 @@ def parse_requirements():
     ap.add_argument("-defa", type=int, choices=[0, 1], default=0)
     ap.add_argument("-test", type=int, choices=[0, 1], default=0)
     ap.add_argument("-altr", type=int, choices=[0, 1], default=0)
+    ap.add_argument("-cuda", type=int, nargs="*", choices=range(device_count()), default=[0])
 
     args = ap.parse_args()
     requirements = {"n_parallels": args.par,
@@ -113,7 +116,8 @@ def parse_requirements():
                     "verbose": bool(args.veb),
                     "print_freq": args.fre,
                     "default": bool(args.defa),
-                    "check": bool(args.che)
+                    "check": bool(args.che),
+                    "cuda": args.cuda if len(args.cuda) == args.par else list(range(args.par))
                     }
 
     if args.dim is not None and args.dat is not None:
