@@ -236,7 +236,7 @@ class BaseOptimizer():
 
     def _optimize_sequential(self, save_time):
         while True:
-            if self.default:
+            if self.default and self.n_jobs < self.max_evals:
                 hp_conf = []
             elif self.n_jobs < self.n_init:
                 hp_conf = self._initial_sampler()
@@ -275,7 +275,7 @@ class BaseOptimizer():
             for _ in range(max(0, self.n_parallels - n_runnings)):
                 cidx = resources.index(False)
 
-                if self.default:
+                if self.default and self.n_jobs < self.max_evals:
                     hp_conf = []
                 elif self.n_jobs < self.n_init:
                     hp_conf = self._initial_sampler()
