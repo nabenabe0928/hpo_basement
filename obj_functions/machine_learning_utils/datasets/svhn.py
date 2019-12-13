@@ -39,7 +39,7 @@ def get_svhn(image_size=32, test=False, all_train=False):
     else:
         test_dataset = datasets.SVHN(root="svhn",
                                      split="train",
-                                     download=True,
+                                     download=False,
                                      transform=transform_test)
         test_labels = np.array([test_dataset.labels[n_train:], list(range(n_train, n_all))])
 

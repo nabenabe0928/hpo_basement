@@ -46,7 +46,7 @@ def get_cifar10(image_size=32, test=False, all_train=False):
     else:
         test_dataset = datasets.CIFAR10(root="cifar",
                                         train=True,
-                                        download=True,
+                                        download=False,
                                         transform=transform_test)
         test_labels = np.array([test_dataset.targets[n_train:], list(range(n_train, n_all))])
 
@@ -84,7 +84,7 @@ def get_cifar100(image_size=32, test=False, all_train=False):
     else:
         test_dataset = datasets.CIFAR100(root="cifar",
                                          train=True,
-                                         download=True,
+                                         download=False,
                                          transform=transform_test)
         test_labels = np.array([test_dataset.targets[n_train:], list(range(n_train, n_all))])
 
