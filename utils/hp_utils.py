@@ -151,6 +151,7 @@ def load_hps(load_file_path, lock, var_type):
     Returns
     -------
     the ndarray of a hyperparameter evlauated in an experiment (N, )
+    and the number of referred jobs
     """
 
     lock.acquire()
@@ -162,7 +163,7 @@ def load_hps(load_file_path, lock, var_type):
 
     order = np.argsort(job_id)
 
-    return values[order]
+    return values[order], job_id[order[-1]]
 
 
 class HyperparameterUtilities():
@@ -502,21 +503,27 @@ class HyperparameterUtilities():
 
         cs = self.config_space
         names = cs._idx_to_hyperparameter
+        n_referred_jobs = np.inf
         hps_conf = []
         ys = []
         for idx in range(len(names)):
             var_name = names[idx]
             var_type = distribution_type(self.config_space, var_name)
             load_file_path = self.save_path + "/" + var_name + ".csv" if another_src is None else another_src + "/" + var_name + ".csv"
-            hps = load_hps(load_file_path, self.lock, var_type)
+            hps, max_job_id = load_hps(load_file_path, self.lock, var_type)
+            n_referred_jobs = min(n_referred_jobs, max_job_id)
             if convert:
                 hps = [self.convert_hp(hp, var_name) for hp in hps]
             hps_conf.append(hps)
 
         for y_name in self.y_names:
             load_file_path = self.save_path + "/" + y_name + ".csv" if another_src is None else another_src + "/" + y_name + ".csv"
-            y = load_hps(load_file_path, self.lock, float)
+            y, max_job_id = load_hps(load_file_path, self.lock, float)
+            n_referred_jobs = min(n_referred_jobs, max_job_id)
             ys.append(np.array(y))
+
+        hps_conf = [hps[:n_referred_jobs] for hps in hps_conf]
+        ys = [y[:n_referred_jobs] for y in ys]
 
         if do_sort:
             order = np.argsort(ys[0])
