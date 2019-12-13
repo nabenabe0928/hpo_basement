@@ -84,7 +84,10 @@ def print_parser_warning():
 
 
 def parse_requirements():
-    from torch.cuda import device_count
+    import subprocess
+    msg = subprocess.check_output("nvidia-smi --query-gpu=index --format=csv", shell=True)
+    n_devices = max(0, len(msg.decode().split("\n")) - 2)
+
     ap = ArgumentParser()
     ap.add_argument("-fuc", type=str, default=None)
     ap.add_argument("-ini", type=int, default=None)
@@ -96,7 +99,7 @@ def parse_requirements():
     ap.add_argument("-defa", type=int, choices=[0, 1], default=0)
     ap.add_argument("-test", type=int, choices=[0, 1], default=0)
     ap.add_argument("-altr", type=int, choices=[0, 1], default=0)
-    ap.add_argument("-cuda", type=int, nargs="*", choices=range(device_count()), default=[0])
+    ap.add_argument("-cuda", type=int, nargs="*", choices=range(n_devices), default=[0])
     ap.add_argument("-par", type=int, default=1)
     ap.add_argument("-exp", type=int, default=0)
     ap.add_argument("-eva", type=int, default=100)
@@ -107,6 +110,7 @@ def parse_requirements():
     ap.add_argument("-che", type=int, choices=[0, 1], default=1)
 
     args = ap.parse_args()
+
     requirements = {"n_parallels": args.par,
                     "n_init": args.ini,
                     "n_experiments": args.exp,

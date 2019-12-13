@@ -260,6 +260,7 @@ class BaseOptimizer():
                      save_time=save_time)
 
             self.n_jobs += 1
+            time.sleep(1.0e-3)
 
     def _optimize_parallel(self, save_time):
         jobs = []
@@ -297,9 +298,12 @@ class BaseOptimizer():
                                   self.print_freq,
                                   save_time))
 
+                resources[cidx] = True
                 p.start()
                 jobs.append([cidx, p])
                 self.n_jobs += 1
 
                 if self.n_jobs >= self.max_evals:
                     return 0
+
+            time.sleep(1.0e-3)
