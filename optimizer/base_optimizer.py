@@ -83,6 +83,17 @@ def objective_function(hp_conf, hp_utils, cuda_id, job_id, verbose=True, print_f
         utils.print_result(hp_conf, ys, job_id, hp_utils.list_to_dict)
 
 
+def add_transfer_information(obj_path_name, transfer_info_pathes):
+    obj_path_name += "_transfers"
+    n_tasks = len(transfer_info_pathes)
+    for i, path in enumerate(transfer_info_pathes):
+        p = "{}{}_{}".format(*path[12:].split("/"))
+        obj_path_name += "_" + p
+        obj_path_name += "_and" if i + 1 < n_tasks else ""
+
+    return obj_path_name
+
+
 def get_path_name(obj_name, experimental_settings, transfer_info_pathes):
     obj_path_name = obj_name
 
@@ -103,12 +114,7 @@ def get_path_name(obj_name, experimental_settings, transfer_info_pathes):
     if experimental_settings.all_train:
         obj_path_name += "_TrainAll"
     if transfer_info_pathes is not None:
-        obj_path_name += "_transfers"
-        n_tasks = len(transfer_info_pathes)
-        for i, path in enumerate(transfer_info_pathes):
-            p = "{}{}_{}".format(*path[12:].split("/"))
-            obj_path_name += "_" + p
-            obj_path_name += "_and" if i + 1 < n_tasks else ""
+        obj_path_name = add_transfer_information(obj_path_name, transfer_info_pathes)
 
     return obj_path_name
 
