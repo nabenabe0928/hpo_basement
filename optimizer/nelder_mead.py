@@ -7,13 +7,14 @@ class NelderMead(BaseOptimizer):
                  hp_utils,
                  opt_requirements,
                  experimental_settings,
+                 obj=None,
                  delta_r=1.0,
                  delta_oc=0.5,
                  delta_ic=-0.5,
                  delta_e=2.0,
                  delta_s=0.5):
 
-        super().__init__(hp_utils, opt_requirements, experimental_settings)
+        super().__init__(hp_utils, opt_requirements, experimental_settings, obj=obj)
         self.delta = {"r": delta_r,
                       "e": delta_e,
                       "s": delta_s,

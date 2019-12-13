@@ -4,7 +4,7 @@ from optimizer.base_optimizer import BaseOptimizer
 
 
 class SingleTaskBOHAMIANN(BaseOptimizer):
-    def __init__(self, hp_utils, opt_requirements, experimental_settings):
+    def __init__(self, hp_utils, opt_requirements, experimental_settings, obj=None):
         """
         lower: ndarray (D, )
             The lower bound of each parameter
@@ -12,7 +12,7 @@ class SingleTaskBOHAMIANN(BaseOptimizer):
             The upper bound of each parameter
         """
 
-        super().__init__(hp_utils, opt_requirements, experimental_settings)
+        super().__init__(hp_utils, opt_requirements, experimental_settings, obj=obj)
         self.opt = self.sample
         self.n_dim = len(self.hp_utils.config_space._hyperparameters)
         self.lower = np.zeros(self.n_dim)
@@ -41,7 +41,7 @@ class SingleTaskBOHAMIANN(BaseOptimizer):
 
 
 class MultiTaskBOHAMIANN(BaseOptimizer):
-    def __init__(self, hp_utils, opt_requirements, experimental_settings, transfer_info_pathes):
+    def __init__(self, hp_utils, opt_requirements, experimental_settings, transfer_info_pathes, obj=None):
         """
         n_tasks: int
             The number of types of tasks including the target task
@@ -52,7 +52,7 @@ class MultiTaskBOHAMIANN(BaseOptimizer):
             Y[:][0] is the performance used in optimization.
         """
 
-        super().__init__(hp_utils, opt_requirements, experimental_settings, transfer_info_pathes)
+        super().__init__(hp_utils, opt_requirements, experimental_settings, transfer_info_pathes, obj=obj)
         transfer_info_pathes = opt_requirements.transfer_info_pathes
 
         self.opt = self.sample

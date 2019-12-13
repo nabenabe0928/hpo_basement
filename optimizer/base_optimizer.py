@@ -125,7 +125,7 @@ class BaseOptimizer():
                  requirements,
                  experimental_settings,
                  transfer_info_pathes=None,
-                 obj=objective_function):
+                 obj=None):
         """
         Member Variables
         ----------------
@@ -147,7 +147,7 @@ class BaseOptimizer():
         """
 
         self.hp_utils = hp_utils
-        self.obj = obj
+        self.obj = obj if obj is not None else objective_function
         self.max_evals = requirements.max_evals
         self.n_init = requirements.n_init
         self.n_parallels = max(requirements.n_parallels, 1)

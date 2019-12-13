@@ -24,6 +24,7 @@ class SingleTaskTPE(BaseOptimizer):
                  hp_utils,
                  opt_requirements,
                  experimental_settings,
+                 obj=None,
                  n_ei_candidates=24,
                  rule="james",
                  gamma_func=default_gamma,
@@ -42,7 +43,7 @@ class SingleTaskTPE(BaseOptimizer):
             The function returning the coefficients of each kernel.
         """
 
-        super().__init__(hp_utils, opt_requirements, experimental_settings)
+        super().__init__(hp_utils, opt_requirements, experimental_settings, obj=obj)
         self.n_ei_candidates = n_ei_candidates
         self.gamma_func = gamma_func
         self.weight_func = weight_func
@@ -98,6 +99,7 @@ class SingleTaskUnivariateTPE(SingleTaskTPE):
                  hp_utils,
                  opt_requirements,
                  experimental_settings,
+                 obj=None,
                  n_ei_candidates=24,
                  rule="james",
                  gamma_func=default_gamma,
@@ -106,6 +108,7 @@ class SingleTaskUnivariateTPE(SingleTaskTPE):
         super().__init__(hp_utils,
                          opt_requirements,
                          experimental_settings,
+                         obj=obj,
                          n_ei_candidates=n_ei_candidates,
                          rule=rule,
                          gamma_func=gamma_func,
@@ -148,6 +151,7 @@ class SingleTaskMultivariateTPE(SingleTaskTPE):
                  hp_utils,
                  opt_requirements,
                  experimental_settings,
+                 obj=None,
                  n_ei_candidates=24,
                  rule="james",
                  gamma_func=default_gamma,
@@ -156,6 +160,7 @@ class SingleTaskMultivariateTPE(SingleTaskTPE):
         super().__init__(hp_utils,
                          opt_requirements,
                          experimental_settings,
+                         obj=obj,
                          n_ei_candidates=n_ei_candidates,
                          rule=rule,
                          gamma_func=gamma_func,
