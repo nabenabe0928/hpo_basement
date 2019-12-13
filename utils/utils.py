@@ -117,7 +117,7 @@ def parse_requirements():
                     "print_freq": args.fre,
                     "default": bool(args.defa),
                     "check": bool(args.che),
-                    "cuda": args.cuda if len(args.cuda) == args.par else list(range(args.par))
+                    "cuda": args.cuda if len(args.cuda) == args.par else list(range(args.par)),
                     }
 
     if args.dim is not None and args.dat is not None:

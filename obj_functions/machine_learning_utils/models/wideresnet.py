@@ -79,7 +79,7 @@ class WideResNet(nn.Module):
                  n_blocks1=4, n_blocks2=4, n_blocks3=4,
                  width_coef1=10, width_coef2=10, width_coef3=10,
                  drop_rate1=0.3, drop_rate2=0.3, drop_rate3=0.3,
-                 nesterov=False,
+                 nesterov=True,
                  lr_decay=0.2,
                  lr_step=[0.3, 0.6, 0.8],
                  n_cls=100

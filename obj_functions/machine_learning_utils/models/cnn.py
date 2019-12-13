@@ -42,7 +42,7 @@ class CNN(nn.Module):
                  ch3=32,
                  ch4=32,
                  drop_rate=0.5,
-                 nesterov=False,
+                 nesterov=True,
                  lr_decay=1.,
                  lr_step=[1.],
                  n_cls=100

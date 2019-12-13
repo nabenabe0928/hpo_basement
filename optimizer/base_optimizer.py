@@ -49,7 +49,7 @@ class BaseOptimizerRequirements(
                 ("verbose", bool),  # True
                 ("print_freq", int),  # 1
                 ("check", bool),  # False
-                ("cuda", list)  # [0]
+                ("cuda", list),  # [0]
                 ])):
     pass
 
@@ -290,6 +290,7 @@ class BaseOptimizer():
                                   self.verbose,
                                   self.print_freq,
                                   save_time))
+
                 p.start()
                 jobs.append([cidx, p])
                 self.n_jobs += 1
