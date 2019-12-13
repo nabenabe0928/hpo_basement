@@ -70,7 +70,7 @@ def print_parser_warning():
     print("  -defa(ML    Optional, default: 0   ): If using the default hyperparameter configuration or not (If 1, using the default configuration.).")
     print("  -test(ML    Optional, default: 0   ): If using validation dataset or test dataset. (If 1, using test dataset.).")
     print("  -altr(ML    Optional, default: 0   ): If using all the training data or not. (If 1, using all the data.).")
-    print("  -cuda(ML    Optional, default: [0] ): Which CUDA devices you use in the experiment. (Specify the single or multiple number(s))")
+    print("  -cuda(ML    Optional, default: range(par) ): Which CUDA devices you use in the experiment. (Specify the single or multiple number(s))")
     print("  -par (Both  Optional, default: 1   ): The number of parallel computer resources.")
     print("  -exp (Both  Optional, default: 0   ): The index of an experiment. (Used only to specify the path of log files.)")
     print("  -eva (Both  Optional, default: 100 ): The number of evaluations in an experiment.")

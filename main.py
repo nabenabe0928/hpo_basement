@@ -26,4 +26,5 @@ if __name__ == '__main__':
     # opt = optimizer.SingleTaskUnivariateTPE(hp_utils, opt_requirements, experimental_settings, gamma_func=gamma[k])
     opt = optimizer.SingleTaskUnivariateTPE(hp_utils, opt_requirements, experimental_settings)
     # opt = optimizer.NelderMead(hp_utils, opt_requirements, experimental_settings)
+    opt = optimizer.RandomSearch(hp_utils, opt_requirements, experimental_settings)
     best_conf, best_performance = opt.optimize()
