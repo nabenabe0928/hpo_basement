@@ -15,8 +15,8 @@
 pip install ConfigSpace
 pip install pybnn
 pip install botorch
-pip install -r requirements.txt
 conda install pytorch=1.2.0 torchvision cudatoolkit=9.2 -c pytorch
+pip install -r requirements.txt
 ```
 
 ## Implementation
