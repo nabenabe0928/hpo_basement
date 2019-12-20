@@ -62,6 +62,7 @@ def print_parser_warning():
     print("")
     print("  -fuc (Both  Required, default: None): The name of callable you would like to optimize.")
     print("  -ini (Both  Required, default: None): The number of initial samplings.")
+    print("  -tra (Trans Required, default; []  ): The list of the path of previous information to transfer. 'opt/function/number'")
     print("  -dim (Bench Required, default: None): The dimension of a hyperparameter configuraiton. (Only for benchmark functions. Otherwise, omit it.)")
     print("  -dat (ML    Required, default: None): The name of dataset.")
     print("  -cls (ML    Required, default: None): The number of classes on a given task.")
@@ -108,6 +109,7 @@ def parse_requirements():
     ap.add_argument("-veb", type=int, choices=[0, 1], default=1)
     ap.add_argument("-fre", type=int, default=1)
     ap.add_argument("-che", type=int, choices=[0, 1], default=1)
+    ap.add_argument("-tra", type=str, nargs="*", default=[])
 
     args = ap.parse_args()
 
@@ -122,7 +124,10 @@ def parse_requirements():
                     "default": bool(args.defa),
                     "check": bool(args.che),
                     "cuda": args.cuda if len(args.cuda) == args.par else list(range(args.par)),
+                    "transfer_info_pathes": ["history/log/{}".format(path) for path in args.tra]
                     }
+    if len(requirements["transfer_info_pathes"]) == 0:
+        requirements["transfer_info_pathes"] = None
 
     if args.dim is not None and args.dat is not None:
         print("dim and dat cannot coexist.")

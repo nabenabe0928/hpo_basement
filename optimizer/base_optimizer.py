@@ -34,6 +34,8 @@ check: bool
     If asking when removing files or not at the initialization.
 cuda: list of int
     Which CUDA devices you use in the experiment. (Specify the single or multiple number(s))
+transfer_info_pathes: list of str
+    The list of the path of previous information to transfer. 'opt/function/number'
 """
 
 
@@ -50,6 +52,7 @@ class BaseOptimizerRequirements(
                 ("print_freq", int),  # 1
                 ("check", bool),  # False
                 ("cuda", list),  # [0]
+                ("transfer_info_pathes", list),  # []
                 ])):
     pass
 
@@ -124,7 +127,6 @@ class BaseOptimizer():
                  hp_utils,
                  requirements,
                  experimental_settings,
-                 transfer_info_pathes=None,
                  obj=None):
         """
         Member Variables
@@ -159,7 +161,7 @@ class BaseOptimizer():
         self.seed = requirements.seed
         self.cuda_id = requirements.cuda
         opt_name = self.__class__.__name__ if not self.default else "DefaultConfs"
-        obj_path_name = get_path_name(self.hp_utils.obj_name, experimental_settings, transfer_info_pathes)
+        obj_path_name = get_path_name(self.hp_utils.obj_name, experimental_settings, requirements.transfer_info_pathes)
         self.hp_utils.save_path = "history/log/{}/{}/{:0>3}".format(opt_name, obj_path_name, requirements.n_experiments)
         self.n_jobs = 0
         self.verbose = requirements.verbose

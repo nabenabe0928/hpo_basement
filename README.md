@@ -52,7 +52,7 @@ if __name__ == '__main__':
 
     opt_requirements, experimental_settings = utils.parse_requirements()
     hp_utils = utils.HyperparameterUtilities(experimental_settings)
-    opt = optimizer.MultiTaskGPBO(hp_utils, opt_requirements, experimental_settingstransfer_info_pathes=transfer_info_pathes)
+    opt = optimizer.MultiTaskGPBO(hp_utils, opt_requirements, experimental_settings, transfer_info_pathes=transfer_info_pathes)
     best_conf, best_performance = opt.optimize()
     opt = optimizer.MultiTaskGPBO(hp_utils, **requirements, )
     best_conf, best_performance = opt.optimize()

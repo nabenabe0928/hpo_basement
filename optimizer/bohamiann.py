@@ -41,7 +41,7 @@ class SingleTaskBOHAMIANN(BaseOptimizer):
 
 
 class MultiTaskBOHAMIANN(BaseOptimizer):
-    def __init__(self, hp_utils, opt_requirements, experimental_settings, transfer_info_pathes, obj=None):
+    def __init__(self, hp_utils, opt_requirements, experimental_settings, obj=None):
         """
         n_tasks: int
             The number of types of tasks including the target task
@@ -52,7 +52,7 @@ class MultiTaskBOHAMIANN(BaseOptimizer):
             Y[:][0] is the performance used in optimization.
         """
 
-        super().__init__(hp_utils, opt_requirements, experimental_settings, transfer_info_pathes, obj=obj)
+        super().__init__(hp_utils, opt_requirements, experimental_settings, obj=obj)
         transfer_info_pathes = opt_requirements.transfer_info_pathes
 
         self.opt = self.sample

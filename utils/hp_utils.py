@@ -559,6 +559,7 @@ class HyperparameterUtilities():
             raise ValueError("transfer_info_pathes has to be list of pathes of information to transfer, but None was given.")
 
         for path in transfer_info_pathes:
+            print("### Transferring from {} ###".format(path))
             _X, _Y = self.load_hps_conf(convert=convert, do_sort=do_sort, another_src=path)
             X.append(_X)
             Y.append(_Y)
