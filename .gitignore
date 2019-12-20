@@ -15,3 +15,5 @@ __pycache__
 *.sh.*
 svhn/
 cifar/
+f-mnist/
+mnist/
