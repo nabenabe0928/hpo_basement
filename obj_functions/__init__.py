@@ -16,6 +16,7 @@ from obj_functions.benchmarks import (ackley,
                                       zakharov)
 
 from obj_functions.machine_learnings import (cnn,
+                                             mlp,
                                              wrn,
                                              dnbc)
 
@@ -44,5 +45,6 @@ __all__ = ["machine_learning_utils",
            "xin_she_yang",
            "zakharov",
            "cnn",
+           "mlp",
            "wrn",
            "dnbc"]

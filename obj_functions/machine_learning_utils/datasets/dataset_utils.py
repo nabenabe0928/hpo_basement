@@ -2,6 +2,8 @@ import torch
 import numpy as np
 from obj_functions.machine_learning_utils.datasets.cifar import get_cifar
 from obj_functions.machine_learning_utils.datasets.svhn import get_svhn
+from obj_functions.machine_learning_utils.datasets.mnist import get_mnist
+from obj_functions.machine_learning_utils.datasets.fashion_mnist import get_fashionmnist
 from torch.utils.data.dataset import Subset
 
 
@@ -72,6 +74,15 @@ def get_raw_dataset(dataset_name, image_size=None, n_cls=10, test=False, all_tra
 
     elif dataset_name.upper() == "SVHN":
         return get_svhn(test=test, all_train=all_train) if image_size is None else get_svhn(image_size, test=test, all_train=all_train)
+    elif dataset_name.upper() == "MNIST":
+        return get_mnist(test=test, all_train=all_train) if image_size is None else get_svhn(image_size, test=test, all_train=all_train)
+    elif dataset_name.upper() == "F-MNIST":
+        return get_fashionmnist(test=test, all_train=all_train) if image_size is None else get_svhn(image_size, test=test, all_train=all_train)
+    else:
+        print("\n### The parsed argument for dataset is wrong ###\n")
+        print("The dataset name must be cifar or svhn or mnist or f-mnist.")
+        print("e.g.) python ###.py -dat f-mnist -fuc mlp -ini 10\n")
+        raise AttributeError("The machine learning algorithms require dataset.")
 
 
 def process_raw_dataset(train_raw_dataset,

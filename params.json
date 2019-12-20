@@ -69,6 +69,21 @@
 
     "_comment4": "Here is the machine learning algorithm zone.",
 
+    "mlp": {"y_names": ["error", "cross_entropy"], "in_fmt": "dict",
+      "config": {
+            "batch_size": {"lower": 32, "upper": 256, "dist": "u", "log": "True", "var_type": "int"},
+            "lr": {"lower": 5.0e-3, "upper": 5.0e-1, "dist": "u", "log": "True", "var_type": "float"},
+            "weight_decay": {"lower": 5.0e-6, "upper": 5.0e-2, "dist": "u", "log": "True", "var_type": "float"},
+            "momentum": {"lower": 0.8, "upper": 1.0, "dist": "u", "var_type": "float"},
+            "n_units1": {"lower": 32, "upper": 512, "dist": "u", "log": "True", "var_type": "int"},
+            "n_units2": {"lower": 32, "upper": 512, "dist": "u", "log": "True", "var_type": "int"},
+            "drop_rate1": {"lower": 0.0, "upper": 1.0, "dist": "u", "var_type": "float"},
+            "drop_rate2": {"lower": 0.0, "upper": 1.0, "dist": "u", "var_type": "float"},
+            "nesterov": {"dist": "c", "choices": ["True", "False"], "var_type": "bool", "ignore": "True"},
+            "lr_decay": {"lower": 1.0e-2, "upper": 1.0, "dist": "u", "log": "True", "var_type": "float", "ignore": "True"}
+        }
+    },
+
     "cnn": {"y_names": ["error", "cross_entropy"], "in_fmt": "dict",
       "config": {
             "batch_size": {"lower": 32, "upper": 256, "dist": "u", "log": "True", "var_type": "int"},
