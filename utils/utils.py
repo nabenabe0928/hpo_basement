@@ -260,7 +260,10 @@ def create_log_dir(path_log):
         for f in files:
             this_path += f + "/"
             if not os.path.isdir(this_path):
-                os.mkdir(this_path)
+                try:
+                    os.mkdir(this_path)
+                except:
+                    pass
 
 
 def _resolve_name(path, package, start):
