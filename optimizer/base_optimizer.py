@@ -90,7 +90,8 @@ def add_transfer_information(obj_path_name, transfer_info_pathes):
     obj_path_name += "_transfers"
     n_tasks = len(transfer_info_pathes)
     for i, path in enumerate(transfer_info_pathes):
-        p = "{}{}_{}".format(*path[12:].split("/"))
+        # p = "{}{}_{}".format(*path[12:].split("/"))
+        p = "{}_on_{}".format(*path[12:].split("/")[:-1])
         obj_path_name += "_" + p
         obj_path_name += "_and" if i + 1 < n_tasks else ""
 
