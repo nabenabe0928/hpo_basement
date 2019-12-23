@@ -52,6 +52,7 @@ class SingleTaskGPBO(BaseOptimizer):
 
         X, Y = self.hp_utils.load_hps_conf(convert=True, do_sort=False)
         X, y = map(np.asarray, [X, Y[0]])
+        y = (y - y.mean()) / y.std()
         X, y = torch.from_numpy(X), torch.from_numpy(y)
 
         gp = SingleTaskGP(X, y)
@@ -68,10 +69,12 @@ class MultiTaskGPBO(BaseOptimizer):
         self.opt = self.sample
         self.n_dim = len(self.hp_utils.config_space._hyperparameters)
         self.X, self.Y = self.hp_utils.load_transfer_hps_conf(transfer_info_pathes, convert=True)
+        self.Y = [[(yn - yn.mean()) / yn.std() for yn in Ym] for Ym in self.Y]
 
     def create_multi_task_X(self):
         _X, _y = self.hp_utils.load_hps_conf(convert=True, do_sort=False)
         self.X[0], self.Y[0] = map(np.asarray, [_X, _y])
+        self.Y[0] = [(yn - yn.mean()) / yn.std() for yn in self.Y[0]]
 
         Xc = []
         for i, Xi in enumerate(self.X):

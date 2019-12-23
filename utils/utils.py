@@ -86,8 +86,11 @@ def print_parser_warning():
 
 def parse_requirements():
     import subprocess
-    msg = subprocess.check_output("nvidia-smi --query-gpu=index --format=csv", shell=True)
-    n_devices = max(0, len(msg.decode().split("\n")) - 2)
+    try:
+        msg = subprocess.check_output("nvidia-smi --query-gpu=index --format=csv", shell=True)
+        n_devices = max(0, len(msg.decode().split("\n")) - 2)
+    except:
+        n_devices = 0
 
     ap = ArgumentParser()
     ap.add_argument("-fuc", type=str, default=None)
