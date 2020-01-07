@@ -65,6 +65,12 @@
     "zakharov": {"y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -10.0, "upper": 10.0, "dist": "u", "var_type": "float"}}
     },
+    "sin": {"y_names": ["loss"], "in_fmt": "list",
+      "config": {"x": {"lower": -3.14, "upper": 3.14, "dist": "u", "var_type": "float"}}
+    },
+    "cos": {"y_names": ["loss"], "in_fmt": "list",
+      "config": {"x": {"lower": -3.14, "upper": 3.14, "dist": "u", "var_type": "float"}}
+    },
 
 
     "_comment4": "Here is the machine learning algorithm zone.",

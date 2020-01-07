@@ -137,3 +137,21 @@ def zakharov(experimental_settings):
         loss = t1 + t2 + t3
         return {"loss": loss}
     return _imp
+
+
+def sin(experimental_settings):
+    def _imp(hp_conf, cuda_id, save_path):
+        hp_conf = np.array(hp_conf)
+        dist = np.sqrt((hp_conf ** 2).sum())
+        loss = np.sin(dist)
+        return {"loss": loss}
+    return _imp
+
+
+def cos(experimental_settings):
+    def _imp(hp_conf, cuda_id, save_path):
+        hp_conf = np.array(hp_conf)
+        dist = np.sqrt((hp_conf ** 2).sum())
+        loss = np.cos(dist)
+        return {"loss": loss}
+    return _imp
