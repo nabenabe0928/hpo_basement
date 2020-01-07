@@ -11,10 +11,13 @@
 
 ・botorch 0.1.3 [ (github)](https://github.com/pytorch/botorch)
 
+・lightGBM 2.3.1 [ (github)](https://github.com/Microsoft/LightGBM)
+
 ```
 pip install ConfigSpace
 pip install pybnn
 pip install botorch
+pip install lightgbm
 conda install pytorch=1.2.0 torchvision cudatoolkit=9.2 -c pytorch
 pip install -r requirements.txt
 ```
