@@ -17,6 +17,10 @@ n_init: int
     the number of initial configurations
 n_experiments: int
     the index of experiments. Used only to specify the path of log file.
+is_barrier: bool
+    if using the barrier function or not.
+    if True, set inf or -inf when the parameter is infeasible.
+    else, force the parameter set into the feasible domain.
 restart: bool
     if restart the experiment or not.
     if True, continue the experiment based on log files.
@@ -45,6 +49,7 @@ class BaseOptimizerRequirements(
                 ("n_init", int),  # 10
                 ("n_experiments", int),  # 0
                 ("max_evals", int),  # 100
+                ("is_barrier", bool),  # True
                 ("restart", bool),  # True
                 ("default", bool),  # False
                 ("seed", int),  # None
@@ -57,7 +62,7 @@ class BaseOptimizerRequirements(
     pass
 
 
-def objective_function(hp_conf, hp_utils, cuda_id, job_id, verbose=True, print_freq=1, save_time=None):
+def objective_function(hp_conf, hp_utils, cuda_id, job_id, is_barrier=True, verbose=True, print_freq=1, save_time=None):
     """
     Parameters
     ----------
@@ -68,7 +73,13 @@ def objective_function(hp_conf, hp_utils, cuda_id, job_id, verbose=True, print_f
     """
 
     save_path = "history/stdo" + hp_utils.save_path[11:] + "/log{:0>5}.csv".format(job_id)
-    is_out_of_domain = hp_utils.out_of_domain(hp_conf)
+    
+    if is_barrier:
+        is_out_of_domain = hp_utils.out_of_domain(hp_conf)
+    else:
+        is_out_of_domain = False
+        hp_conf = hp_utils.pack_into_domain(hp_conf)
+
     eval_start = time.time()
 
     if hp_utils.in_fmt == "dict":
@@ -161,6 +172,7 @@ class BaseOptimizer():
         self.rng = np.random.RandomState(requirements.seed)
         self.seed = requirements.seed
         self.cuda_id = requirements.cuda
+        self.is_barrier = requirements.is_barrier
         opt_name = self.__class__.__name__ if not self.default else "DefaultConfs"
         obj_path_name = get_path_name(self.hp_utils.obj_name, experimental_settings, requirements.transfer_info_pathes)
         self.hp_utils.save_path = "history/log/{}/{}/{:0>3}".format(opt_name, obj_path_name, requirements.n_experiments)
@@ -258,6 +270,7 @@ class BaseOptimizer():
                      self.hp_utils,
                      self.cuda_id[0],
                      self.n_jobs,
+                     is_barrier=self.is_barrier,
                      verbose=self.verbose,
                      print_freq=self.print_freq,
                      save_time=save_time)
@@ -297,6 +310,7 @@ class BaseOptimizer():
                                   self.hp_utils,
                                   self.cuda_id[cidx],
                                   self.n_jobs,
+                                  self.is_barrier,
                                   self.verbose,
                                   self.print_freq,
                                   save_time))

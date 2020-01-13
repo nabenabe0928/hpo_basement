@@ -77,6 +77,7 @@ def print_parser_warning():
     print("  -eva (Both  Optional, default: 100 ): The number of evaluations in an experiment.")
     print("  -res (Both  Optional, default: 0   ): Whether restarting the previous experiment or not. If 0, removes the previous log files.")
     print("  -seed(Both  Optional, default: None): The number to specify a random number generator.")
+    print("  -bar (Both  Optional, default: 1   ): Whether to use the barrier function or not. if 0, make hyperparameter get in feasible domain.")
     print("  -veb (Both  Optional, default: 1   ): Whether print the result or not. If 0, do not print.")
     print("  -fre (Both  Optional, default: 1   ): Every print_freq iteration, the result will be printed.")
     print("  -che (Both  Optional, default: 1   ): If asking when removing files or not at the initialization.")
@@ -110,6 +111,7 @@ def parse_requirements():
     ap.add_argument("-res", type=int, choices=[0, 1], default=0)
     ap.add_argument("-seed", type=int, default=None)
     ap.add_argument("-veb", type=int, choices=[0, 1], default=1)
+    ap.add_argument("-bar", type=int, choices=[0, 1], default=1)
     ap.add_argument("-fre", type=int, default=1)
     ap.add_argument("-che", type=int, choices=[0, 1], default=1)
     ap.add_argument("-tra", type=str, nargs="*", default=[])
@@ -122,6 +124,7 @@ def parse_requirements():
                     "max_evals": args.eva,
                     "restart": bool(args.res),
                     "seed": args.seed,
+                    "is_barrier": bool(args.bar),
                     "verbose": bool(args.veb),
                     "print_freq": args.fre,
                     "default": bool(args.defa),

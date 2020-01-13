@@ -300,6 +300,33 @@ class HyperparameterUtilities():
             else:
                 return True
         return False
+    
+    def pack_into_domain(self, hp_conf):
+        """
+        Parameters
+        ----------
+        hp_conf: list or dict of hyperparameter values (D, )
+            if list, the indexes follows the indexes in the ConfigSpace
+            else if dict, the keys are the name of hyperparameters
+            values are the value of hyperparameter which will be evaluated.
+
+        Returns
+        -------
+        hp_conf: list or dict of hyperparameter values (D, )
+            same type as input of this function.
+            every element is bounded in the boundary described in params.json
+        """
+
+        is_conf_list = type(hp_conf) == list
+        hp_dict = self.list_to_dict(hp_conf) if is_conf_list else hp_conf
+
+        for var_name, value in hp_dict.items():
+            if not distribution_type(self.config_space, var_name) in [int, float]:
+                continue
+            hp = self.config_space._hyperparameters[var_name]
+            hp_dict[var_name] = np.clip(value, hp.lower, hp.upper)
+
+        return self.dict_to_list(hp_dict) if is_conf_list else hp_dict
 
     def convert_hp(self, hp_value, var_name):
         """
