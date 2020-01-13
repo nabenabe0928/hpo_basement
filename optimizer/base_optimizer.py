@@ -230,7 +230,7 @@ class BaseOptimizer():
 
         self.n_jobs = self.get_n_jobs()
 
-        save_time = utils.save_elapsed_time(self.hp_utils.save_path, self.verbose, self.print_freq)
+        save_time = utils.save_elapsed_time(self.hp_utils.save_path, self.hp_utils.lock, self.verbose, self.print_freq)
 
         if self.n_parallels <= 1:
             self._optimize_sequential(save_time)

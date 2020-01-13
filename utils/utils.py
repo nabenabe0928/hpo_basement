@@ -187,9 +187,22 @@ def print_result(hp_conf, ys, job_id, list_to_dict):
     print("")
 
 
-def save_elapsed_time(save_path, verbose=True, print_freq=1):
-    start_time = time.time()
+def save_elapsed_time(save_path, lock, verbose=True, print_freq=1):
     save_path = save_path + "/TIME.csv"
+    start_time = time.time()
+    
+    if not os.path.isfile(save_path):
+        lock.acquire()
+        with open(save_path, "w", newline=""):
+            pass
+        lock.release()
+    else:
+        lock.acquire()
+        with open(save_path, "r", newline="") as f:
+            reader = list(csv.reader(f, delimiter=","))
+            last_time = float(reader[-1][-1])
+        lock.release()
+        start_time -= last_time
 
     def _imp(eval_start, lock, n_jobs):
         current_time = time.time()
