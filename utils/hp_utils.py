@@ -211,6 +211,7 @@ class HyperparameterUtilities():
         self.obj_name = experimental_settings.func_name
         self.config_space = CS.ConfigurationSpace()
         self.y_names = None
+        self.y_upper_bounds = None
         self.in_fmt = None
         self.lock = Lock()
         self.save_path = None
@@ -300,7 +301,7 @@ class HyperparameterUtilities():
             else:
                 return True
         return False
-    
+
     def pack_into_domain(self, hp_conf):
         """
         Parameters
@@ -554,7 +555,7 @@ class HyperparameterUtilities():
 
         if do_sort:
             order = np.argsort(ys[0])
-            ys = [y[order] for y in ys]
+            ys = [np.minimum(y[order], y_upper_bound) for y, y_upper_bound in zip(ys, self.y_upper_bounds)]
             hps_conf = [np.array(hps)[order] for hps in hps_conf]
         if index_from_conf:
             n_confs = len(hps_conf[0])
@@ -602,7 +603,11 @@ class HyperparameterUtilities():
 
         config_info = json_params["config"]
         self.y_names = json_params["y_names"]
+        self.y_upper_bounds = json_params["y_upper_bounds"] if "y_upper_bounds" in json_params.keys() else [1.0e+8 for _ in range(len(self.y_names))]
         self.in_fmt = json_params["in_fmt"]
+
+        if len(self.y_names) != len(self.y_upper_bounds):
+            raise ValueError("The shape of y_names and y_upper_bounds in params.json must be same.")
 
         if experimental_settings.dim is not None:
             try:

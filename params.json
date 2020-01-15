@@ -3,6 +3,8 @@
                   "          The name of the objective function in 'func_file'.",
                   " y_names: list of string",
                   "          The names of measurements of hyperparameter configurations. e.g.) loss, cross entropy etc...",
+                  " y_upper_bounds: list of float",
+                  "          The upper bounds of each objective function. if no description, treated as 1.0e+8",
                   "  in_fmt: string",
                   "          The format of input for the objective function. Either 'list' or 'dict'."],
 
@@ -75,7 +77,7 @@
 
     "_comment4": "Here is the machine learning algorithm zone.",
 
-    "mlp": {"y_names": ["error", "cross_entropy"], "in_fmt": "dict",
+    "mlp": {"y_names": ["error", "cross_entropy"], "in_fmt": "dict", "y_upper_bounds": [1.0, 1.0e+8],
       "config": {
             "batch_size": {"lower": 32, "upper": 256, "dist": "u", "log": "True", "var_type": "int"},
             "lr": {"lower": 5.0e-3, "upper": 5.0e-1, "dist": "u", "log": "True", "var_type": "float"},
@@ -90,7 +92,7 @@
         }
     },
 
-    "cnn": {"y_names": ["error", "cross_entropy"], "in_fmt": "dict",
+    "cnn": {"y_names": ["error", "cross_entropy"], "in_fmt": "dict", "y_upper_bounds": [1.0, 1.0e+8],
       "config": {
             "batch_size": {"lower": 32, "upper": 256, "dist": "u", "log": "True", "var_type": "int"},
             "lr": {"lower": 5.0e-3, "upper": 5.0e-1, "dist": "u", "log": "True", "var_type": "float"},
@@ -106,7 +108,7 @@
         }
     },
 
-    "wrn": {"y_names": ["error", "cross_entropy"], "in_fmt": "dict",
+    "wrn": {"y_names": ["error", "cross_entropy"], "in_fmt": "dict", "y_upper_bounds": [1.0, 1.0e+8],
       "config": {
             "batch_size": {"lower": 64, "upper": 256, "dist": "u", "log": "True", "var_type": "int"},
             "lr": {"lower": 1.0e-4, "upper": 1.0, "dist": "u", "log": "True", "var_type": "float"},
@@ -126,7 +128,7 @@
         }
     },
 
-    "dnbc": {"y_names": ["error", "cross_entropy"], "in_fmt": "dict",
+    "dnbc": {"y_names": ["error", "cross_entropy"], "in_fmt": "dict", "y_upper_bounds": [1.0, 1.0e+8],
       "config": {
             "batch_size": {"lower": 32, "upper": 128, "dist": "u", "log": "True", "var_type": "int"},
             "lr": {"lower": 1.0e-4, "upper": 1.0, "dist": "u", "log": "True", "var_type": "float"},

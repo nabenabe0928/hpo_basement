@@ -11,13 +11,10 @@
 
 ・botorch 0.1.3 [ (github)](https://github.com/pytorch/botorch)
 
-・lightGBM 2.3.1 [ (github)](https://github.com/Microsoft/LightGBM)
-
 ```
 pip install ConfigSpace
 pip install pybnn
 pip install botorch
-pip install lightgbm
 conda install pytorch=1.2.0 torchvision cudatoolkit=9.2 -c pytorch
 pip install -r requirements.txt
 ```
@@ -161,42 +158,45 @@ The name of objective function and it corresponds to the name of objective funct
 ### 2. y_names
 The names of the measurements of hyperparameter configurations
 
-### 3. in_fmt
+### 3. y_upper_bounds
+The upper bounds of each objective function. if there is no description, treated as 1.0e+8.
+
+### 4. in_fmt
 The format of input for the objective function. Either 'list' or 'dict'.
 
-### 4. config
+### 5. config
 The information related to the hyperparameters.
 
-#### 4-1. the name of each hyperparameter
+#### 5-1. the name of each hyperparameter
 Used when recording the hyperparameter configurations.
 
-#### 4-2. lower, upper
+#### 5-2. lower, upper
 The lower and upper bound of the hyperparameter.
 Required only for float and integer parameters.
 
-#### 4-3. dist (required anytime)
+#### 5-3. dist (required anytime)
 The distribution of the hyperparameter.
 Either 'u' (uniform) or 'c' (categorical).
 
-#### 4-4. q
+#### 5-4. q
 The quantization parameter of a hyperparameter.
 If omited, q is going to be None.
 Either any float or integer value or 'None'.
 
-#### 4-5. log
+#### 5-5. log
 If searching on a log-scale space or not.
 If 'True', on a log scale.
 If omited or 'False', on a linear scale.
 
-#### 4-6. var_type (required anytime)
+#### 5-6. var_type (required anytime)
 The type of a hyperparameter.
 Either 'int' or 'float' or 'str' or 'bool'.
 
-#### 4-7. choices (required only if dist is 'c' (categorical) )
+#### 5-7. choices (required only if dist is 'c' (categorical) )
 The choices of categorical parameters.
 Have to be given by a list.
 
-#### 4-8. ignore (optional: "True" or "False")
+#### 5-8. ignore (optional: "True" or "False")
 Whether ignoring the hyperparameter or not.
 
 An example follows below.
@@ -215,6 +215,7 @@ An example follows below.
     },
     "cnn": {
       "y_names": ["error", "cross_entropy"],
+      "y_upper_bounds": [1.0, 1.0e+8],
       "in_fmt": "dict",
       "config": {
             "batch_size": {

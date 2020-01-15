@@ -73,7 +73,7 @@ def objective_function(hp_conf, hp_utils, cuda_id, job_id, is_barrier=True, verb
     """
 
     save_path = "history/stdo" + hp_utils.save_path[11:] + "/log{:0>5}.csv".format(job_id)
-    
+
     if is_barrier:
         is_out_of_domain = hp_utils.out_of_domain(hp_conf)
     else:
@@ -85,11 +85,11 @@ def objective_function(hp_conf, hp_utils, cuda_id, job_id, is_barrier=True, verb
     if hp_utils.in_fmt == "dict":
         hp_conf = hp_utils.list_to_dict(hp_conf)
         ml_utils.print_config(hp_conf, save_path, is_out_of_domain=is_out_of_domain)
-        ys = {yn: 1.0e+8 for yn in hp_utils.y_names} if is_out_of_domain else hp_utils.obj_class(hp_conf, cuda_id, save_path)
-        hp_utils.save_hp_conf(hp_conf, ys, job_id)
     else:
-        ys = {yn: 1.0e+8 for yn in hp_utils.y_names} if is_out_of_domain else hp_utils.obj_class(hp_conf, cuda_id, save_path)
-        hp_utils.save_hp_conf(hp_conf, ys, job_id)
+        pass
+
+    ys = {yn: yu for yn, yu in zip(hp_utils.y_names, hp_utils.y_upper_bounds)} if is_out_of_domain else hp_utils.obj_class(hp_conf, cuda_id, save_path)
+    hp_utils.save_hp_conf(hp_conf, ys, job_id)
 
     save_time(eval_start, hp_utils.lock, job_id)
 
