@@ -13,14 +13,15 @@ from obj_functions.benchmarks import (ackley,
                                       styblinski,
                                       weighted_sphere,
                                       xin_she_yang,
-                                      zakharov,
-                                      sin,
-                                      cos)
+                                      zakharov)
 
 from obj_functions.machine_learnings import (cnn,
                                              mlp,
+                                             old_mlp,
                                              wrn,
-                                             dnbc)
+                                             dnbc,
+                                             lgbm_toxic,
+                                             rf_safedriver)
 
 n_non_func = len(["machine_learning_utils",
                   "datasets",
@@ -46,9 +47,10 @@ __all__ = ["machine_learning_utils",
            "weighted_sphere",
            "xin_she_yang",
            "zakharov",
-           "sin",
-           "cos",
            "cnn",
            "mlp",
+           "old_mlp",
            "wrn",
-           "dnbc"]
+           "dnbc",
+           "lgbm_toxic",
+           "rf_safedriver"]

@@ -163,7 +163,11 @@ def load_hps(load_file_path, lock, var_type):
 
     order = np.argsort(job_id)
 
-    return values[order], job_id[order[-1]]
+    try:
+        return values[order], job_id[order[-1]]
+    except IndexError:
+        raise IndexError("Probably, the names of objective functions are not correct\n\
+            Make sure the names of the objective functions is the same as the ones in params.json.")
 
 
 class HyperparameterUtilities():

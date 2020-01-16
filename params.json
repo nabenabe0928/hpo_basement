@@ -102,7 +102,8 @@
             "ch2": {"lower": 16, "upper": 128, "dist": "u", "log": "True", "var_type": "int", "ignore": "True"},
             "ch3": {"lower": 16, "upper": 128, "dist": "u", "log": "True", "var_type": "int", "ignore": "True"},
             "ch4": {"lower": 16, "upper": 128, "dist": "u", "log": "True", "var_type": "int", "ignore": "True"},
-            "drop_rate": {"lower": 0.0, "upper": 1.0, "dist": "u", "var_type": "float"},
+            "drop_rate1": {"lower": 0.0, "upper": 1.0, "dist": "u", "var_type": "float"},
+            "drop_rate2": {"lower": 0.0, "upper": 1.0, "dist": "u", "var_type": "float"},
             "nesterov": {"dist": "c", "choices": ["True", "False"], "var_type": "bool", "ignore": "True"},
             "lr_decay": {"lower": 1.0e-2, "upper": 1.0, "dist": "u", "log": "True", "var_type": "float", "ignore": "True"}
         }
@@ -156,6 +157,27 @@
             "compression2": {"lower": 0.3, "upper": 0.7, "dist": "u", "var_type": "float"},
             "lr_decay": {"lower": 1.0e-2, "upper": 1.0, "dist": "u", "log": "True", "var_type": "float"},
             "nesterov": {"dist": "c", "choices": ["True", "False"], "var_type": "bool", "ignore": "True"}
+        }
+    },
+
+    "lgbm_toxic":{"y_names": ["mean", "toxic", "severe_toxic", "obscene", "threat", "insult", "identity_hate"], "in_fmt": "dict",
+      "y_upper_bounds": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+      "config": {
+            "learning_rate": {"lower": 1.0e-3, "upper": 1.0, "dist": "u", "log": "True", "var_type": "float"},
+            "num_leaves": {"lower": 8, "upper": 128, "dist": "u", "log": "True", "var_type": "int"},
+            "bagging_fraction": {"lower": 0.1, "upper": 0.9, "dist": "u", "var_type": "float"},
+            "feature_fraction": {"lower": 0.1, "upper": 0.9, "dist": "u", "var_type": "float"},
+            "lambda_l1": {"lower": 1.0e-1, "upper": 10, "dist": "u", "log": "True", "var_type": "float"},
+            "lambda_l2": {"lower": 1.0e-1, "upper": 10, "dist": "u", "log": "True", "var_type": "float"}
+        }
+    },
+
+    "rf_safedriver":{"y_names": ["gini"], "in_fmt": "dict", "y_upper_bounds": [1.0],
+      "config": {
+            "n_estimators": {"lower": 10, "upper": 1000, "dist": "u", "log": "True", "var_type": "int"},
+            "max_depth": {"lower": 1, "upper": 64, "dist": "u", "log": "True", "var_type": "int"},
+            "min_samples_split": {"lower": 0.1, "upper": 0.9, "dist": "u", "var_type": "float"},
+            "min_samples_leaf": {"lower": 0.1, "upper": 0.5, "dist": "u", "var_type": "float"}
         }
     }
 }

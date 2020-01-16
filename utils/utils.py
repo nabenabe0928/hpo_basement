@@ -135,6 +135,12 @@ def parse_requirements():
     if len(requirements["transfer_info_pathes"]) == 0:
         requirements["transfer_info_pathes"] = None
 
+    if args.ini is None or args.fuc is None:
+        print("The list of func_name is as follows:")
+        print(obj_functions.__all__[obj_functions.n_non_func:])
+        print("")
+        print_parser_warning()
+
     if args.dim is not None and args.dat is not None:
         print("dim and dat cannot coexist.")
         print_parser_warning()
@@ -163,10 +169,8 @@ def parse_requirements():
                                  "test": bool(args.test),
                                  "all_train": bool(args.altr)
                                  }
-    if args.ini is None or args.fuc is None:
-        print("The list of func_name is as follows:")
-        print(obj_functions.__all__[obj_functions.n_non_func:])
-        print("")
+    else:
+        print("### Check the requirements for the running command below ###")
         print_parser_warning()
 
     return optimizer.BaseOptimizerRequirements(**requirements), ExperimentalSettings(**experimental_settings)

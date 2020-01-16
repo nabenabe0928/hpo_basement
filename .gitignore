@@ -17,3 +17,5 @@ svhn/
 cifar/
 f-mnist/
 mnist/
+toxic-comment/
+safe-driver/

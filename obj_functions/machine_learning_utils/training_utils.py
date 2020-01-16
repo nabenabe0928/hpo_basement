@@ -125,5 +125,5 @@ def print_config(hp_dict, save_path, is_out_of_domain=False):
 
         if is_out_of_domain:
             s = "Out of Domain\n"
-            s += "\nMinTestLoss: {}\nMaxTestAcc: {}".format(1.0e+8, 0.0)
+            s += "\nMinTestLoss: {}\nMaxTestAcc: {}".format(1.0e+8, 1.0e+8)
             writer.writerow([s])

@@ -7,6 +7,21 @@ from obj_functions.machine_learning_utils.datasets.fashion_mnist import get_fash
 from torch.utils.data.dataset import Subset
 
 
+def dataset_check_for_kaggle(experimental_settings, data_name, func_name):
+    if experimental_settings.dataset_name != data_name:
+        print("You must give the name '{}' when calling {}.".format(data_name, func_name))
+        raise ValueError("add the following to the command. -dat {}".format(data_name))
+    data_frac = experimental_settings.data_frac
+
+    if data_frac is None:
+        print("Learning with all the training data.")
+        data_frac = 1.0
+    else:
+        print("Learning with {:.2f}% of the training data.".format(data_frac * 100))
+    
+    return data_frac
+
+
 def get_dataset(experimental_settings):
     """
     Parameters
