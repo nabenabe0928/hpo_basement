@@ -24,11 +24,12 @@ def evaluate_toxic(hp_dict, train_data, valid_data):
         sfm = SelectFromModel(model, threshold=0.2)
         print(train_features.shape)
         train_sparse_matrix = sfm.fit_transform(train_features, train_target)
-        test_sparse_matrix = sfm.transform(valid_features)
+        valid_sparse_matrix = sfm.transform(valid_features)
+        valid_target = valid_labels[class_name]
         print(train_sparse_matrix.shape)
-        train_sparse_matrix, valid_sparse_matrix, y_train, y_valid = train_test_split(train_sparse_matrix, train_target, test_size=0.05, random_state=144)
-        d_train = lgb.Dataset(train_sparse_matrix, label=y_train)
-        d_valid = lgb.Dataset(valid_sparse_matrix, label=y_valid)
+        # train_sparse_matrix, valid_sparse_matrix, y_train, y_valid = train_test_split(train_sparse_matrix, train_target, test_size=0.05)
+        d_train = lgb.Dataset(train_sparse_matrix, label=train_target)
+        d_valid = lgb.Dataset(valid_sparse_matrix, label=valid_target)
         watchlist = [d_train, d_valid]
         params = {**hp_dict,
                   'application': 'binary',
@@ -47,7 +48,7 @@ def evaluate_toxic(hp_dict, train_data, valid_data):
                           num_boost_round=rounds_lookup[class_name],
                           valid_sets=watchlist,
                           verbose_eval=10)
-        score = 1. - roc_auc_score(valid_labels[class_name], model.predict(test_sparse_matrix))
+        score = 1. - roc_auc_score(valid_labels[class_name], model.predict(valid_sparse_matrix))
         scores[class_name] = score
     scores["mean"] = np.array(list(scores.values())).mean()
 
