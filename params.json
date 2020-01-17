@@ -172,7 +172,7 @@
         }
     },
 
-    "rf_safedriver":{"y_names": ["gini"], "in_fmt": "dict", "y_upper_bounds": [1.0],
+    "rf_safedriver":{"y_names": ["gini"], "in_fmt": "dict", "y_upper_bounds": [2.0],
       "config": {
             "n_estimators": {"lower": 10, "upper": 1000, "dist": "u", "log": "True", "var_type": "int"},
             "max_depth": {"lower": 1, "upper": 64, "dist": "u", "log": "True", "var_type": "int"},

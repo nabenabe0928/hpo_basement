@@ -16,21 +16,14 @@ def gini_sklearn(truth, pred):
     return gini(truth, pred) / gini(truth, truth)
 
 
-def evaluate_safedriver(hp_dict, train_data, valid_data):
+def evaluate_safedriver(hp_dict, train_data):
     clf = RandomForestClassifier(n_jobs=-1, class_weight="balanced", **hp_dict)
 
     train_X = train_data.drop(["id", "target"], axis=1)
     train_target = train_data["target"]
-    valid_X = valid_data.drop(["id", "target"], axis=1)
-    valid_target = valid_data["target"]
     gini_scorer = make_scorer(gini_sklearn, greater_is_better=True, needs_proba=True)
 
-    clf.fit(train_X, train_target)
-    gini_score = gini_scorer(clf, valid_X, valid_target)
-
-    clf = RandomForestClassifier(n_jobs=-1, class_weight="balanced", **hp_dict)
     gini_score = cross_val_score(clf, train_X, train_target, scoring=gini_scorer, cv=StratifiedKFold(n_splits=5)).mean()
-    print("### {} ###".format(gini_score))
 
     # minimization
     return {"gini": 1. - gini_score}

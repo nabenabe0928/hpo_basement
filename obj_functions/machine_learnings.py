@@ -9,20 +9,20 @@ def evaluating_model(model, hp_dict, train_data, test_data, cuda_id, save_path):
 
 
 def rf_safedriver(experimental_settings):
-    train_dataset, test_dataset = datasets.get_safedriver(experimental_settings)
+    train_dataset = datasets.get_safedriver(experimental_settings)
 
     def _imp(hp_dict, cuda_id, save_path):
-        score = models.sd_randomforest.evaluate_safedriver(hp_dict, train_dataset, test_dataset)
+        score = models.sd_randomforest.evaluate_safedriver(hp_dict, train_dataset)
         return score
 
     return _imp
 
 
 def lgbm_toxic(experimental_settings):
-    train_dataset, test_dataset = datasets.get_toxic(experimental_settings)
+    train_dataset = datasets.get_toxic(experimental_settings)
 
     def _imp(hp_dict, cuda_id, save_path):
-        scores = models.toxic_lgbm.evaluate_toxic(hp_dict, train_dataset, test_dataset)
+        scores = models.toxic_lgbm.evaluate_toxic(hp_dict, train_dataset)
         return scores
 
     return _imp
