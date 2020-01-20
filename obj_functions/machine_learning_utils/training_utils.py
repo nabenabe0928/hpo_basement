@@ -3,7 +3,9 @@ import torch.nn as nn
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
 import datetime
+import sys
 import csv
+import os
 from tqdm import tqdm
 
 
@@ -115,15 +117,19 @@ def print_resource(is_available, gpu_id, save_path):
 
 
 def print_config(hp_dict, save_path, is_out_of_domain=False):
-    with open(save_path, "w", newline="") as f:
-        writer = csv.writer(f, delimiter=",", quotechar=" ")
-        s = "### Hyperparameters ###\n"
+    if not os.path.isfile(save_path):
+        with open(save_path, "w", newline="") as f:
+            writer = csv.writer(f, delimiter=",", quotechar=" ")
+            s = "### Hyperparameters ###\n"
 
-        for name, value in hp_dict.items():
-            s += "{}: {}\n".format(name, value)
-        writer.writerow([s])
-
-        if is_out_of_domain:
-            s = "Out of Domain\n"
-            s += "\nMinTestLoss: {}\nMaxTestAcc: {}".format(1.0e+8, 1.0e+8)
+            for name, value in hp_dict.items():
+                s += "{}: {}\n".format(name, value)
             writer.writerow([s])
+
+            if is_out_of_domain:
+                s = "Out of Domain\n"
+                s += "\nMinTestLoss: {}\nMaxTestAcc: {}".format(1.0e+8, 1.0e+8)
+                writer.writerow([s])
+    else:
+        print("You are running the same program in different processes.\nWill Stop this process to prevent double evalutions.")
+        sys.exit()

@@ -5,6 +5,7 @@ import os
 import ConfigSpace as CS
 import ConfigSpace.hyperparameters as CSH
 import utils
+import sys
 from multiprocessing import Lock
 
 
@@ -109,6 +110,17 @@ def get_hp_info(hp):
         raise NotImplementedError("Categorical parameters do not have the log scale option.")
 
 
+def check_double_evaluation(save_file_path, job_id):
+    with open(save_file_path, "r", newline="") as f:
+        reader = csv.reader(f, delimiter=",")
+
+        job_id = str(job_id)
+        for r in reader:
+            if job_id == r[0]:
+                print("You are running the same program in different processes.\nWill Stop this process to prevent double evalutions.")
+                sys.exit()
+
+
 def save_hp(save_file_path, lock, job_id, value, record=True):
     """
     recording a hyperparameter evaluated in an experiment
@@ -133,6 +145,7 @@ def save_hp(save_file_path, lock, job_id, value, record=True):
 
     if record:
         lock.acquire()
+        check_double_evaluation(save_file_path, job_id)
         with open(save_file_path, "a", newline="") as f:
             writer = csv.writer(f, delimiter=",")
             writer.writerow([job_id, value])
