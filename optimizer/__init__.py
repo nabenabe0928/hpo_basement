@@ -1,6 +1,6 @@
 from optimizer.base_optimizer import BaseOptimizer, BaseOptimizerRequirements
 from optimizer.nelder_mead import NelderMead
-from optimizer.random_search import RandomSearch
+from optimizer.random_search import RandomSearch, LatinHypercubeSampling
 from optimizer.gaussian_process import SingleTaskGPBO, MultiTaskGPBO
 from optimizer.tpe import SingleTaskUnivariateTPE, SingleTaskMultivariateTPE
 from optimizer.bohamiann import SingleTaskBOHAMIANN, MultiTaskBOHAMIANN
@@ -15,6 +15,7 @@ __all__ = ['constants',
            'BaseOptimizerRequirements',
            'NelderMead',
            'RandomSearch',
+           'LatinHypercubeSampling',
            'SingleTaskGPBO',
            'MultiTaskGPBO',
            'SingleTaskUnivariateTPE',

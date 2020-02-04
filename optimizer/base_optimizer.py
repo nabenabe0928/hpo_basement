@@ -88,7 +88,9 @@ def objective_function(hp_conf, hp_utils, cuda_id, job_id, is_barrier=True, verb
     else:
         pass
 
-    ys = {yn: yu for yn, yu in zip(hp_utils.y_names, hp_utils.y_upper_bounds)} if is_out_of_domain else hp_utils.obj_class(hp_conf, cuda_id, save_path)
+    ys = {yn: yu for yn, yu in zip(hp_utils.y_names, hp_utils.y_upper_bounds)} \
+        if is_out_of_domain else hp_utils.obj_class(hp_conf, cuda_id, save_path)
+
     hp_utils.save_hp_conf(hp_conf, ys, job_id)
 
     save_time(eval_start, hp_utils.lock, job_id)
