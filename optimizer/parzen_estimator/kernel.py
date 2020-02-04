@@ -138,7 +138,7 @@ class AitchisonAitkenKernel():
         """
 
         choice_one_hot = rng.multinomial(n=1, pvals=self.probabilities(), size=1)
-        return np.dot(choice_one_hot, np.arange(self.n_choices))
+        return np.dot(choice_one_hot, np.arange(self.n_choices))[0]
 
 
 class UniformKernel():
@@ -194,4 +194,4 @@ class UniformKernel():
         """
 
         choice_one_hot = rng.multinomial(n=1, pvals=self.probabilities(), size=1)
-        return np.dot(choice_one_hot, np.arange(self.n_choices))
+        return np.dot(choice_one_hot, np.arange(self.n_choices))[0]
