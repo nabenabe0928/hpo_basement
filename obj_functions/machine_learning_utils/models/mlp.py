@@ -57,7 +57,7 @@ class MultiLayerPerceptron(nn.Module):
         self.image_size = image_size if image_size is not None else 28
         self.weight_decay = weight_decay
         self.drop_rate1 = drop_rate1
-        self.drop_rate2 = drop_rate2
+        self.drop_rate2 = drop_rate1  # drop_rate2
         self.n_units1 = int(n_units1)
         self.n_units2 = int(n_units2)
         self.nesterov = nesterov

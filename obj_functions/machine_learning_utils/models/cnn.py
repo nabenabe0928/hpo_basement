@@ -46,8 +46,7 @@ class CNN(nn.Module):
                  nesterov=True,
                  lr_decay=1.,
                  lr_step=[1.],
-                 n_cls=100
-                 ):
+                 n_cls=100):
         super(CNN, self).__init__()
 
         # Hyperparameter Configuration for CNN.
