@@ -141,7 +141,8 @@ class BaseOptimizer():
                  hp_utils,
                  requirements,
                  experimental_settings,
-                 obj=None):
+                 obj=None,
+                 given_default=None):
         """
         Member Variables
         ----------------
@@ -170,6 +171,7 @@ class BaseOptimizer():
         self.opt = callable
         self.restart = requirements.restart
         self.default = requirements.default
+        self.given_default = self.format_default_confs(given_default)
         self.check = requirements.check
         self.rng = np.random.RandomState(requirements.seed)
         self.seed = requirements.seed
@@ -234,6 +236,47 @@ class BaseOptimizer():
         print("##### Best Performance #####")
         print("{:.3f}".format(best_performance))
 
+    def order_default_conf(self, conf):
+        name_to_idx = self.hp_utils.config_space._hyperparameter_idx
+        n_dim = len(name_to_idx)
+
+        if len(conf) != n_dim:
+            raise ValueError("The length of Default configurations must be eqaul to {}, but {} was given.".format(n_dim, len(conf)))
+        elif eval(self.hp_utils.in_fmt) is not type(conf):
+            raise TypeError("Default configurations must be identical to in_fmt specified in params.json.")
+
+        if self.hp_utils.in_fmt == "list":
+            return conf
+        else:
+            return_conf = [None for _ in range(len(name_to_idx))]
+            for var_name, idx in name_to_idx.items():
+                return_conf[idx] = conf[var_name]
+            return return_conf
+
+    def format_default_confs(self, given_conf):
+        if given_conf is None:
+            return None
+        elif not type(given_conf) in [dict, list]:
+            raise ValueError("Default configurations must be list or dict, but {} was given.".format(type(given_conf)))
+        elif not type(given_conf[0]) in [dict, list]:
+            return self.order_default_conf(given_conf)
+        else:
+            return_confs = []
+            for conf in given_conf:
+                return_confs.append(self.order_default_conf(conf))
+            return return_confs
+
+    def get_from_given_default(self):
+        if self.given_default is None:
+            return []
+        elif type(self.given_default[0]) is list:
+            n_given_confs = len(self.given_default)
+            return self.given_default[self.n_jobs % n_given_confs]
+        elif type(self.given_default) is list:
+            return self.given_default
+        else:
+            raise ValueError("Given default configurations must be 1d or 2d array.")
+
     def optimize(self):
         utils.create_log_dir(self.hp_utils.save_path)
         if not self.restart:
@@ -260,7 +303,7 @@ class BaseOptimizer():
     def _optimize_sequential(self, save_time):
         while True:
             if self.default and self.n_jobs < self.max_evals:
-                hp_conf = []
+                hp_conf = self.get_from_given_default()
             elif self.n_jobs < self.n_init:
                 hp_conf = self._initial_sampler()
             elif self.n_jobs < self.max_evals:
@@ -301,7 +344,7 @@ class BaseOptimizer():
                 cidx = resources.index(False)
 
                 if self.default and self.n_jobs < self.max_evals:
-                    hp_conf = []
+                    hp_conf = self.get_from_given_default()
                 elif self.n_jobs < self.n_init:
                     hp_conf = self._initial_sampler()
                 else:

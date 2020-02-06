@@ -4,7 +4,11 @@ from optimizer.base_optimizer import BaseOptimizer
 
 
 class SingleTaskBOHAMIANN(BaseOptimizer):
-    def __init__(self, hp_utils, opt_requirements, experimental_settings, obj=None):
+    def __init__(self,
+                 hp_utils,
+                 opt_requirements,
+                 experimental_settings,
+                 obj=None):
         """
         lower: ndarray (D, )
             The lower bound of each parameter

@@ -4,8 +4,13 @@ import numpy as np
 
 
 class RandomSearch(BaseOptimizer):
-    def __init__(self, hp_utils, opt_requirements, experimental_settings, obj=None):
-        super().__init__(hp_utils, opt_requirements, experimental_settings, obj=obj)
+    def __init__(self,
+                 hp_utils,
+                 opt_requirements,
+                 experimental_settings,
+                 obj=None,
+                 given_default=None):
+        super().__init__(hp_utils, opt_requirements, experimental_settings, obj=obj, given_default=given_default)
         self.opt = self._initial_sampler
 
 
