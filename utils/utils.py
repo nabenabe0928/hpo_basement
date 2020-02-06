@@ -35,6 +35,10 @@ biased_cls: list of float (K, )
     The length must be same as n_cls. Each element must be (0, 1].
 test: bool
     If using validation dataset or test dataset. If false, using validation dataset.
+extra_opt_name: str
+    The information added to optimizer name. (Used only for the specification of path to save log.)
+extra_exp_name: str
+    The information added to experiment's name. (Used only for the specification of path to save log.)
 """
 
 
@@ -48,7 +52,9 @@ class ExperimentalSettings(
                 ("data_frac", float),
                 ("biased_cls", list),
                 ("test", bool),
-                ("all_train", bool)
+                ("all_train", bool),
+                ("extra_opt_name", str),
+                ("extra_exp_name", str)
                 ])):
     pass
 
@@ -81,6 +87,8 @@ def print_parser_warning():
     print("  -veb (Both  Optional, default: 1   ): Whether print the result or not. If 0, do not print.")
     print("  -fre (Both  Optional, default: 1   ): Every print_freq iteration, the result will be printed.")
     print("  -che (Both  Optional, default: 1   ): If asking when removing files or not at the initialization.")
+    print("  -eopt(Both  Optional, default: None): The information added to optimizer name. (Used only for the specification of path to save log.)")
+    print("  -eexp(Both  Optional, default: None): The information added to experiment's name. (Used only for the specification of path to save log.)")
     print("")
     sys.exit()
 
@@ -115,6 +123,8 @@ def parse_requirements():
     ap.add_argument("-fre", type=int, default=1)
     ap.add_argument("-che", type=int, choices=[0, 1], default=1)
     ap.add_argument("-tra", type=str, nargs="*", default=[])
+    ap.add_argument("-eopt", type=str, default=None)
+    ap.add_argument("-eexp", type=str, default=None)
 
     args = ap.parse_args()
 
@@ -172,6 +182,9 @@ def parse_requirements():
     else:
         print("### Check the requirements for the running command below ###")
         print_parser_warning()
+
+    experimental_settings["extra_opt_name"] = args.eopt
+    experimental_settings["extra_exp_name"] = args.eexp
 
     return optimizer.BaseOptimizerRequirements(**requirements), ExperimentalSettings(**experimental_settings)
 

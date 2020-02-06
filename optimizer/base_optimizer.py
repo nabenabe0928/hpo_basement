@@ -132,6 +132,8 @@ def get_path_name(obj_name, experimental_settings, transfer_info_pathes):
         obj_path_name += "_TrainAll"
     if transfer_info_pathes is not None:
         obj_path_name = add_transfer_information(obj_path_name, transfer_info_pathes)
+    if experimental_settings.extra_exp_name is not None:
+        obj_path_name += "_{}".format(experimental_settings.extra_exp_name)
 
     return obj_path_name
 
@@ -178,6 +180,7 @@ class BaseOptimizer():
         self.cuda_id = requirements.cuda
         self.is_barrier = requirements.is_barrier
         opt_name = self.__class__.__name__ if not self.default else "DefaultConfs"
+        opt_name += "" if experimental_settings.extra_opt_name is None else "_{}".format(experimental_settings.extra_opt_name)
         obj_path_name = get_path_name(self.hp_utils.obj_name, experimental_settings, requirements.transfer_info_pathes)
         self.hp_utils.save_path = "history/log/{}/{}/{:0>3}".format(opt_name, obj_path_name, requirements.n_experiments)
         self.n_jobs = 0

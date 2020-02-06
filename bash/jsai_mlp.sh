@@ -18,7 +18,7 @@ done
 
 sing_exec="singularity exec --nv ubuntu16.04-cuda9.2-anaconda3.img "
 py_script="python lhs_main.py "
-cond="-fuc mlp -ini 1 -eva 100 -dat f-mnist -cls 10"
+cond="-fuc mlp -ini 1 -eva 100 -dat f-mnist -cls 10 -eexp jsai"
 
 for num in `seq 0 3`; do
     $sing_exec$py_script$cond -cuda $num -exp $(($num+$a)) -res $rs &
