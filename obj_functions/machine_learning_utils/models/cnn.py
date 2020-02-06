@@ -56,7 +56,7 @@ class CNN(nn.Module):
         self.momentum = momentum
         self.weight_decay = weight_decay
         self.drop_rate1 = drop_rate1
-        self.drop_rate2 = drop_rate2
+        self.drop_rate2 = drop_rate1  # drop_rate2
         self.ch1 = int(ch1)
         self.ch2 = int(ch2)
         self.ch3 = int(ch3)

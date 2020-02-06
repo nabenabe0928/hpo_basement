@@ -103,7 +103,7 @@
             "ch3": {"lower": 16, "upper": 128, "dist": "u", "log": "True", "var_type": "int", "ignore": "True"},
             "ch4": {"lower": 16, "upper": 128, "dist": "u", "log": "True", "var_type": "int", "ignore": "True"},
             "drop_rate1": {"lower": 0.0, "upper": 1.0, "dist": "u", "var_type": "float"},
-            "drop_rate2": {"lower": 0.0, "upper": 1.0, "dist": "u", "var_type": "float"},
+            "drop_rate2": {"lower": 0.0, "upper": 1.0, "dist": "u", "var_type": "float", "ignore": "True"},
             "nesterov": {"dist": "c", "choices": ["True", "False"], "var_type": "bool", "ignore": "True"},
             "lr_decay": {"lower": 1.0e-2, "upper": 1.0, "dist": "u", "log": "True", "var_type": "float", "ignore": "True"}
         }
