@@ -19,3 +19,4 @@ f-mnist/
 mnist/
 toxic-comment/
 safe-driver/
+optimizer/cma.py

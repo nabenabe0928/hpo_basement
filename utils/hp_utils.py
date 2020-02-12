@@ -557,6 +557,7 @@ class HyperparameterUtilities():
             load_file_path = self.save_path + "/" + var_name + ".csv" if another_src is None else another_src + "/" + var_name + ".csv"
             hps, max_job_id = load_hps(load_file_path, self.lock, var_type)
             n_referred_jobs = min(n_referred_jobs, max_job_id)
+
             if convert:
                 hps = [self.convert_hp(hp, var_name) for hp in hps]
             hps_conf.append(hps)
@@ -567,8 +568,8 @@ class HyperparameterUtilities():
             n_referred_jobs = min(n_referred_jobs, max_job_id)
             ys.append(np.array(y))
 
-        hps_conf = [hps[:n_referred_jobs] for hps in hps_conf]
-        ys = [y[:n_referred_jobs] for y in ys]
+        hps_conf = [hps[:n_referred_jobs + 1] for hps in hps_conf]
+        ys = [y[:n_referred_jobs + 1] for y in ys]
 
         if do_sort:
             order = np.argsort(ys[0])

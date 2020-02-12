@@ -4,49 +4,52 @@ import csv
 
 
 if __name__ == "__main__":
-    funcs = ["griewank_10d",
-             "k_tablet_10d",
-             "michalewicz_10d",
-             "schwefel_10d",
-             "sphere_10d",
-             "styblinski_10d"]
+    funcs = {"griewank_10d": 0.0,
+             "k_tablet_10d": 0.0,
+             "michalewicz_10d": -9.66015,
+             "schwefel_10d": -4189.829,
+             "sphere_10d": 0.0,
+             "weighted_sphere_10d": 0.0,
+             "styblinski_10d": -391.66165}
+    opts = {"SingleTaskMultivariateTPE/": "MV-TPE",
+            "SingleTaskUnivariateTPE/": "TPE",
+            "NelderMead/": "NM",
+            "CMA/": "CMA",
+            "LatinHypercubeSampling/": "LHS"}
+    cs = ["red", "blue", "green", "purple", "black"]
     head = "history/log/"
     tar = "/loss.csv"
     n = 500
-    e = 1
+    e = 10
 
-    for func in funcs:
-        mvs, uvs = [], []
+    for func, min_val in funcs.items():
+        res = {v: [] for v in opts.values()}
         for i in range(e):
-            mvtpe, tpe = [np.inf], [np.inf]
-            with open("{}{}{}/00{}{}".format(head, "SingleTaskMultivariateTPE/", func, i, tar), "r", newline="") as f:
-                reader = csv.reader(f, delimiter=",")
-                for r in reader:
-                    mvtpe.append(min(mvtpe[-1], float(r[1])))
-            del mvtpe[0]
+            for opt, key in opts.items():
+                ys = [np.inf]
+                with open("{}{}{}/00{}{}".format(head, opt, func, i, tar), "r", newline="") as f:
+                    reader = csv.reader(f, delimiter=",")
+                    for r in reader:
+                        ys.append(min(ys[-1], float(r[1])))
+                del ys[0]
+                res[key].append(ys[:n])
 
-            with open("{}{}{}/00{}{}".format(head, "SingleTaskUnivariateTPE/", func, i, tar), "r", newline="") as f:
-                reader = csv.reader(f, delimiter=",")
-                for r in reader:
-                    tpe.append(min(tpe[-1], float(r[1])))
-            del tpe[0]
-        mvs.append(mvtpe[:n])
-        uvs.append(tpe[:n])
         print(func)
 
-        uvs, mvs = map(np.asarray, [uvs, mvs])
+        res = {k: np.array(v) for k, v in res.items()}
         x = np.arange(n)
         # tpe, mvtpe = np.log(tpe), np.log(mvtpe)
         plt.title(func)
-        m = uvs.mean(axis=0)
-        s = uvs.std(axis=0)
-        plt.plot(x, m, label="TPE", color="blue")
-        plt.fill_between(x, m - s, m + s, color="blue", alpha=0.2)
+
+        for c, (k, v) in zip(cs, res.items()):
+            # print(v.min())
+            v = np.log(v - min_val + 1.0e-12)
+            m = v.mean(axis=0)
+            s = v.std(axis=0) / np.sqrt(e)
+            print(s)
+            plt.plot(x, m, label=k, color=c)
+            plt.fill_between(x, m - s, m + s, color=c, alpha=0.2)
         
-        m = mvs.mean(axis=0)
-        s = mvs.std(axis=0)
-        plt.plot(x, m, label="MV-TPE", color="red")
-        plt.fill_between(x, m - s, m + s, color="red", alpha=0.2)
         plt.legend()
         plt.grid()
         plt.show()
