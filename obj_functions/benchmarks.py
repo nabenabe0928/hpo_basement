@@ -115,6 +115,17 @@ def weighted_sphere(experimental_settings):
     return _imp
 
 
+def michalewicz(experimental_settings):
+    def _imp(hp_conf, cuda_id, save_path):
+        m = 10
+        hp_conf = np.array(hp_conf)
+        s = np.sin(hp_conf)
+        ws = np.sin(hp_conf ** 2 * (np.arange(hp_conf.size) + 1) / np.pi)
+        ts = s * ws ** (2 * m)
+        return {"loss": - ts.sum()}
+    return _imp
+
+
 def xin_she_yang(experimental_settings):
     def _imp(hp_conf, cuda_id, save_path):
         hp_conf = np.array(hp_conf)

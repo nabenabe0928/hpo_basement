@@ -43,6 +43,9 @@
     "perm": {"y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -1.0, "upper": 1.0, "dist": "u", "var_type": "float"}}
     },
+    "michalewicz": {"y_names": ["loss"], "in_fmt": "list",
+      "config": {"x": {"lower": 0.0, "upper": 3.14, "dist": "u", "var_type": "float"}}
+    },
     "rastrigin": {"y_names": ["loss"], "in_fmt": "list",
       "config": {"x": {"lower": -5.12, "upper": 5.12, "dist": "u", "var_type": "float"}}
     },

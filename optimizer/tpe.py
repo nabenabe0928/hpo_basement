@@ -153,7 +153,7 @@ class SingleTaskMultivariateTPE(SingleTaskTPE):
                  experimental_settings,
                  obj=None,
                  n_ei_candidates=24,
-                 rule="james",
+                 rule="scott",
                  gamma_func=default_gamma,
                  weight_func=default_weights):
 
