@@ -18,7 +18,7 @@ def dataset_check_for_kaggle(experimental_settings, data_name, func_name):
         data_frac = 1.0
     else:
         print("Learning with {:.2f}% of the training data.".format(data_frac * 100))
-    
+
     return data_frac
 
 

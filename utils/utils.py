@@ -98,7 +98,7 @@ def parse_requirements():
     try:
         msg = subprocess.check_output("nvidia-smi --query-gpu=index --format=csv", shell=True)
         n_devices = max(0, len(msg.decode().split("\n")) - 2)
-    except:
+    except subprocess.CalledProcessError:
         n_devices = 0
 
     ap = ArgumentParser()
@@ -298,7 +298,7 @@ def create_log_dir(path_log):
             if not os.path.isdir(this_path):
                 try:
                     os.mkdir(this_path)
-                except:
+                except OSError:
                     pass
 
 

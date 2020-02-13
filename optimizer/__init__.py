@@ -6,7 +6,7 @@ from optimizer.tpe import SingleTaskUnivariateTPE, SingleTaskMultivariateTPE
 from optimizer.bohamiann import SingleTaskBOHAMIANN, MultiTaskBOHAMIANN
 from optimizer import parzen_estimator
 from optimizer.parzen_estimator import plot_density_estimators
-from optimizer.cma import CMA, WarmStartCMA
+# from optimizer.cma import CMA, WarmStartCMA
 from optimizer import robo
 from optimizer import constants
 
