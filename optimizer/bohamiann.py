@@ -57,12 +57,12 @@ class MultiTaskBOHAMIANN(BaseOptimizer):
         """
 
         super().__init__(hp_utils, opt_requirements, experimental_settings, obj=obj)
-        transfer_info_pathes = opt_requirements.transfer_info_pathes
+        transfer_info_paths = opt_requirements.transfer_info_paths
 
         self.opt = self.sample
-        self.n_tasks = len(transfer_info_pathes) + 1
+        self.n_tasks = len(transfer_info_paths) + 1
         self.n_dim = len(self.hp_utils.config_space._hyperparameters)
-        self.X, self.Y = self.hp_utils.load_transfer_hps_conf(transfer_info_pathes, convert=True)
+        self.X, self.Y = self.hp_utils.load_transfer_hps_conf(transfer_info_paths, convert=True)
         self.lower = np.zeros(self.n_dim)
         self.upper = np.ones(self.n_dim)
         self.model_objective = models.WrapperBohamiannMultiTask(n_tasks=self.n_tasks)

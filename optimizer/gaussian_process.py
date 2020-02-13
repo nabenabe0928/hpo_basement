@@ -65,10 +65,10 @@ class MultiTaskGPBO(BaseOptimizer):
     def __init__(self, hp_utils, opt_requirements, experimental_settings, obj=None):
 
         super().__init__(hp_utils, opt_requirements, experimental_settings, obj=obj)
-        transfer_info_pathes = opt_requirements.transfer_info_pathes
+        transfer_info_paths = opt_requirements.transfer_info_paths
         self.opt = self.sample
         self.n_dim = len(self.hp_utils.config_space._hyperparameters)
-        self.X, self.Y = self.hp_utils.load_transfer_hps_conf(transfer_info_pathes, convert=True)
+        self.X, self.Y = self.hp_utils.load_transfer_hps_conf(transfer_info_paths, convert=True)
         self.Y = [[(yn - yn.mean()) / yn.std() for yn in Ym] for Ym in self.Y]
 
     def create_multi_task_X(self):

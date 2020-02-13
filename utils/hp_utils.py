@@ -582,13 +582,13 @@ class HyperparameterUtilities():
 
         return hps_conf, ys
 
-    def load_transfer_hps_conf(self, transfer_info_pathes, convert=False, do_sort=False):
+    def load_transfer_hps_conf(self, transfer_info_paths, convert=False, do_sort=False):
         """
         loading hyperparameter configurations of prior information and the corresponding performance
 
         Parameters
         ----------
-        transfer_info_pathes: list of string (M, )
+        transfer_info_paths: list of string (M, )
             The path of the location of prior information
 
         Returns
@@ -601,10 +601,10 @@ class HyperparameterUtilities():
         X = [[]]
         Y = [[]]
 
-        if transfer_info_pathes is None:
-            raise ValueError("transfer_info_pathes has to be list of pathes of information to transfer, but None was given.")
+        if transfer_info_paths is None:
+            raise ValueError("transfer_info_paths has to be list of paths of information to transfer, but None was given.")
 
-        for path in transfer_info_pathes:
+        for path in transfer_info_paths:
             print("### Transferring from {} ###".format(path))
             _X, _Y = self.load_hps_conf(convert=convert, do_sort=do_sort, another_src=path)
             X.append(_X)

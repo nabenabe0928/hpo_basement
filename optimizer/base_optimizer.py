@@ -38,7 +38,7 @@ check: bool
     If asking when removing files or not at the initialization.
 cuda: list of int
     Which CUDA devices you use in the experiment. (Specify the single or multiple number(s))
-transfer_info_pathes: list of str
+transfer_info_paths: list of str
     The list of the path of previous information to transfer. 'opt/function/number'
 """
 
@@ -57,7 +57,7 @@ class BaseOptimizerRequirements(
                 ("print_freq", int),  # 1
                 ("check", bool),  # False
                 ("cuda", list),  # [0]
-                ("transfer_info_pathes", list),  # []
+                ("transfer_info_paths", list),  # []
                 ])):
     pass
 
@@ -99,10 +99,10 @@ def objective_function(hp_conf, hp_utils, cuda_id, job_id, is_barrier=True, verb
         utils.print_result(hp_conf, ys, job_id, hp_utils.list_to_dict)
 
 
-def add_transfer_information(obj_path_name, transfer_info_pathes):
+def add_transfer_information(obj_path_name, transfer_info_paths):
     obj_path_name += "_transfers"
-    n_tasks = len(transfer_info_pathes)
-    for i, path in enumerate(transfer_info_pathes):
+    n_tasks = len(transfer_info_paths)
+    for i, path in enumerate(transfer_info_paths):
         # p = "{}{}_{}".format(*path[12:].split("/"))
         p = "{}_on_{}".format(*path[12:].split("/")[:-1])
         obj_path_name += "_" + p
@@ -111,7 +111,7 @@ def add_transfer_information(obj_path_name, transfer_info_pathes):
     return obj_path_name
 
 
-def get_path_name(obj_name, experimental_settings, transfer_info_pathes):
+def get_path_name(obj_name, experimental_settings, transfer_info_paths):
     obj_path_name = obj_name
 
     if experimental_settings.dim is not None:
@@ -130,8 +130,8 @@ def get_path_name(obj_name, experimental_settings, transfer_info_pathes):
         obj_path_name += "_TEST"
     if experimental_settings.all_train:
         obj_path_name += "_TrainAll"
-    if transfer_info_pathes is not None:
-        obj_path_name = add_transfer_information(obj_path_name, transfer_info_pathes)
+    if transfer_info_paths is not None:
+        obj_path_name = add_transfer_information(obj_path_name, transfer_info_paths)
     if experimental_settings.extra_exp_name is not None:
         obj_path_name += "_{}".format(experimental_settings.extra_exp_name)
 
@@ -161,8 +161,8 @@ class BaseOptimizer():
             the optimizer of hyperparameter configurations
         rng: numpy.random.RandomState object
             Sampling random numbers based on the seed argument.
-        transfer_info_pathes: list of str (M - 1, )
-            The list of pathes where there are previous log you want to transfer.
+        transfer_info_paths: list of str (M - 1, )
+            The list of paths where there are previous log you want to transfer.
         """
 
         self.hp_utils = hp_utils
@@ -181,7 +181,7 @@ class BaseOptimizer():
         self.is_barrier = requirements.is_barrier
         opt_name = self.__class__.__name__ if not self.default else "DefaultConfs"
         opt_name += "" if experimental_settings.extra_opt_name is None else "_{}".format(experimental_settings.extra_opt_name)
-        obj_path_name = get_path_name(self.hp_utils.obj_name, experimental_settings, requirements.transfer_info_pathes)
+        obj_path_name = get_path_name(self.hp_utils.obj_name, experimental_settings, requirements.transfer_info_paths)
         self.hp_utils.save_path = "history/log/{}/{}/{:0>3}".format(opt_name, obj_path_name, requirements.n_experiments)
         self.n_jobs = 0
         self.verbose = requirements.verbose

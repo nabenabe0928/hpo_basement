@@ -140,10 +140,10 @@ def parse_requirements():
                     "default": bool(args.defa),
                     "check": bool(args.che),
                     "cuda": args.cuda if len(args.cuda) == args.par else list(range(args.par)),
-                    "transfer_info_pathes": ["history/log/{}".format(path) for path in args.tra]
+                    "transfer_info_paths": ["history/log/{}".format(path) for path in args.tra]
                     }
-    if len(requirements["transfer_info_pathes"]) == 0:
-        requirements["transfer_info_pathes"] = None
+    if len(requirements["transfer_info_paths"]) == 0:
+        requirements["transfer_info_paths"] = None
 
     if args.ini is None or args.fuc is None:
         print("The list of func_name is as follows:")
