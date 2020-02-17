@@ -3,6 +3,9 @@ import utils
 import os
 import csv
 import time
+import datetime
+import sys
+import subprocess as sp
 import obj_functions.machine_learning_utils as ml_utils
 from multiprocessing import Process
 from typing import NamedTuple
@@ -94,6 +97,7 @@ def objective_function(hp_conf, hp_utils, cuda_id, job_id, is_barrier=True, verb
     hp_utils.save_hp_conf(hp_conf, ys, job_id)
 
     save_time(eval_start, hp_utils.lock, job_id)
+    record_login(hp_utils.save_path)
 
     if verbose and job_id % print_freq == 0:
         utils.print_result(hp_conf, ys, job_id, hp_utils.list_to_dict)
@@ -109,6 +113,16 @@ def add_transfer_information(obj_path_name, transfer_info_paths):
         obj_path_name += "_and" if i + 1 < n_tasks else ""
 
     return obj_path_name
+
+
+def record_login(save_path):
+    current_time = str(datetime.datetime.today())[:-7]
+    current_pid = os.environ["JOB_ID"] if "JOB_ID" in os.environ.keys() else os.getpid()
+    record_path = "{0}/stdo/{2}/{3}/{4}/last_login.csv".format(*save_path.split("/"))
+
+    with open(record_path, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["{}+{}".format(current_pid, current_time)])
 
 
 def get_path_name(obj_name, experimental_settings, transfer_info_paths):
@@ -280,6 +294,42 @@ class BaseOptimizer():
         else:
             raise ValueError("Given default configurations must be 1d or 2d array.")
 
+    def check_double_submission(self):
+        is_abci = "JOB_ID" in os.environ.keys()
+        current_time = str(datetime.datetime.today())[:-7]
+        current_pid = os.environ["JOB_ID"] if is_abci else str(os.getpid())
+        save_path = "{0}/stdo/{2}/{3}/{4}/last_login.csv".format(*self.hp_utils.save_path.split("/"))
+        job_ids = [] if is_abci \
+            else [s.strip() for s in sp.check_output('ps -u {} -o pid'.format(os.environ["USER"]), shell=True).decode("utf-8").split("\n")
+                  if s.strip().isdecimal()]
+        # sp.check_output('qstat | cut -d " " -f 4 | sort -n', shell=True).split("\n") if is_abci \
+
+        if os.path.isfile(save_path):
+            with open(save_path, "r", newline="") as f:
+                reader = list(csv.reader(f, delimiter="+"))[-1]
+                last_pid, last_time = reader[0], reader[1]
+
+            last_time_dt = datetime.datetime.strptime(last_time, "%Y-%m-%d %H:%M:%S")
+            current_time_dt = datetime.datetime.strptime(current_time, "%Y-%m-%d %H:%M:%S")
+            time_diff = current_time_dt - last_time_dt
+
+            try:
+                date_diff = time_diff.date
+            except AttributeError:
+                date_diff = 0
+            try:
+                second_diff = time_diff.seconds
+            except AttributeError:
+                second_diff = 0
+        else:
+            date_diff, second_diff, last_pid = 0, 0, current_pid
+
+        if (not is_abci and last_pid not in job_ids) or (is_abci and date_diff > 0 or second_diff > self.hp_utils.waiting_time):
+            record_login(self.hp_utils.save_path)
+        else:
+            print("You are running the same program in different processes.\nWill Stop this process to prevent double evalutions.")
+            sys.exit()
+
     def optimize(self):
         utils.create_log_dir(self.hp_utils.save_path)
         if not self.restart:
@@ -289,6 +339,7 @@ class BaseOptimizer():
         self.hp_utils.save_hp_conf(list(range(len(self.hp_utils.var_names))), dy, None, record=False)
 
         self.n_jobs = self.get_n_jobs()
+        self.check_double_submission()
 
         save_time = utils.save_elapsed_time(self.hp_utils.save_path, self.hp_utils.lock, self.verbose, self.print_freq)
 

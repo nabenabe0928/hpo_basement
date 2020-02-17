@@ -5,7 +5,6 @@ import os
 import ConfigSpace as CS
 import ConfigSpace.hyperparameters as CSH
 import utils
-import sys
 from multiprocessing import Lock
 
 
@@ -110,17 +109,6 @@ def get_hp_info(hp):
         raise NotImplementedError("Categorical parameters do not have the log scale option.")
 
 
-def check_double_evaluation(save_file_path, job_id):
-    with open(save_file_path, "r", newline="") as f:
-        reader = csv.reader(f, delimiter=",")
-
-        job_id = str(job_id)
-        for r in reader:
-            if job_id == r[0]:
-                print("You are running the same program in different processes.\nWill Stop this process to prevent double evalutions.")
-                sys.exit()
-
-
 def save_hp(save_file_path, lock, job_id, value, record=True):
     """
     recording a hyperparameter evaluated in an experiment
@@ -145,7 +133,6 @@ def save_hp(save_file_path, lock, job_id, value, record=True):
 
     if record:
         lock.acquire()
-        check_double_evaluation(save_file_path, job_id)
         with open(save_file_path, "a", newline="") as f:
             writer = csv.writer(f, delimiter=",")
             writer.writerow([job_id, value])
@@ -232,6 +219,7 @@ class HyperparameterUtilities():
         self.in_fmt = None
         self.lock = Lock()
         self.save_path = None
+        self.waiting_time = None
         self.obj_class = self.prepare_opt_env(experimental_settings)
         self.var_names = list(self.config_space._hyperparameters.keys())
 
@@ -623,6 +611,7 @@ class HyperparameterUtilities():
         self.y_names = json_params["y_names"]
         self.y_upper_bounds = json_params["y_upper_bounds"] if "y_upper_bounds" in json_params.keys() else [1.0e+8 for _ in range(len(self.y_names))]
         self.in_fmt = json_params["in_fmt"]
+        self.waiting_time = json_params["waiting_time"]
 
         if len(self.y_names) != len(self.y_upper_bounds):
             raise ValueError("The shape of y_names and y_upper_bounds in params.json must be same.")
