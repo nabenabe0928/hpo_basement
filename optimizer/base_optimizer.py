@@ -297,7 +297,6 @@ class BaseOptimizer():
     def check_double_submission(self):
         is_abci = "JOB_ID" in os.environ.keys()
         current_time = str(datetime.datetime.today())[:-7]
-        current_pid = os.environ["JOB_ID"] if is_abci else str(os.getpid())
         save_path = "{0}/stdo/{2}/{3}/{4}/last_login.csv".format(*self.hp_utils.save_path.split("/"))
         job_ids = [] if is_abci \
             else [s.strip() for s in sp.check_output('ps -u {} -o pid'.format(os.environ["USER"]), shell=True).decode("utf-8").split("\n")
