@@ -322,7 +322,7 @@ class BaseOptimizer():
             except AttributeError:
                 second_diff = 0
         else:
-            date_diff, second_diff, last_pid = 0, 0, current_pid
+            date_diff, second_diff, last_pid = 1, 1e+8, None
 
         if (not is_abci and last_pid not in job_ids) or (is_abci and date_diff > 0 or second_diff > self.hp_utils.waiting_time):
             record_login(self.hp_utils.save_path)
