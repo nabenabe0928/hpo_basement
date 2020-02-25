@@ -306,7 +306,6 @@ class BaseOptimizer():
     def check_double_submission(self):
         is_abci = "JOB_ID" in os.environ.keys()
         current_time = str(datetime.datetime.today())[:-7]
-        current_pid = os.environ["JOB_ID"] if is_abci else str(os.getpid())
         save_path = "{0}/stdo/{2}/{3}/{4}/last_login.csv".format(*self.hp_utils.save_path.split("/"))
         job_ids = [] if is_abci \
             else [s.strip() for s in sp.check_output('ps -u {} -o pid'.format(os.environ["USER"]), shell=True).decode("utf-8").split("\n")
@@ -331,7 +330,7 @@ class BaseOptimizer():
             except AttributeError:
                 second_diff = 0
         else:
-            date_diff, second_diff, last_pid = 0, 0, current_pid
+            date_diff, second_diff, last_pid = 1, 1e+8, None
 
         if (not is_abci and last_pid not in job_ids) or (is_abci and date_diff > 0 or second_diff > self.hp_utils.waiting_time):
             record_login(self.hp_utils.save_path)

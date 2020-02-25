@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cond=" -dim 10 -ini 10 -eva 500 -che 0 -fre 100 -exp "
+cond=" -dim 10 -ini 10 -eva 500 -che 0 -fre 25 -exp "
 tpe="python tpe_main.py"$cond
 mvtpe="python mvtpe_main.py"$cond
 lhs="python lhs_main.py"$cond
@@ -9,7 +9,8 @@ cma="python cma_main.py"$cond
 gp="python gp_main.py"$cond
 f=" -fuc "
 
-for fuc in griewank k_tablet michalewicz schwefel sphere styblinski weighted_sphere; do
+# for fuc in griewank k_tablet michalewicz schwefel sphere styblinski weighted_sphere; do
+for fuc in weighted_sphere styblinski; do
     echo $fuc
     for num in `seq 0 9`; do
         # echo $tpe$num$f$fuc -re 1
@@ -22,7 +23,7 @@ for fuc in griewank k_tablet michalewicz schwefel sphere styblinski weighted_sph
         # $nm$num$f$fuc -re 1
         # echo $cma$num$f$fuc -re 1
         # $cma$num$f$fuc -bar 0 -re 1
-        echo $gp$num$f$fuc
-        $gp$num$f$fuc
+        echo $gp$num$f$fuc -re 1
+        $gp$num$f$fuc -re 1
     done
 done
