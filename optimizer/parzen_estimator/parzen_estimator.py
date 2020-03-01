@@ -49,7 +49,7 @@ class NumericalParzenEstimator():
         The quantization value.
     """
 
-    def __init__(self, samples, lb, ub, weight_func, q=None, rule="james"):
+    def __init__(self, samples, lb, ub, weight_func, q=None, rule="james", prior=True):
         """
         Here, the number of basis is n + 1.
         n basis are from observed values and 1 basis is from the prior distribution which is N((lb + ub) / 2, (ub - lb) ** 2).
@@ -66,7 +66,7 @@ class NumericalParzenEstimator():
         """
 
         self.lb, self.ub, self.q, self.rule = lb, ub, q, rule
-        self.weights, self.mus, self.sigmas = self._calculate(samples, weight_func)
+        self.weights, self.mus, self.sigmas = self._calculate(samples, weight_func, prior=prior)
         self.basis = [GaussKernel(m, s, lb, ub, q) for m, s in zip(self.mus, self.sigmas)]
 
     def sample_from_density_estimator(self, rng, n_samples):
@@ -105,6 +105,7 @@ class NumericalParzenEstimator():
         """
 
         ps = np.zeros(xs.shape, dtype=float)
+
         for w, b in zip(self.weights, self.basis):
             ps += w * b.pdf(xs)
 
@@ -123,16 +124,16 @@ class NumericalParzenEstimator():
 
         return return_vals
 
-    def _calculate(self, samples, weights_func):
+    def _calculate(self, samples, weights_func, prior):
         if self.rule == "james":
-            return self._calculate_by_james_rule(samples, weights_func)
+            return self._calculate_by_james_rule(samples, weights_func, prior)
         elif self.rule == "scott":
-            return self._calculate_by_scott_rule(samples)
+            return self._calculate_by_scott_rule(samples, prior)
         else:
             raise ValueError("Rule must be 'scott' or 'james'.")
 
-    def _calculate_by_james_rule(self, samples, weights_func):
-        mus = np.append(samples, 0.5 * (self.lb + self.ub))
+    def _calculate_by_james_rule(self, samples, weights_func, prior):
+        mus = np.append(samples, 0.5 * (self.lb + self.ub)) if prior else np.array(samples)
         sigma_bounds = [(self.ub - self.lb) / min(100.0, mus.size), self.ub - self.lb]
 
         order = np.argsort(mus)
@@ -143,21 +144,22 @@ class NumericalParzenEstimator():
         sorted_mus_with_bounds = np.insert([sorted_mus[0], sorted_mus[-1]], 1, sorted_mus)
         sigmas = np.maximum(sorted_mus_with_bounds[1:-1] - sorted_mus_with_bounds[0:-2], sorted_mus_with_bounds[2:] - sorted_mus_with_bounds[1:-1])
         sigmas = np.clip(sigmas, sigma_bounds[0], sigma_bounds[1])
-        sigmas[prior_pos] = sigma_bounds[1]
+        if prior:
+            sigmas[prior_pos] = sigma_bounds[1]
 
         weights = weights_func(mus.size)
         weights /= weights.sum()
 
         return weights, mus, sigmas[original_order]
 
-    def _calculate_by_scott_rule(self, samples):
-        samples = np.array(samples)
-        mus = np.append(samples, 0.5 * (self.lb + self.ub))
+    def _calculate_by_scott_rule(self, samples, prior):
+        mus = np.append(samples, 0.5 * (self.lb + self.ub)) if prior else np.array(samples)
         mus_sigma = mus.std(ddof=1)
         IQR = np.subtract.reduce(np.percentile(mus, [75, 25]))
         sigma = 1.059 * min(IQR, mus_sigma) * mus.size ** (-0.2)
         sigmas = np.ones(mus.size) * np.clip(sigma, 1.0e-2 * (self.ub - self.lb), 0.5 * (self.ub - self.lb))
-        sigmas[-1] = self.ub - self.lb
+        if prior:
+            sigmas[-1] = self.ub - self.lb
         weights = np.ones(mus.size)
         weights /= weights.sum()
 
@@ -165,11 +167,12 @@ class NumericalParzenEstimator():
 
 
 class CategoricalParzenEstimator():
-    def __init__(self, samples, n_choices, weights_func, top=0.9):
+    def __init__(self, samples, n_choices, weights_func, top=0.9, prior=True):
         self.n_choices = n_choices
         self.mus = samples
         self.basis = [AitchisonAitkenKernel(c, n_choices, top=top) for c in samples]
-        self.basis.append(UniformKernel(n_choices))
+        if prior:
+            self.basis.append(UniformKernel(n_choices))
         self.weights = weights_func(samples.size + 1)
         self.weights /= self.weights.sum()
 
