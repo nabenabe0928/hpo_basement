@@ -275,11 +275,20 @@ class BaseOptimizer():
             return None
         elif not type(given_conf) in [dict, list]:
             raise ValueError("Default configurations must be list or dict, but {} was given.".format(type(given_conf)))
-        elif not type(given_conf[0]) in [dict, list]:
+        elif type(given_conf) == list and not type(given_conf[0]) in [dict, list]:
             return self.order_default_conf(given_conf)
-        else:
+        elif type(given_conf) == dict and not type(given_conf[list(given_conf.keys())[0]]) in [dict, list]:
+            return self.order_default_conf(given_conf)
+        elif type(given_conf) == list:
             return_confs = []
             for conf in given_conf:
+                return_confs.append(self.order_default_conf(conf))
+            return return_confs
+        elif type(given_conf) == dict:
+            return_confs = []
+            n_conf = len(given_conf[list(given_conf.keys())[0]])
+            reshaped_conf = [{k: v[i] for k, v in given_conf.items()} for i in range(n_conf)]
+            for conf in reshaped_conf:
                 return_confs.append(self.order_default_conf(conf))
             return return_confs
 

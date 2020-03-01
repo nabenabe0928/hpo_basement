@@ -168,7 +168,7 @@ def parse_requirements():
                                  "test": None,
                                  "all_train": None
                                  }
-    elif args.dat is not None:
+    elif args.dat is not None and args.cls is not None:
         experimental_settings = {"func_name": args.fuc,
                                  "dim": None,
                                  "dataset_name": args.dat,
