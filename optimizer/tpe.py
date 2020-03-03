@@ -83,10 +83,11 @@ class SingleTaskTPE(BaseOptimizer):
         return pe_lower, pe_upper
 
     def _construct_categorical_parzen_estimator(self, var_name, lower_hps, upper_hps):
-        choices = self.hp_utils._hyperparameters[var_name].choices
+        choices = self.hp_utils.config_space._hyperparameters[var_name].choices
         n_choices = len(choices)
         lower_hps = [choices.index(hp) for hp in lower_hps]
         upper_hps = [choices.index(hp) for hp in upper_hps]
+        lower_hps, upper_hps = map(np.asarray, [lower_hps, upper_hps])
 
         pe_lower = CategoricalParzenEstimator(lower_hps, n_choices, self.weight_func)
         pe_upper = CategoricalParzenEstimator(upper_hps, n_choices, self.weight_func)

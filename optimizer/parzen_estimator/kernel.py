@@ -114,16 +114,11 @@ class AitchisonAitkenKernel():
         Returning probabilities of a given list x.
         """
 
-        return_val = np.array([])
-        for x in xs:
-            np.append(return_val, self.cdf(x))
-        return return_val
+        return np.array([self.cdf(x) for x in xs])
 
     def log_cdf_for_numpy(self, xs):
-        return_val = np.array([])
-        for x in xs:
-            np.append(return_val, self.log_cdf(x))
-        return return_val
+
+        return np.log(self.cdf_for_numpy(xs))
 
     def probabilities(self):
         """
@@ -170,16 +165,11 @@ class UniformKernel():
         Returning probabilities of a given list x.
         """
 
-        return_val = np.array([])
-        for x in xs:
-            np.append(return_val, self.cdf(x))
-        return return_val
+        return np.array([self.cdf(x) for x in xs])
 
     def log_cdf_for_numpy(self, xs):
-        return_val = np.array([])
-        for x in xs:
-            np.append(return_val, self.log_cdf(x))
-        return return_val
+
+        return np.log(np.array([self.cdf(x) for x in xs]))
 
     def probabilities(self):
         """

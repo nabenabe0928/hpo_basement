@@ -104,12 +104,9 @@ class NumericalParzenEstimator():
             Here, we do not consider jacobian, because it will be canceled out when we compute EI function.
         """
 
-        ps = np.zeros(xs.shape, dtype=float)
+        ps = np.array([w * b.pdf(xs) for w, b in zip(self.weights, self.basis)])
 
-        for w, b in zip(self.weights, self.basis):
-            ps += w * b.pdf(xs)
-
-        return np.log(ps + EPS)
+        return np.log(ps.sum(axis=0) + EPS)
 
     def basis_loglikelihood(self, xs):
         """
@@ -118,11 +115,7 @@ class NumericalParzenEstimator():
         loglikelihood of each basis at given points: ndarray (n_basis, n_ei_candidates)
         """
 
-        return_vals = np.zeros((len(self.basis), xs.size), dtype=float)
-        for basis_idx, b in enumerate(self.basis):
-            return_vals[basis_idx] += b.log_pdf(xs)
-
-        return return_vals
+        return np.array([b.log_pdf(xs) for b in self.basis])
 
     def _calculate(self, samples, weights_func, prior):
         if self.rule == "james":
@@ -182,14 +175,10 @@ class CategoricalParzenEstimator():
         return np.array([self.basis[idx].sample_from_kernel(rng) for idx in basis_idxs])
 
     def log_likelihood(self, values):
-        ps = np.zeros(values.shape, dtype=float)
-        for w, b in zip(self.weights, self.basis):
-            ps += w * b.cdf_for_numpy(values)
-        return np.log(ps + EPS)
+        ps = np.array([w * b.cdf_for_numpy(values) for w, b in zip(self.weights, self.basis)])
+
+        return np.log(ps.sum(axis=0) + EPS)
 
     def basis_loglikelihood(self, xs):
-        return_vals = np.zeros((len(self.basis), xs.size), dtype=float)
-        for basis_idx, b in enumerate(self.basis):
-            return_vals[basis_idx] += b.log_cdf_for_numpy(xs)
 
-        return return_vals
+        return np.array([b.log_cdf_for_numpy(xs) for b in self.basis])

@@ -546,7 +546,7 @@ class HyperparameterUtilities():
             hps, max_job_id = load_hps(load_file_path, self.lock, var_type)
             n_referred_jobs = min(n_referred_jobs, max_job_id)
 
-            if convert:
+            if convert and var_type in [float, int]:
                 hps = [self.convert_hp(hp, var_name) for hp in hps]
             hps_conf.append(hps)
 
