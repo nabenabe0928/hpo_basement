@@ -224,6 +224,7 @@ class HyperparameterUtilities():
         self.n_dimension = len(self.config_space._hyperparameters)
         self.var_names = [self.config_space._idx_to_hyperparameter[i] for i in range(self.n_dimension)]
         self.dist_types = {var_name: distribution_type(self.config_space, var_name) for var_name in self.var_names}
+        self.hp_infos = {var_name: self.config_space._hyperparameters[var_name] for var_name in self.var_names}
 
     def dict_to_list(self, hp_dict):
         """
@@ -346,7 +347,7 @@ class HyperparameterUtilities():
         """
 
         try:
-            lb, ub, _, log = get_hp_info(self.config_space._hyperparameters[var_name])
+            lb, ub, _, log = get_hp_info(self.hp_infos[var_name])
             hp_value = np.log(hp_value) if log else hp_value
             return (hp_value - lb) / (ub - lb)
         except NotImplementedError:
@@ -410,7 +411,7 @@ class HyperparameterUtilities():
         """
 
         try:
-            lb, ub, q, log = get_hp_info(self.config_space._hyperparameters[var_name])
+            lb, ub, q, log = get_hp_info(self.hp_infos[var_name])
             var_type = self.dist_types[var_name]
             hp_value = (ub - lb) * hp_converted_value + lb
             hp_value = np.exp(hp_value) if log else hp_value

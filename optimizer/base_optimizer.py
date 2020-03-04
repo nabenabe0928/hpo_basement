@@ -233,8 +233,9 @@ class BaseOptimizer():
         sample = [None for _ in range(len(hps))]
 
         for var_name, hp in hps.items():
-            idx = self.hp_utils.config_space._hyperparameter_idx[var_name]
-            dist = utils.distribution_type(self.hp_utils.config_space, var_name)
+            idx = self.hp_utils.var_names.index(var_name)
+            dist = self.hp_utils.dist_types[var_name]
+
             if dist is str or dist is bool:
                 # categorical
                 choices = hp.choices
