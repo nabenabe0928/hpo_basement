@@ -229,7 +229,7 @@ class BaseOptimizer():
         hyperparameter configurations: list
         """
 
-        hps = self.hp_utils.config_space._hyperparameters
+        hps = self.hp_utils.hp_infos
         sample = [None for _ in range(len(hps))]
 
         for var_name, hp in hps.items():
