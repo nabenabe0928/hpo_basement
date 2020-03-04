@@ -1,5 +1,4 @@
 from optimizer import BaseOptimizer
-import utils
 import numpy as np
 
 
@@ -33,13 +32,13 @@ class LatinHypercubeSampling(BaseOptimizer):
             return self.rng.randint(n_choice)
 
     def obtain_latin_hypercube(self):
-        hps = self.hp_utils.config_space._hyperparameters
         hp_idx = {"numerical": [], "categorical": []}
         choices = []
 
-        for var_name, hp in hps.items():
-            idx = self.hp_utils.config_space._hyperparameter_idx[var_name]
-            dist = utils.distribution_type(self.hp_utils.config_space, var_name)
+        for idx, var_name in enumerate(self.hp_utils.var_names):
+            hp = self.hp_utils.hp_infos[var_name]
+            dist = self.hp_utils.dist_types[var_name]
+
             if dist is str or dist is bool:
                 hp_idx["categorical"].append(idx)
                 choices.append(hp.choices)

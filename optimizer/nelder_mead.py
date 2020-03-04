@@ -21,7 +21,7 @@ class NelderMead(BaseOptimizer):
                       "ic": delta_ic,
                       "oc": delta_oc}
         self.opt = self.sample
-        self.n_dim = len(self.hp_utils.config_space._hyperparameter_idx)
+        self.n_dim = self.hp_utils.n_dimension
         self.n_init = self.n_dim + 1
         self.idx = 0
         self.n_evals = 0

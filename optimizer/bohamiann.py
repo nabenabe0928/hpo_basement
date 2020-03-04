@@ -18,7 +18,7 @@ class SingleTaskBOHAMIANN(BaseOptimizer):
 
         super().__init__(hp_utils, opt_requirements, experimental_settings, obj=obj)
         self.opt = self.sample
-        self.n_dim = len(self.hp_utils.config_space._hyperparameters)
+        self.n_dim = self.hp_utils.n_dimension
         self.lower = np.zeros(self.n_dim)
         self.upper = np.ones(self.n_dim)
         self.model_objective = models.WrapperBohamiann()
@@ -61,7 +61,7 @@ class MultiTaskBOHAMIANN(BaseOptimizer):
 
         self.opt = self.sample
         self.n_tasks = len(transfer_info_paths) + 1
-        self.n_dim = len(self.hp_utils.config_space._hyperparameters)
+        self.n_dim = self.hp_utils.n_dimension
         self.X, self.Y = self.hp_utils.load_transfer_hps_conf(transfer_info_paths, convert=True)
         self.lower = np.zeros(self.n_dim)
         self.upper = np.ones(self.n_dim)
