@@ -83,11 +83,10 @@ class NumericalParzenEstimator():
             The random number sampled from the parzen estimator.
         """
 
-        samples = np.asarray([], dtype=float)
-        while samples.size < n_samples:
-            active = np.argmax(rng.multinomial(1, self.weights))
-            drawn_hp = self.basis[active].sample_from_kernel(rng)
-            samples = np.append(samples, drawn_hp)
+        samples = np.array([
+            self.basis[np.argmax(rng.multinomial(1, self.weights))].sample_from_kernel(rng)
+            for _ in range(n_samples)
+        ])
 
         return samples if self.q is None else np.round(samples / self.q) * self.q
 

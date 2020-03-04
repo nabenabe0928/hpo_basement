@@ -1,5 +1,4 @@
 import numpy as np
-import utils
 from scipy.special import logsumexp
 from optimizer.parzen_estimator import NumericalParzenEstimator, CategoricalParzenEstimator
 from optimizer import BaseOptimizer
@@ -66,11 +65,10 @@ class SingleTaskTPE(BaseOptimizer):
         hp = self.hp_utils.config_space._hyperparameters[var_name]
         q, log, lb, ub, converted_q = hp.q, hp.log, 0., 1., None
 
-        if var_type is int or q is not None:
-            if not log:
-                converted_q = 1. / (hp.upper - hp.lower) if q is None else q / (hp.upper - hp.lower)
-                lb -= 0.5 * converted_q
-                ub += 0.5 * converted_q
+        if not log and (var_type is int or q is not None):
+            converted_q = 1. / (hp.upper - hp.lower) if q is None else q / (hp.upper - hp.lower)
+            lb -= 0.5 * converted_q
+            ub += 0.5 * converted_q
 
         pe_lower = NumericalParzenEstimator(lower_hps, lb, ub, self.weight_func, q=converted_q, rule=self.rule)
         pe_upper = NumericalParzenEstimator(upper_hps, lb, ub, self.weight_func, q=converted_q, rule=self.rule)
@@ -121,11 +119,10 @@ class SingleTaskUnivariateTPE(SingleTaskTPE):
         hps_conf, _ = self.hp_utils.load_hps_conf(convert=True, do_sort=True, index_from_conf=False)
         hp_conf = []
 
-        for idx, hps in enumerate(hps_conf):
+        for var_name, hps in zip(self.hp_utils.var_names, hps_conf):
             n_lower = self.gamma_func(len(hps))
             lower_hps, upper_hps = hps[:n_lower], hps[n_lower:]
-            var_name = self.hp_utils.config_space._idx_to_hyperparameter[idx]
-            var_type = utils.distribution_type(self.hp_utils.config_space, var_name)
+            var_type = self.hp_utils.dist_types[var_name]
 
             if var_type in [float, int]:
                 pe_lower, pe_upper = self._construct_numerical_parzen_estimator(var_name, var_type, lower_hps, upper_hps)
@@ -178,10 +175,9 @@ class SingleTaskMultivariateTPE(SingleTaskTPE):
         basis_loglikelihoods_lower = np.zeros((len(hps_conf), n_lower + 1, self.n_ei_candidates))
         basis_loglikelihoods_upper = np.zeros((len(hps_conf), n_evals - n_lower + 1, self.n_ei_candidates))
 
-        for idx, hps in enumerate(hps_conf):
+        for idx, (var_name, hps) in enumerate(zip(self.hp_utils.var_names, hps_conf)):
             lower_hps, upper_hps = hps[:n_lower], hps[n_lower:]
-            var_name = self.hp_utils.config_space._idx_to_hyperparameter[idx]
-            var_type = utils.distribution_type(self.hp_utils.config_space, var_name)
+            var_type = self.hp_utils.dist_types[var_name]
 
             if var_type in [float, int]:
                 pe_lower, pe_upper = self._construct_numerical_parzen_estimator(var_name, var_type, lower_hps, upper_hps)
@@ -217,10 +213,7 @@ class SingleTaskMultivariateTPE(SingleTaskTPE):
         (n_basis, n_confs) = conf_basis_loglikelihood.shape
         weights = self.weight_func(n_basis)
         weights /= weights.sum()
-        ll_confs = np.zeros(n_confs)
-
-        for n in range(n_confs):
-            ll_confs[n] = logsumexp(conf_basis_loglikelihood[:, n], b=weights)
+        ll_confs = [logsumexp(conf_basis_loglikelihood[:, n], b=weights) for n in range(n_confs)]
 
         return ll_confs
 
@@ -231,12 +224,7 @@ class SingleTaskMultivariateTPE(SingleTaskTPE):
 
         best_idx = np.argmax(ll_lower - ll_upper)
         raw_best_conf = hp_confs[:, best_idx]
-        hp_conf = []
-
-        for choices, hp_value in zip(choices_list, raw_best_conf):
-            if choices is None:
-                hp_conf.append(hp_value)
-            else:
-                hp_conf.append(choices[int(hp_value)])
+        hp_conf = [hp_value if choices is None 
+                   else choices[int(hp_value)] for choices, hp_value in zip(choices_list, raw_best_conf)]
 
         return hp_conf

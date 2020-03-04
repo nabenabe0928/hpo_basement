@@ -221,7 +221,9 @@ class HyperparameterUtilities():
         self.save_path = None
         self.waiting_time = None
         self.obj_class = self.prepare_opt_env(experimental_settings)
-        self.var_names = list(self.config_space._hyperparameters.keys())
+        self.n_dimension = len(self.config_space._hyperparameters)
+        self.var_names = [self.config_space._idx_to_hyperparameter[i] for i in range(self.n_dimension)]
+        self.dist_types = {var_name: distribution_type(self.config_space, var_name) for var_name in self.var_names}
 
     def dict_to_list(self, hp_dict):
         """
@@ -240,11 +242,7 @@ class HyperparameterUtilities():
         if type(hp_dict) != dict:
             raise NotImplementedError("{} is not dict.".format(hp_dict))
 
-        hp_list = [None for _ in range(len(hp_dict))]
-
-        for var_name, value in hp_dict.items():
-            idx = self.config_space._hyperparameter_idx[var_name]
-            hp_list[idx] = value
+        hp_list = [hp_dict[var_name] for var_name in self.var_names]
 
         if None in hp_list:
             raise ValueError("hp_list is including None.")
@@ -269,11 +267,7 @@ class HyperparameterUtilities():
         if type(hp_list) != list:
             raise NotImplementedError("{} is not list.".format(hp_list))
 
-        hp_dict = {}
-
-        for idx, value in enumerate(hp_list):
-            var_name = self.config_space._idx_to_hyperparameter[idx]
-            hp_dict[var_name] = value
+        hp_dict = {var_name: hp_value for hp_value, var_name in zip(hp_list, self.var_names)}
 
         return hp_dict
 
@@ -296,15 +290,14 @@ class HyperparameterUtilities():
         hp_dict = self.list_to_dict(hp_conf) if type(hp_conf) == list else hp_conf
 
         for var_name, value in hp_dict.items():
-            if not distribution_type(self.config_space, var_name) in [int, float]:
+            if not self.dist_types[var_name] in [int, float]:
                 continue
             hp = self.config_space._hyperparameters[var_name]
             lb, ub = hp.lower, hp.upper
 
-            if lb <= value <= ub:
-                pass
-            else:
-                return True
+            if value < lb or ub < value:
+                True
+
         return False
 
     def pack_into_domain(self, hp_conf):
@@ -326,11 +319,12 @@ class HyperparameterUtilities():
         is_conf_list = type(hp_conf) == list
         hp_dict = self.list_to_dict(hp_conf) if is_conf_list else hp_conf
 
-        for var_name, value in hp_dict.items():
-            if not distribution_type(self.config_space, var_name) in [int, float]:
-                continue
-            hp = self.config_space._hyperparameters[var_name]
-            hp_dict[var_name] = np.clip(value, hp.lower, hp.upper)
+        hp_dict = {var_name: np.clip(value, 
+                                     self.config_space._hyperparameters[var_name].lower,
+                                     self.config_space._hyperparameters[var_name].upper)
+                   if self.dist_types[var_name] in [int, float]
+                   else value
+                   for var_name, value in hp_dict.items()}
 
         return self.dict_to_list(hp_dict) if is_conf_list else hp_dict
 
@@ -373,14 +367,11 @@ class HyperparameterUtilities():
             the values are constrained in [0, 1]
         """
 
-        hp_converted_conf = []
-        for idx, hp_value in enumerate(hp_conf):
-            var_name = self.config_space._idx_to_hyperparameter[idx]
-            d = distribution_type(self.config_space, var_name)
-            if d is int or d is float:
-                hp_converted_conf.append(self.convert_hp(hp_value, var_name))
-            else:
-                hp_converted_conf.append(hp_value)
+        hp_converted_conf = [self.convert_hp(hp_value, var_name)
+                             if self.dist_types[var_name] in [float, int]
+                             else hp_value
+                             for var_name, hp_value in zip(self.var_names, hp_conf)]
+
         return hp_converted_conf
 
     def convert_hp_confs(self, hp_confs):
@@ -398,9 +389,7 @@ class HyperparameterUtilities():
             the values are constrained in [0, 1]
         """
 
-        hp_converted_confs = []
-        for hp_conf in hp_confs:
-            hp_converted_confs.append(self.convert_hp_conf(hp_conf))
+        hp_converted_confs = [self.convert_hp_conf(hp_conf) for hp_conf in hp_confs]
         return hp_converted_confs
 
     def revert_hp(self, hp_converted_value, var_name):
@@ -422,7 +411,7 @@ class HyperparameterUtilities():
 
         try:
             lb, ub, q, log = get_hp_info(self.config_space._hyperparameters[var_name])
-            var_type = distribution_type(self.config_space, var_name)
+            var_type = self.dist_types[var_name]
             hp_value = (ub - lb) * hp_converted_value + lb
             hp_value = np.exp(hp_value) if log else hp_value
             hp_value = np.round(hp_value / q) * q if q is not None else hp_value
@@ -445,14 +434,10 @@ class HyperparameterUtilities():
             the values of a hyperparameter configuration on original scales
         """
 
-        hp_conf = []
-        for idx, hp_converted_value in enumerate(hp_converted_conf):
-            var_name = self.config_space._idx_to_hyperparameter[idx]
-            d = distribution_type(self.config_space, var_name)
-            if d is int or d is float:
-                hp_conf.append(self.revert_hp(hp_converted_value, var_name))
-            else:
-                hp_conf.append(hp_converted_value)
+        hp_conf = [self.revert_hp(hp_converted_value, var_name)
+                   if self.dist_types[var_name] in [int, float]
+                   else hp_converted_value
+                   for var_name, hp_converted_value in zip(self.var_names, hp_converted_conf)]
 
         return hp_conf
 
@@ -471,9 +456,7 @@ class HyperparameterUtilities():
             the values of hyperparameter configurations in original scales
         """
 
-        hp_confs = []
-        for converted_hp_conf in converted_hp_confs:
-            hp_confs.append(self.revert_hp_conf(converted_hp_conf))
+        hp_confs = [self.revert_hp_conf(converted_hp_conf) for converted_hp_conf in converted_hp_confs]
         return hp_confs
 
     def save_hp_conf(self, hp_conf, ys, job_id, converted=False, record=True):
@@ -502,8 +485,7 @@ class HyperparameterUtilities():
             raise ValueError("ys must be dict.")
         if converted:
             hp_conf = self.revert_hp_conf(hp_conf)
-        for idx, hp in enumerate(hp_conf):
-            var_name = self.config_space._idx_to_hyperparameter[idx]
+        for var_name, hp in zip(self.var_names, hp_conf):
             save_file_path = self.save_path + "/" + var_name + ".csv"
             save_hp(save_file_path, self.lock, job_id, hp, record=record)
 
@@ -534,14 +516,11 @@ class HyperparameterUtilities():
         ys: list (yN, N)
         """
 
-        cs = self.config_space
-        names = cs._idx_to_hyperparameter
         n_referred_jobs = np.inf
         hps_conf = []
         ys = []
-        for idx in range(len(names)):
-            var_name = names[idx]
-            var_type = distribution_type(self.config_space, var_name)
+        for var_name in self.var_names:
+            var_type = self.dist_types[var_name]
             load_file_path = self.save_path + "/" + var_name + ".csv" if another_src is None else another_src + "/" + var_name + ".csv"
             hps, max_job_id = load_hps(load_file_path, self.lock, var_type)
             n_referred_jobs = min(n_referred_jobs, max_job_id)
