@@ -5,7 +5,6 @@ from optimizer.gaussian_process import SingleTaskGPBO, MultiTaskGPBO
 from optimizer.tpe import SingleTaskUnivariateTPE, SingleTaskMultivariateTPE
 from optimizer.bohamiann import SingleTaskBOHAMIANN, MultiTaskBOHAMIANN
 from optimizer import parzen_estimator
-from optimizer.parzen_estimator import plot_density_estimators
 # from optimizer.cma import CMA, WarmStartCMA
 from optimizer import robo
 from optimizer import constants
@@ -26,6 +25,5 @@ __all__ = ['constants',
            'CMA',
            'WarmStartCMA',
            'parzen_estimator',
-           'plot_density_estimators',
            'robo'
            ]

@@ -1,38 +1,6 @@
 import numpy as np
-from optimizer.parzen_estimator import GaussKernel, AitchisonAitkenKernel, UniformKernel
-from optimizer.constants import EPS
-
-
-def plot_density_estimators(pe_lower, pe_upper, var_name, pr_basis=False, pr_ei=False, pr_basis_mu=False):
-    import matplotlib.pyplot as plt
-
-    weights_set = [pe_lower.weights, pe_upper.weights]
-    basis_set = [pe_lower.basis, pe_upper.basis]
-    mus_set = [pe_lower.mus, pe_upper.mus]
-    names = ["lower", "upper"]
-    lb, ub = pe_lower.lb, pe_lower.ub
-    cmap = plt.get_cmap("tab10")
-
-    x = np.linspace(lb, ub, 100)
-    des = np.array([np.zeros(100) for _ in range(2)])
-
-    for i, (weights, basis, mus, de, name) in enumerate(zip(weights_set, basis_set, mus_set, des, names)):
-        for w, b, mu in zip(weights, basis, mus):
-            de += w * b.pdf(x)
-            if pr_basis:
-                plt.plot(x, w * b.pdf(x), color=cmap(i), linestyle="dotted")
-            if pr_basis_mu:
-                plt.plot([mu] * 100, np.linspace(0, w, 100), color=cmap(i), linestyle="dotted")
-        plt.plot(x, de, label=name, color=cmap(i))
-
-    if pr_ei:
-        plt.plot(x, np.log(des[0]) - np.log(des[1]), label="EI function", color=cmap(2))
-
-    plt.title("Parzen Estimators for {} with {} lower and {} upper evaluations.".format(var_name, len(mus_set[0]) - 1, len(mus_set[1]) - 1))
-    plt.xlim(lb, ub)
-    plt.grid()
-    plt.legend()
-    plt.show()
+from optimizer.constants import EPS, sq2, sq_pi
+from scipy.special import erf
 
 
 class NumericalParzenEstimator():
@@ -62,12 +30,26 @@ class NumericalParzenEstimator():
         sigmas: ndarray (n + 1, )
             The band width of each basis.
             The values are determined by a heuristic.
-        basis: the list of kernel.GaussKernel object (n + 1, )
+        sq2_sigmas: ndarray (n + 1, )
+            Define to reduce the computational time.
+            It is equal to np.sqrt(2) * sigmas
+        normal_terms: ndarray (n + 1, )
+            Define to reduce the computational time.
+            The normalization coefficient for each kernel.
+        gauss_coefs: ndarray (n + 1, )
+            Define to reduce the computational time.
+            The product of normalization coefficient and coefficient put before the exponential part of gauss kernel.
+        log_gauss_coefs: ndarray (n + 1, )
+            Define to reduce the computational time.
+            The log version of norm_consts
         """
 
         self.lb, self.ub, self.q, self.rule = lb, ub, q, rule
         self.weights, self.mus, self.sigmas = self._calculate(samples, weight_func, prior=prior)
-        self.basis = [GaussKernel(m, s, lb, ub, q) for m, s in zip(self.mus, self.sigmas)]
+        self.sq2_sigmas = sq2 * self.sigmas
+        self.normal_terms = 1. / np.maximum(0.5 * (erf((ub - self.mus) / self.sq2_sigmas) - erf((lb - self.mus) / self.sq2_sigmas)), EPS)
+        self.gauss_coefs = self.normal_terms / sq_pi / self.sq2_sigmas
+        self.log_gauss_coefs = np.log(self.gauss_coefs)
 
     def sample_from_density_estimator(self, rng, n_samples):
         """
@@ -84,11 +66,43 @@ class NumericalParzenEstimator():
         """
 
         samples = np.array([
-            self.basis[np.argmax(rng.multinomial(1, self.weights))].sample_from_kernel(rng)
+            self.sample_from_kernel(rng, np.argmax(rng.multinomial(1, self.weights)))
             for _ in range(n_samples)
         ])
 
         return samples if self.q is None else np.round(samples / self.q) * self.q
+
+    def sample_from_kernel(self, rng, idx):
+        """
+        Returning the random number sampled from a chosen Gauss kernel.
+        """
+
+        while True:
+            sample = rng.normal(loc=self.mus[idx], scale=self.sigmas[idx])
+            if self.lb <= sample <= self.ub:
+                return sample
+
+    def pdf(self, xs):
+        """
+        Parameters
+        ----------
+        xs: np.ndarray (n_ei_candidates, )
+            The candidates for the next evaluation.
+
+        Returns
+        -------
+        pdf: np.ndarray (n_ei_candidates, )
+            The probablity density function values for each candidates.
+        """
+        if self.q is None:
+            mahalanobis = ((xs[:, None] - self.mus) / self.sigmas) ** 2  # shape = (n_ei_candidates, n_basis)
+            vals_for_each_basis_at_each_x = self.gauss_coefs * np.exp(-0.5 * mahalanobis)
+            return vals_for_each_basis_at_each_x @ self.weights
+        else:
+            xl = np.maximum(xs + 0.5 * self.q, self.lb)
+            xu = np.minimum(xs + 0.5 * self.q, self.ub)
+            vals_for_each_basis_at_each_x = self.cdf_with_range(xl, xu)
+            return vals_for_each_basis_at_each_x @ self.weights
 
     def log_likelihood(self, xs):
         """
@@ -103,18 +117,51 @@ class NumericalParzenEstimator():
             Here, we do not consider jacobian, because it will be canceled out when we compute EI function.
         """
 
-        ps = np.array([w * b.pdf(xs) for w, b in zip(self.weights, self.basis)])
+        return np.log(self.pdf(xs) + EPS)
 
-        return np.log(ps.sum(axis=0) + EPS)
+    def basis_likelihood(self, xs):
+        """
+        Parameters
+        ----------
+        xs: np.ndarray (n_ei_candidates, )
+            The candidates for the next evaluation.
+
+        Returns
+        -------
+        pdf: np.ndarray (n_ei_candidates, n_basis)
+            The probablity density function values of each basis at each candidate point.
+        """
+        if self.q is None:
+            mahalanobis = ((xs[:, None] - self.mus) / self.sigmas) ** 2  # shape = (n_ei_candidates, n_basis)
+            vals_for_each_basis_at_each_x = self.gauss_coefs * np.exp(-0.5 * mahalanobis)
+        else:
+            xl = np.maximum(xs + 0.5 * self.q, self.lb)
+            xu = np.minimum(xs + 0.5 * self.q, self.ub)
+            vals_for_each_basis_at_each_x = self.cdf_with_range(xl, xu)
+
+        return vals_for_each_basis_at_each_x
 
     def basis_loglikelihood(self, xs):
         """
         Returns
         -------
-        loglikelihood of each basis at given points: ndarray (n_basis, n_ei_candidates)
+        loglikelihood of each basis at given points: ndarray (n_ei_candidates, n_basis)
         """
 
-        return np.array([b.log_pdf(xs) for b in self.basis])
+        if self.q is None:
+            mahalanobis = ((xs[:, None] - self.mus) / self.sigmas) ** 2
+            return self.log_gauss_coefs - 0.5 * mahalanobis
+        else:
+            xl = np.maximum(xs + 0.5 * self.q, self.lb)
+            xu = np.minimum(xs + 0.5 * self.q, self.ub)
+            vals_for_each_basis_at_each_x = self.cdf_with_range(xl, xu)
+            return np.log(vals_for_each_basis_at_each_x)
+
+    def cdf_with_range(self, xl, xu):
+        zl = (xl[:, None] - self.mus) / self.sq2_sigmas  # shape = (n_ei_candidates, n_basis)
+        zu = (xu[:, None] - self.mus) / self.sq2_sigmas
+        vals_for_each_basis_at_each_x = np.maxinum(self.normal_terms * 0.5 * (erf(zu) - erf(zl)), EPS)
+        return vals_for_each_basis_at_each_x
 
     def _calculate(self, samples, weights_func, prior):
         if self.rule == "james":
@@ -159,25 +206,62 @@ class NumericalParzenEstimator():
 
 
 class CategoricalParzenEstimator():
+    """
+    Reference: http://www.ccsenet.org/journal/index.php/jmr/article/download/24994/15579
+
+    Hyperparameters of Aitchison Aitken Kernel.
+
+    n_choices: int
+        The number of choices.
+    choice: int
+        The ID of the target choice.
+    top: float (0. to 1.)
+        The hyperparameter controling the extent of the other choice's distribution.
+    """
     def __init__(self, samples, n_choices, weights_func, top=0.9, prior=True):
         self.n_choices = n_choices
-        self.mus = samples
-        self.basis = [AitchisonAitkenKernel(c, n_choices, top=top) for c in samples]
-        if prior:
-            self.basis.append(UniformKernel(n_choices))
-        self.weights = weights_func(samples.size + 1)
+        self.samples = samples
+        self.top = top
+        self.n_basis = samples.size + prior
+        self.weights = weights_func(self.n_basis)
         self.weights /= self.weights.sum()
+        self._calculate_cdf(prior=prior)
+
+    def _calculate_cdf(self, prior=True):
+        bottom_val = (1. - self.top) / (self.n_choices - 1)
+        self.likelihoods = np.ones(self.n_choices) * bottom_val
+        self.basis_likelihoods = np.ones((self.n_choices, self.n_basis)) * bottom_val
+        bottom_to_top = self.top - bottom_val
+
+        for b, (c, w) in enumerate(zip(self.samples, self.weights)):
+            if 0 <= c <= self.n_choices - 1:
+                self.likelihoods[c] += w * bottom_to_top
+                self.basis_likelihoods[c][b] = bottom_to_top
+            else:
+                raise ValueError("The choice must be between {} and {}, but {} was given.".format(0, self.n_choices - 1, c))
+
+        if prior:
+            self.basis_likelihoods[:, -1] += 1. / self.n_choices - bottom_val
+            self.likelihoods += self.weights[-1] * (1. / self.n_choices - bottom_val)
+        self.basis_loglikelihoods = np.log(self.basis_likelihoods) + EPS
+        self.loglikelihoods = np.log(self.basis_likelihood) + EPS
 
     def sample_from_density_estimator(self, rng, n_samples):
-        basis_samples = rng.multinomial(n=1, pvals=self.weights, size=n_samples)
-        basis_idxs = np.dot(basis_samples, np.arange(self.weights.size))
-        return np.array([self.basis[idx].sample_from_kernel(rng) for idx in basis_idxs])
+        n_samples_of_each_choice = rng.multinomial(n=1, pvals=self.likelihoods, size=n_samples)
+        return np.dot(n_samples_of_each_choice, np.arange(self.n_choices))
 
-    def log_likelihood(self, values):
-        ps = np.array([w * b.cdf_for_numpy(values) for w, b in zip(self.weights, self.basis)])
+    def pdf(self, xs):
 
-        return np.log(ps.sum(axis=0) + EPS)
+        return self.likelihoods[xs]  # (n_ei_candidates,)
+
+    def log_likelihood(self, xs):
+
+        return self.basis_loglikelihood[xs]  # (n_ei_candidates,)
 
     def basis_loglikelihood(self, xs):
 
-        return np.array([b.log_cdf_for_numpy(xs) for b in self.basis])
+        return self.basis_loglikelihoods[xs]  # (n_ei_candidates, n_basis)
+
+    def basis_likelihood(self, xs):
+
+        return self.basis_likelihoods[xs]  # (n_ei_candidates, n_basis)

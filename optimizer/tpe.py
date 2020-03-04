@@ -73,11 +73,6 @@ class SingleTaskTPE(BaseOptimizer):
         pe_lower = NumericalParzenEstimator(lower_hps, lb, ub, self.weight_func, q=converted_q, rule=self.rule)
         pe_upper = NumericalParzenEstimator(upper_hps, lb, ub, self.weight_func, q=converted_q, rule=self.rule)
 
-        """
-        from optimizer.parzen_estimator import plot_density_estimators
-        plot_density_estimators(pe_lower, pe_upper, var_name, pr_basis=True, pr_basis_mu=True)
-        """
-
         return pe_lower, pe_upper
 
     def _construct_categorical_parzen_estimator(self, var_name, lower_hps, upper_hps):
@@ -165,6 +160,7 @@ class SingleTaskMultivariateTPE(SingleTaskTPE):
                          weight_func=weight_func)
 
         self.opt = self.sample
+        self.n_dimension = self.hp_utils.n_dimension
 
     def sample(self):
         hps_conf, _ = self.hp_utils.load_hps_conf(convert=True, do_sort=True, index_from_conf=False)
@@ -172,10 +168,10 @@ class SingleTaskMultivariateTPE(SingleTaskTPE):
         choices_list = []
         n_evals = len(hps_conf[0])
         n_lower = self.gamma_func(n_evals)
-        basis_loglikelihoods_lower = np.zeros((len(hps_conf), n_lower + 1, self.n_ei_candidates))
-        basis_loglikelihoods_upper = np.zeros((len(hps_conf), n_evals - n_lower + 1, self.n_ei_candidates))
+        basis_loglikelihoods_lower = np.zeros((self.n_dimension, self.n_ei_candidates, n_lower + 1))
+        basis_loglikelihoods_upper = np.zeros((self.n_dimension, self.n_ei_candidates, n_evals - n_lower + 1))
 
-        for idx, (var_name, hps) in enumerate(zip(self.hp_utils.var_names, hps_conf)):
+        for dim, (var_name, hps) in enumerate(zip(self.hp_utils.var_names, hps_conf)):
             lower_hps, upper_hps = hps[:n_lower], hps[n_lower:]
             var_type = self.hp_utils.dist_types[var_name]
 
@@ -187,8 +183,8 @@ class SingleTaskMultivariateTPE(SingleTaskTPE):
                 choices_list.append(choices)
             samples_lower = pe_lower.sample_from_density_estimator(self.rng, self.n_ei_candidates)
             hp_confs.append(samples_lower)
-            basis_loglikelihoods_lower[idx] += pe_lower.basis_loglikelihood(samples_lower)
-            basis_loglikelihoods_upper[idx] += pe_upper.basis_loglikelihood(samples_lower)
+            basis_loglikelihoods_lower[dim] += pe_lower.basis_loglikelihood(samples_lower)
+            basis_loglikelihoods_upper[dim] += pe_upper.basis_loglikelihood(samples_lower)
 
         hp_conf = self._compare_configurations(basis_loglikelihoods_lower, basis_loglikelihoods_upper, hp_confs, choices_list)
 
@@ -200,7 +196,7 @@ class SingleTaskMultivariateTPE(SingleTaskTPE):
 
         Parameters
         ----------
-        basis_loglikelihood: ndarray (D=n_dim, B=n_basis, N=n_ei_candidates)
+        basis_loglikelihood: ndarray (D=n_dim, N=n_ei_candidates, B=n_basis)
             Each element is the loglikelihood of D-th dimension's hyperparameter's
             parzen estimator's B-th basis of sample N.
 
@@ -209,11 +205,11 @@ class SingleTaskMultivariateTPE(SingleTaskTPE):
         loglikelihood of each configuration: ndarray (n_ei_candidates, )
         """
 
-        conf_basis_loglikelihood = basis_loglikelihood.sum(axis=0)
-        (n_basis, n_confs) = conf_basis_loglikelihood.shape
+        conf_basis_loglikelihood = basis_loglikelihood.sum(axis=0)  # -> (N, B)
+        (n_confs, n_basis) = conf_basis_loglikelihood.shape
         weights = self.weight_func(n_basis)
         weights /= weights.sum()
-        ll_confs = [logsumexp(conf_basis_loglikelihood[:, n], b=weights) for n in range(n_confs)]
+        ll_confs = logsumexp(conf_basis_loglikelihood, b=weights, axis=1)  # -> (N, )
 
         return ll_confs
 
@@ -224,7 +220,7 @@ class SingleTaskMultivariateTPE(SingleTaskTPE):
 
         best_idx = np.argmax(ll_lower - ll_upper)
         raw_best_conf = hp_confs[:, best_idx]
-        hp_conf = [hp_value if choices is None 
+        hp_conf = [hp_value if choices is None
                    else choices[int(hp_value)] for choices, hp_value in zip(choices_list, raw_best_conf)]
 
         return hp_conf
