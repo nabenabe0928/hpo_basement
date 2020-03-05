@@ -18,7 +18,7 @@ def default_weights(x, n_samples_lower=26):
         return np.concatenate([ramp, flat], axis=0)
 
 
-class SingleTaskTPE(BaseOptimizer):
+class BaseTPE(BaseOptimizer):
     def __init__(self,
                  hp_utils,
                  opt_requirements,
@@ -88,7 +88,7 @@ class SingleTaskTPE(BaseOptimizer):
         return pe_lower, pe_upper, choices
 
 
-class SingleTaskUnivariateTPE(SingleTaskTPE):
+class SingleTaskUnivariateTPE(BaseTPE):
     def __init__(self,
                  hp_utils,
                  opt_requirements,
@@ -139,7 +139,7 @@ class SingleTaskUnivariateTPE(SingleTaskTPE):
             return choices[best_choice_idx]
 
 
-class SingleTaskMultivariateTPE(SingleTaskTPE):
+class SingleTaskMultivariateTPE(BaseTPE):
     def __init__(self,
                  hp_utils,
                  opt_requirements,
