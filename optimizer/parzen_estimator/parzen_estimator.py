@@ -217,14 +217,22 @@ class CategoricalParzenEstimator():
         The ID of the target choice.
     top: float (0. to 1.)
         The hyperparameter controling the extent of the other choice's distribution.
+    basis_likelihoods, basis_loglikelihoods: ndarray (n_choices, n_basis)
+        The likelihood value of a given basis at each choice and that of log value.
+    likelihoods, loglikelihoods: ndarray (n_choices,)
+        The likelihood value of each choice and that of log value.
     """
-    def __init__(self, samples, n_choices, weights_func, top=0.9, prior=True):
+    def __init__(self, samples, n_choices, weights_func, top=0.8, prior=True):
         self.n_choices = n_choices
         self.samples = samples
         self.top = top
         self.n_basis = samples.size + prior
         self.weights = weights_func(self.n_basis)
         self.weights /= self.weights.sum()
+        self.basis_likelihoods = None
+        self.basis_loglikelihoods = None
+        self.likelihoods = None
+        self.loglikelihoods = None
         self._calculate_cdf(prior=prior)
 
     def _calculate_cdf(self, prior=True):
@@ -243,8 +251,9 @@ class CategoricalParzenEstimator():
         if prior:
             self.basis_likelihoods[:, -1] += 1. / self.n_choices - bottom_val
             self.likelihoods += self.weights[-1] * (1. / self.n_choices - bottom_val)
-        self.basis_loglikelihoods = np.log(self.basis_likelihoods) + EPS
-        self.loglikelihoods = np.log(self.basis_likelihood) + EPS
+        print(self.likelihoods)
+        self.basis_loglikelihoods = np.log(self.basis_likelihoods + EPS)
+        self.loglikelihoods = np.log(self.likelihoods + EPS)
 
     def sample_from_density_estimator(self, rng, n_samples):
         n_samples_of_each_choice = rng.multinomial(n=1, pvals=self.likelihoods, size=n_samples)
@@ -256,7 +265,7 @@ class CategoricalParzenEstimator():
 
     def log_likelihood(self, xs):
 
-        return self.basis_loglikelihood[xs]  # (n_ei_candidates,)
+        return self.loglikelihoods[xs]  # (n_ei_candidates,)
 
     def basis_loglikelihood(self, xs):
 
