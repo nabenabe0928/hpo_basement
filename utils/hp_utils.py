@@ -550,7 +550,7 @@ class HyperparameterUtilities():
 
         return hps_conf, ys
 
-    def load_transfer_hps_conf(self, transfer_info_paths, convert=False, do_sort=False):
+    def load_transfer_hps_conf(self, transfer_info_paths, convert=False, do_sort=False, index_from_conf=True):
         """
         loading hyperparameter configurations of prior information and the corresponding performance
 
@@ -574,7 +574,7 @@ class HyperparameterUtilities():
 
         for path in transfer_info_paths:
             print("### Transferring from {} ###".format(path))
-            _X, _Y = self.load_hps_conf(convert=convert, do_sort=do_sort, another_src=path)
+            _X, _Y = self.load_hps_conf(convert=convert, do_sort=do_sort, another_src=path, index_from_conf=index_from_conf)
             X.append(_X)
             Y.append(_Y)
         return X, Y
