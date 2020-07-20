@@ -177,8 +177,8 @@ class NumericalParzenEstimator():
 
         order = np.argsort(mus)
         sorted_mus = mus[order]
-        original_order = np.arange(mus.size)[order]
-        prior_pos = np.where(original_order == mus.size - 1)[0][0]
+        original_order = np.argsort(order)
+        prior_pos = np.where(order == mus.size - 1)[0][0]
 
         sorted_mus_with_bounds = np.insert([sorted_mus[0], sorted_mus[-1]], 1, sorted_mus)
         sigmas = np.maximum(sorted_mus_with_bounds[1:-1] - sorted_mus_with_bounds[0:-2], sorted_mus_with_bounds[2:] - sorted_mus_with_bounds[1:-1])
