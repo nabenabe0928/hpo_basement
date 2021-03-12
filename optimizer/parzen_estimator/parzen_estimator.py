@@ -20,7 +20,8 @@ class NumericalParzenEstimator():
     def __init__(self, samples, lb, ub, weight_func, q=None, rule="james", prior=True):
         """
         Here, the number of basis is n + 1.
-        n basis are from observed values and 1 basis is from the prior distribution which is N((lb + ub) / 2, (ub - lb) ** 2).
+        n basis are from observed values and 1 basis is from the prior distribution
+        which is N((lb + ub) / 2, (ub - lb) ** 2).
 
         weights: ndarray (n + 1, )
             the weight of each basis. The total must be 1.
@@ -47,7 +48,8 @@ class NumericalParzenEstimator():
         self.lb, self.ub, self.q, self.rule = lb, ub, q, rule
         self.weights, self.mus, self.sigmas = self._calculate(samples, weight_func, prior=prior)
         self.sq2_sigmas = sq2 * self.sigmas
-        self.normal_terms = 1. / np.maximum(0.5 * (erf((ub - self.mus) / self.sq2_sigmas) - erf((lb - self.mus) / self.sq2_sigmas)), EPS)
+        self.normal_terms = 1. / np.maximum(EPS, 0.5 * (erf((ub - self.mus) / self.sq2_sigmas)
+                                                        - erf((lb - self.mus) / self.sq2_sigmas)))
         self.gauss_coefs = self.normal_terms / sq_pi / self.sq2_sigmas
         self.log_gauss_coefs = np.log(self.gauss_coefs)
 
@@ -181,8 +183,10 @@ class NumericalParzenEstimator():
         prior_pos = np.where(order == mus.size - 1)[0][0]
 
         sorted_mus_with_bounds = np.insert([sorted_mus[0], sorted_mus[-1]], 1, sorted_mus)
-        sigmas = np.maximum(sorted_mus_with_bounds[1:-1] - sorted_mus_with_bounds[0:-2], sorted_mus_with_bounds[2:] - sorted_mus_with_bounds[1:-1])
+        sigmas = np.maximum(sorted_mus_with_bounds[1:-1] - sorted_mus_with_bounds[0:-2],
+                            sorted_mus_with_bounds[2:] - sorted_mus_with_bounds[1:-1])
         sigmas = np.clip(sigmas, sigma_bounds[0], sigma_bounds[1])
+
         if prior:
             sigmas[prior_pos] = sigma_bounds[1]
 
@@ -246,7 +250,7 @@ class CategoricalParzenEstimator():
                 self.likelihoods[c] += w * bottom_to_top
                 self.basis_likelihoods[c][b] = bottom_to_top
             else:
-                raise ValueError("The choice must be between {} and {}, but {} was given.".format(0, self.n_choices - 1, c))
+                raise ValueError(f"The choice must be between {0} and {self.n_choices - 1}, but {c} was given.")
 
         if prior:
             self.basis_likelihoods[:, -1] += 1. / self.n_choices - bottom_val
