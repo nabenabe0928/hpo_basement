@@ -1,3 +1,29 @@
+"""Unitility modules
+
+Variable name definitions:
+    func_name: str
+        The name of callable you want to optimize.
+    dim: int
+        the dimension of a benchmark function. Required only when using a benchmark function.
+    dataset_name: string
+        the name of dataset. e.g.) cifar, svhn etc...
+    n_cls: int
+        the number of classes on a given task.
+    image_size: int
+        pixel size
+    data_frac: float
+        How much percentages of training data to use in training. The value must be [0., 1.].
+    biased_cls: list of float (K, )
+        How much percentages of i-th labeled data to use in training.
+        The length must be same as n_cls. Each element must be (0, 1].
+    test: bool
+        If using validation dataset or test dataset. If false, using validation dataset.
+    extra_opt_name: str
+        The information added to optimizer name. (Used only for the specification of path to save log.)
+    extra_exp_name: str
+        The information added to experiment's name. (Used only for the specification of path to save log.)
+"""
+
 import sys
 import os
 import csv
@@ -6,40 +32,14 @@ import time
 import optimizer
 import obj_functions
 from argparse import ArgumentParser
-from typing import NamedTuple
+from typing import NamedTuple, Any, List, Union, Callable
+from utils.constants import ObjectiveFuncType, ConfigurationTypes
 
 
 class pycolor:
     RED = '\033[31m'
     YELLOW = '\033[33m'
     END = '\033[0m'
-
-
-"""
-Parameters
-----------
-func_name: str
-    The name of callable you want to optimize.
-dim: int
-    the dimension of a benchmark function. Required only when using a benchmark function.
-dataset_name: string
-    the name of dataset. e.g.) cifar, svhn etc...
-n_cls: int
-    the number of classes on a given task.
-image_size: int
-    pixel size
-data_frac: float
-    How much percentages of training data to use in training. The value must be [0., 1.].
-biased_cls: list of float (K, )
-    How much percentages of i-th labeled data to use in training.
-    The length must be same as n_cls. Each element must be (0, 1].
-test: bool
-    If using validation dataset or test dataset. If false, using validation dataset.
-extra_opt_name: str
-    The information added to optimizer name. (Used only for the specification of path to save log.)
-extra_exp_name: str
-    The information added to experiment's name. (Used only for the specification of path to save log.)
-"""
 
 
 class ExperimentalSettings(
@@ -68,37 +68,48 @@ def print_parser_warning():
     print("")
     print("  -fuc (Both  Required, default: None): The name of callable you would like to optimize.")
     print("  -ini (Both  Required, default: None): The number of initial samplings.")
-    print("  -tra (Trans Required, default; []  ): The list of the path of previous information to transfer. 'opt/function/number'")
-    print("  -dim (Bench Required, default: None): The dimension of a hyperparameter configuraiton. (Only for benchmark functions. Otherwise, omit it.)")
+    print("  -tra (Trans Required, default; []  ): The list of the path of previous information to transfer."
+          "'opt/function/number'")
+    print("  -dim (Bench Required, default: None): The dimension of a hyperparameter configuraiton."
+          " (Only for benchmark functions. Otherwise, omit it.)")
     print("  -dat (ML    Required, default: None): The name of dataset.")
     print("  -cls (ML    Required, default: None): The number of classes on a given task.")
-    print("  -img (ML    Optional, default: None): The pixel size of training data. (If None, using the possible maximum pixel size.)")
-    print("  -sub (ML    Optional, default: 1.  ): How much percentages of training data to use in training (Must be between 0. and 1.).")
-    print("  -defa(ML    Optional, default: 0   ): If using the default hyperparameter configuration or not (If 1, using the default configuration.).")
-    print("  -test(ML    Optional, default: 0   ): If using validation dataset or test dataset. (If 1, using test dataset.).")
+    print("  -img (ML    Optional, default: None): The pixel size of training data. "
+          "(If None, using the possible maximum pixel size.)")
+    print("  -sub (ML    Optional, default: 1.  ): How much percentages of training data to use in training"
+          " (Must be between 0. and 1.).")
+    print("  -defa(ML    Optional, default: 0   ): If using the default hyperparameter configuration or not "
+          "(If 1, using the default configuration.).")
+    print("  -test(ML    Optional, default: 0   ): If using validation dataset or test dataset."
+          " (If 1, using test dataset.).")
     print("  -altr(ML    Optional, default: 0   ): If using all the training data or not. (If 1, using all the data.).")
-    print("  -cuda(ML    Optional, default: range(par) ): Which CUDA devices you use in the experiment. (Specify the single or multiple number(s))")
+    print("  -cuda(ML    Optional, default: range(par) ): Which CUDA devices you use in the experiment. "
+          "(Specify the single or multiple number(s))")
     print("  -par (Both  Optional, default: 1   ): The number of parallel computer resources.")
-    print("  -exp (Both  Optional, default: 0   ): The index of an experiment. (Used only to specify the path of log files.)")
+    print("  -exp (Both  Optional, default: 0   ): The index of an experiment."
+          " (Used only to specify the path of log files.)")
     print("  -eva (Both  Optional, default: 100 ): The number of evaluations in an experiment.")
-    print("  -res (Both  Optional, default: 0   ): Whether restarting the previous experiment or not. If 0, removes the previous log files.")
+    print("  -res (Both  Optional, default: 0   ): Whether restarting the previous experiment or not."
+          " If 0, removes the previous log files.")
     print("  -seed(Both  Optional, default: None): The number to specify a random number generator.")
-    print("  -bar (Both  Optional, default: 1   ): Whether to use the barrier function or not. if 0, make hyperparameter get in feasible domain.")
+    print("  -bar (Both  Optional, default: 1   ): Whether to use the barrier function or not. "
+          "if 0, make hyperparameter get in feasible domain.")
     print("  -veb (Both  Optional, default: 1   ): Whether print the result or not. If 0, do not print.")
     print("  -fre (Both  Optional, default: 1   ): Every print_freq iteration, the result will be printed.")
     print("  -che (Both  Optional, default: 1   ): If asking when removing files or not at the initialization.")
-    print("  -eopt(Both  Optional, default: None): The information added to optimizer name. (Used only for the specification of path to save log.)")
-    print("  -eexp(Both  Optional, default: None): The information added to experiment's name. (Used only for the specification of path to save log.)")
+    print("  -eopt(Both  Optional, default: None): The information added to optimizer name."
+          " (Used only for the specification of path to save log.)")
+    print("  -eexp(Both  Optional, default: None): The information added to experiment's name. "
+          "(Used only for the specification of path to save log.)")
     print("")
     sys.exit()
 
 
 def parse_requirements():
-    import subprocess
     try:
-        msg = subprocess.check_output("nvidia-smi --query-gpu=index --format=csv", shell=True)
+        msg = sp.check_output("nvidia-smi --query-gpu=index --format=csv", shell=True)
         n_devices = max(0, len(msg.decode().split("\n")) - 2)
-    except subprocess.CalledProcessError:
+    except sp.CalledProcessError:
         n_devices = 0
 
     ap = ArgumentParser()
@@ -189,7 +200,7 @@ def parse_requirements():
     return optimizer.BaseOptimizerRequirements(**requirements), ExperimentalSettings(**experimental_settings)
 
 
-def get_stdo_path(path):
+def get_stdo_path(path: str) -> str:
     stdo = "history/stdo/"
 
     for p in path.split("/")[2:]:
@@ -197,7 +208,8 @@ def get_stdo_path(path):
     return stdo
 
 
-def print_result(hp_conf, ys, job_id, list_to_dict):
+def print_result(hp_conf: ConfigurationTypes, ys: List[List[Union[float, int]]],
+                 job_id: int, list_to_dict: Any) -> None:
     print("##### Evaluation {:0>5} #####".format(job_id))
     if type(hp_conf) is dict:
         print(hp_conf)
@@ -207,7 +219,9 @@ def print_result(hp_conf, ys, job_id, list_to_dict):
     print("")
 
 
-def save_elapsed_time(save_path, lock, verbose=True, print_freq=1):
+def save_elapsed_time(save_path: str, lock: Any,
+                      verbose: bool = True, print_freq: int = 1
+                      ) -> Callable[[float, Any, int], None]:
     save_path = save_path + "/TIME.csv"
     start_time = time.time()
 
@@ -248,7 +262,7 @@ def save_elapsed_time(save_path, lock, verbose=True, print_freq=1):
     return _imp
 
 
-def check_conflict(path, check=True):
+def check_conflict(path: str, check: bool = True) -> str:
     stdo = get_stdo_path(path)
 
     n_files = len(os.listdir(stdo)) + len(os.listdir(path))
@@ -279,12 +293,12 @@ def check_conflict(path, check=True):
         print("")
 
 
-def create_log_dir(path_log):
+def create_log_dir(path_log: str) -> None:
     """
-    Parameters
-    ----------
-    path: string
-        the path where creating the log file for hyperparameter configurations and corresponding performances.
+    Args:
+        path: string
+            the path where creating the log file for hyperparameter configurations
+            and corresponding performances.
     """
 
     stdo = get_stdo_path(path_log)
@@ -302,7 +316,7 @@ def create_log_dir(path_log):
                     pass
 
 
-def _resolve_name(path, package, start):
+def _resolve_name(path: str, package: str, start: int) -> str:
     """Return the absolute name of the module to be imported."""
 
     if not hasattr(package, 'rindex'):
@@ -317,7 +331,7 @@ def _resolve_name(path, package, start):
     return "{}.{}".format(package[:dot], path)
 
 
-def import_module(path, package=None):
+def import_module(path: str, package: str = None):
     """Import a module.
 
     The 'package' argument is required when performing a relative import. It
@@ -337,7 +351,16 @@ def import_module(path, package=None):
     return sys.modules[path]
 
 
-def load_class(path):
+def load_class(path: str) -> ObjectiveFuncType:
+    """
+    Args:
+        path (str):
+            path of the file that has the specified objective function
+
+    Returns:
+        _ (ObjectiveFuncType):
+            The objective function
+    """
     dot_loc = path.rindex(".")
     module_path, class_name = path[:dot_loc], path[dot_loc + 1:]
     module = import_module(module_path)

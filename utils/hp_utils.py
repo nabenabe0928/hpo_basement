@@ -19,15 +19,8 @@ import ConfigSpace as CS
 import ConfigSpace.hyperparameters as CSH
 import utils
 from multiprocessing import Lock
-from typing import List, Union, Tuple, Any, Dict, NamedTuple, Callable
-
-
-HyperparameterTypes = Union[CSH.CategoricalHyperparameter,
-                            CSH.UniformFloatHyperparameter,
-                            CSH.UniformIntegerHyperparameter]
-ConfigurationTypes = Union[Dict[str, Union[float, int, str]],
-                           List[Union[float, int, str]]]
-ObjectiveFuncType = Callable[[Dict[str, Any], int, str], Dict[str, Union[float, int]]]
+from typing import List, Union, Tuple, Any, Dict, NamedTuple
+from utils.constants import ObjectiveFuncType, HyperparameterTypes, ConfigurationTypes
 
 
 def create_hyperparameter(var_type: type, name: str,

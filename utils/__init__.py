@@ -1,4 +1,5 @@
 from utils.hp_utils import HyperparameterUtilities, get_hp_info, distribution_type
+from utils.constants import HyperparameterTypes, ConfigurationTypes, ObjectiveFuncType
 from utils.utils import (load_class,
                          create_log_dir,
                          import_module,
@@ -19,5 +20,8 @@ __all__ = ['HyperparameterUtilities',
            'check_conflict',
            'parse_requirements',
            'save_elapsed_time',
-           'print_result'
+           'print_result',
+           'HyperparameterTypes',
+           'ConfigurationTypes',
+           'ObjectiveFuncType'
            ]
