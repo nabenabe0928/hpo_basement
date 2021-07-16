@@ -99,7 +99,6 @@ def get_hp_info(hp: HyperparameterTypes
     """
 
     try:
-        print()
         return (hp.lower, hp.upper, hp.q, hp.log) if not hp.log else \
             (np.log(hp.lower), np.log(hp.upper), hp.q, hp.log)
     except NotImplementedError:
@@ -409,7 +408,6 @@ class HyperparameterUtilities():
         """
 
         try:
-            print(get_hp_info(self.hp_infos[var_name]))
             lb, ub, q, log = get_hp_info(self.hp_infos[var_name])
             var_type = self.dist_types[var_name]
             hp_value = (ub - lb) * hp_converted_value + lb

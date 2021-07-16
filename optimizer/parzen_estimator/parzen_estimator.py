@@ -255,7 +255,7 @@ class CategoricalParzenEstimator():
         if prior:
             self.basis_likelihoods[:, -1] += 1. / self.n_choices - bottom_val
             self.likelihoods += self.weights[-1] * (1. / self.n_choices - bottom_val)
-        print(self.likelihoods)
+
         self.basis_loglikelihoods = np.log(self.basis_likelihoods + EPS)
         self.loglikelihoods = np.log(self.likelihoods + EPS)
 
