@@ -101,7 +101,7 @@ class NumericalParzenEstimator():
             vals_for_each_basis_at_each_x = self.gauss_coefs * np.exp(-0.5 * mahalanobis)
             return vals_for_each_basis_at_each_x @ self.weights
         else:
-            xl = np.maximum(xs + 0.5 * self.q, self.lb)
+            xl = np.maximum(xs - 0.5 * self.q, self.lb)
             xu = np.minimum(xs + 0.5 * self.q, self.ub)
             vals_for_each_basis_at_each_x = self.cdf_with_range(xl, xu)
             return vals_for_each_basis_at_each_x @ self.weights
@@ -137,7 +137,7 @@ class NumericalParzenEstimator():
             mahalanobis = ((xs[:, None] - self.mus) / self.sigmas) ** 2  # shape = (n_ei_candidates, n_basis)
             vals_for_each_basis_at_each_x = self.gauss_coefs * np.exp(-0.5 * mahalanobis)
         else:
-            xl = np.maximum(xs + 0.5 * self.q, self.lb)
+            xl = np.maximum(xs - 0.5 * self.q, self.lb)
             xu = np.minimum(xs + 0.5 * self.q, self.ub)
             vals_for_each_basis_at_each_x = self.cdf_with_range(xl, xu)
 
@@ -154,7 +154,7 @@ class NumericalParzenEstimator():
             mahalanobis = ((xs[:, None] - self.mus) / self.sigmas) ** 2
             return self.log_gauss_coefs - 0.5 * mahalanobis
         else:
-            xl = np.maximum(xs + 0.5 * self.q, self.lb)
+            xl = np.maximum(xs - 0.5 * self.q, self.lb)
             xu = np.minimum(xs + 0.5 * self.q, self.ub)
             vals_for_each_basis_at_each_x = self.cdf_with_range(xl, xu)
             return np.log(vals_for_each_basis_at_each_x)

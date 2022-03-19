@@ -252,7 +252,7 @@ class BaseOptimizer():
         print("#### Best Configuration ####")
         print(best_hp_conf)
         print("##### Best Performance #####")
-        print("{:.3f}".format(best_performance))
+        print(f"{best_performance:.3e}")
 
     def order_default_conf(self, conf):
         name_to_idx = self.hp_utils.config_space._hyperparameter_idx
